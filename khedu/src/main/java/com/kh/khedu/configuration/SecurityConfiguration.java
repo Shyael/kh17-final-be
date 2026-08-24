@@ -10,7 +10,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -30,7 +29,9 @@ public class SecurityConfiguration {
 		HttpSecurity http//Spring Security가 제공하는 http 설정 객체
 	) throws Exception {
 		//http에 홈페이지 운영 규칙을 모두 설정하고 Build해서 반환
-		http	
+		http
+			//csrf 비활성화
+			.csrf(csrf -> csrf.disable())
 			//cors 설정 : 별도로 등록한 CorsconfigurationSource의 설정을 따르겟다(없으면 기본값)
 			.cors(Customizer.withDefaults())
 			//session 설정 : 무상태(StateLess)로 설정
@@ -60,6 +61,8 @@ public class SecurityConfiguration {
 							"/active"  //체크용 페이지 허용
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
+							//등록확인차 임시 작성
+							,"/service/employee/register"
 						).permitAll()
 						// 조건부 허용(내가 만든 요소들)
 					

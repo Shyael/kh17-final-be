@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.account">
+	
+	<!-- 회원 등록 -->
+	<select id="sequence" resultType="int">
+		select account_seq.nextval from dual
+	</select>
+	
+	<insert id="register">
+		insert into account(
+			account_no,
+			account_id,
+			account_password,
+			account_name,
+			account_phone
+		)
+		values (
+			#{accountNo},
+			#{accountId},
+			#{accountPassword},
+			#{accountName},
+			#{accountPhone}
+		)
+		
+	</insert>
+	
+	<!-- 회원 상세  -->
+	<select id="find" resultType="AccountDto">
+		select * from account where account_id = #{accountId}
+	</select>
+</mapper>
