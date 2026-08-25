@@ -1,4 +1,4 @@
-package com.kh.khedu.vo.register;
+package com.kh.khedu.vo.jwt;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class AccountRoleVO {
-	private int accountNo;
-	private int roleNo;
+public class TokenCreateRequestVO {
+	private String accountId;
 }

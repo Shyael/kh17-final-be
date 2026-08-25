@@ -20,8 +20,8 @@ public class EmployeeController {
 	@Autowired
 	private EmployeeService employeeService;
 	
-	@ApiResponse(responseCode = "200", description = "등록성공")
-	@PostMapping(value ="/register", produces = "application/json")
+	@ApiResponse(responseCode = "200", description = "등록 성공")
+	@PostMapping(value ="/", produces = "application/json")
 	public void register(@RequestBody EmployeeRegisterRequestVO request){
 		employeeService.registerEmployee(request);
 	}

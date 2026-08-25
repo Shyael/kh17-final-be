@@ -4,16 +4,16 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import com.kh.khedu.vo.register.AccountRoleVO;
+import com.kh.khedu.dto.AccountRolesDto;
 
 @Repository
-public class AccountRoleDaoMybatis implements AccountRoleDao {
+public class AccountRolesDaoMybatis implements AccountRolesDao {
 	@Autowired
 	private SqlSession sqlSession;
 	
 	@Override
-	public void insert(AccountRoleVO accountRoleVO) {
-		sqlSession.insert("mapper.accountRoles.add", accountRoleVO);
+	public void insert(AccountRolesDto accountRolesDto) {
+		sqlSession.insert("mapper.accountRoles.add", accountRolesDto);
 	}
 
 }

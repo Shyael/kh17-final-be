@@ -12,12 +12,14 @@
 		insert into employee(
 			employee_no,
 			account_no,
-			employee_type
+			employee_type,
+			employee_htime
 		)
 		values(
 			#{employeeNo},
 			#{accountNo},
-			#{employeeType}
+			#{employeeType},
+			#{employeeHtime}
 		)
 	</insert>
 </mapper>
