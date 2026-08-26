@@ -30,7 +30,7 @@ public class AccountDaoMybatis implements AccountDao {
 	}
 
 	@Override
-	public AccountDto selectone(String accountId) {
+	public AccountDto selectOne(String accountId) {
 		return sqlSession.selectOne("mapper.account.find", accountId);
 	}
 

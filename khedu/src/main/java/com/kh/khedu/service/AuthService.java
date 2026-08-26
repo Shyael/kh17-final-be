@@ -27,7 +27,7 @@ public class AuthService {
 	//로그인 처리
 	public AuthLoginResponseVO login(AuthLoginRequestVO request) {
 		
-		AccountDto accountDto = accountDao.selectone(request.getAccountId());
+		AccountDto accountDto = accountDao.selectOne(request.getAccountId());
 		if(accountDto == null) {
 			throw new TargetNotfoundException();
 		}

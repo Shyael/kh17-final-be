@@ -1,6 +1,7 @@
 package com.kh.khedu.controller;
 
 import java.time.Duration;
+import java.util.List;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CommonsApiResponse;
 import com.kh.khedu.configuration.JwtProperties;
+import com.kh.khedu.dao.AccountDao;
+import com.kh.khedu.dao.AccountRolesDao;
+import com.kh.khedu.dto.AccountDto;
+import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.service.AuthService;
 import com.kh.khedu.service.JwtService;
 import com.kh.khedu.vo.auth.AuthLoginRequestVO;
@@ -37,6 +42,10 @@ public class AuthRestController {
 	private JwtProperties jwtProperties;
 	@Autowired
 	private JwtService jwtService;
+	@Autowired
+	private AccountDao accountDao;
+	@Autowired
+	private AccountRolesDao accountRolesDao;
 	
 	@ApiResponse(responseCode = "200", description = "로그인 성공")
 	@ApiResponse(responseCode = "400", description = "정보 불일치")
@@ -49,24 +58,39 @@ public class AuthRestController {
 		//토큰 생성
 		TokenCreateRequestVO tokenRequest = new TokenCreateRequestVO();
 		BeanUtils.copyProperties(response, tokenRequest);
+		String accessToken = jwtService.createAccessToken(tokenRequest);
+		String refreshToken = jwtService.createRefreshToken(tokenRequest.getAccountId());
 		
-		String token = jwtService.createToken(tokenRequest);
-		
-		//쿠키 생성
-		ResponseCookie postIt = ResponseCookie
-				.from("loginId", response.getAccountId())
+		//쿠키 생성 (accessToken + refreshToken)
+		ResponseCookie accessCookie = ResponseCookie
+				.from("accessToken", accessToken)
 				//각종 설정들
 				.maxAge(Duration.ofMinutes(jwtProperties.getAccessTokenValidity()))
 				.path("/")//적용범위
-				.httpOnly(false) //true : 서버전용(등뒤), false : 클라이언트 겸용(이마)
+				.httpOnly(true) //true : 서버전용(등뒤), false : 클라이언트 겸용(이마)
 				.secure(false) //https사용여부 (나중에 true로 하고 배포하면됨)
 				.sameSite("Lax")//허용범위 (NONE: 자유, Lax:유연, Strict:엄격)
+				.build();
+		
+		ResponseCookie refreshCookie = ResponseCookie
+				.from("refreshToken", refreshToken)
+				.maxAge(Duration.ofMinutes( //유효시간 설정 (JWT와 동일하게)
+						jwtProperties.getRefreshTokenValidity()
+				))
+				.path("/service/auth/refresh") //정확하게 갱신매핑에서만 사용되도록
+				.httpOnly(true)
+				.secure(false)
+				.sameSite("Lax")
 				.build();
 		
 		//결과 반환
 		return ResponseEntity.ok()
 				//쿠키를 추가하는 설정
-				.header(HttpHeaders.SET_COOKIE, postIt.toString())
+				.header(
+					HttpHeaders.SET_COOKIE, 
+					accessCookie.toString(),
+					refreshCookie.toString()
+				)
 				.body(response);
 	}
 	
@@ -77,19 +101,102 @@ public class AuthRestController {
 	@DeleteMapping("/logout")
 	public ResponseEntity<Void> logout() {
 		//삭제를 위한 쿠키 생성(생성시와 똑같지만 만료시간이 0초여야함)
-		ResponseCookie postIt = ResponseCookie
-				.from("token", "")
+		ResponseCookie accessCookie = ResponseCookie
+				.from("accessToken", "")
 				//각종 설정들
 				.maxAge(Duration.ZERO)//유효시간 제거
 				.path("/")//적용범위
-				.httpOnly(false) //true : 서버전용(등뒤), false : 클라이언트 겸용(이마)
+				.httpOnly(true) //true : 서버전용(등뒤), false : 클라이언트 겸용(이마)
 				.secure(false) //https사용여부 (나중에 true로 하고 배포하면됨)
 				.sameSite("Lax")//허용범위 (NONE: 자유, Lax:유연, Strict:엄격)
 				.build();
 		
+		ResponseCookie refreshCookie = ResponseCookie
+				.from("refreshToken", "")
+				//각종 설정들
+				.maxAge(Duration.ZERO)//유효시간 제거
+				.path("/service/auth/refresh")//적용범위
+				.httpOnly(true) //true : 서버전용(등뒤), false : 클라이언트 겸용(이마)
+				.secure(false) //https사용여부 (나중에 true로 하고 배포하면됨)
+				.sameSite("Lax")//허용범위 (NONE: 자유, Lax:유연, Strict:엄격)
+				.build();
 		//응답 생성
 		return ResponseEntity.noContent()
-				.header(HttpHeaders.SET_COOKIE, postIt.toString())
+				.header(
+					HttpHeaders.SET_COOKIE, 
+					accessCookie.toString(),
+					refreshCookie.toString()
+				)
 				.build();
+	}
+	
+	//로그인 갱신(refresh)) 매핑
+	// - 사용자의 액세스토큰이 만료되었을 때 이를 재발급해주는 매핑
+	// - refreshToken 쿠키를 읽어서 유효성 검증 및 DB 발급내역 조사까지 해서 유효성 판정
+	// - 통과하면 login과 동일한 작업을 수행, 통과 못하면 401(Unauthorized) 발송
+	@PostMapping(value ="/refresh", produces = "application/json")
+	public ResponseEntity<AuthLoginResponseVO> refresh(
+		@CookieValue(name = "refreshToken", required = false) String refreshToken
+	){
+		//만약 쿠키가 없으면 로그인 상태가 아닌 것
+		if(refreshToken == null)
+			throw new WhoAreYouException();
+		
+		//토큰 해석 및 DB검증(현재 DB 생략되어 있음)
+		// - 토큰이 문제가 되면 JwtValidationException이 발생하며 자동으로 401 발송
+		String accountId = jwtService.parseRefreshToken(refreshToken);
+		//- 토큰내역조회 코드 생략
+		
+		//아이디의 실 정보를 조회
+		AccountDto accountDto = accountDao.selectOne(accountId);
+		//권한 조회
+		List<Integer> roleNos = accountRolesDao.selectRoleNos(accountDto.getAccountNo());
+		
+		//토큰 및 Cookie 생성
+		TokenCreateRequestVO createVO = new TokenCreateRequestVO();
+		
+		//아이디 정보 추가(필요한 항목만 취사)
+		BeanUtils.copyProperties(accountDto, createVO);//필요한 항목 복사(부족)
+		//권한 정보 추가
+		createVO.setRoleNos(roleNos);
+		
+		String accessToken = jwtService.createAccessToken(createVO);
+		String newRefreshToken = jwtService.createRefreshToken(accountId);
+		
+		//쿠키 생성 (accessToken + refreshToken)
+		ResponseCookie accessCookie = ResponseCookie
+				.from("accessToken", accessToken)
+				//각종 설정들
+				.maxAge(Duration.ofMinutes(jwtProperties.getAccessTokenValidity()))
+				.path("/")//적용범위
+				.httpOnly(true) //true : 서버전용(등뒤), false : 클라이언트 겸용(이마)
+				.secure(false) //https사용여부 (나중에 true로 하고 배포하면됨)
+				.sameSite("Lax")//허용범위 (NONE: 자유, Lax:유연, Strict:엄격)
+				.build();
+		
+		ResponseCookie refreshCookie = ResponseCookie
+				.from("refreshToken", newRefreshToken) //새로만든 refresh Token
+				.maxAge(Duration.ofMinutes( //유효시간 설정 (JWT와 동일하게)
+						jwtProperties.getRefreshTokenValidity()
+				))
+				.path("/service/auth/refresh") //정확하게 갱신매핑에서만 사용되도록
+				.httpOnly(true)
+				.secure(false)
+				.sameSite("Lax")
+				.build();
+		
+		//결과 반환
+		AuthLoginResponseVO response = new AuthLoginResponseVO();
+		BeanUtils.copyProperties(createVO, response);
+		
+		return ResponseEntity.ok()
+				//쿠키를 추가하는 설정
+				.header(
+					HttpHeaders.SET_COOKIE, 
+					accessCookie.toString(),
+					refreshCookie.toString()
+				)
+				.body(response);
+		
 	}
 }

@@ -15,9 +15,11 @@ import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.service.EmployeeService;
+import com.kh.khedu.service.JwtService;
 import com.kh.khedu.vo.account.AccountFindResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeRegisterRequestVO;
+import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,13 +27,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "직원 정보 관리 서비스")
 @RestController
 @RequestMapping("/api/employee")
-public class EmployeeController {
+public class EmployeeRestController {
 	
 	@Autowired
 	private AccountDao accountDao;
 	@Autowired
 	private EmployeeService employeeService;
-	
+	@Autowired
+	private JwtService jwtService;
 	//회원 등록
 	@ApiResponse(responseCode = "200", description = "등록 성공")
 	@PostMapping(value ="/", produces = "application/json")
@@ -44,7 +47,7 @@ public class EmployeeController {
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping(value = "/{accountId}", produces = "application/json")
 	public AccountFindResponseVO find(@PathVariable String accountId) {
-		AccountDto accountDto = accountDao.selectone(accountId);
+		AccountDto accountDto = accountDao.selectOne(accountId);
 		//아이디가 없으면
 		if(accountDto == null) throw new TargetNotfoundException();
 		//직원이 아니면
@@ -60,8 +63,11 @@ public class EmployeeController {
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping(value = "/me", produces= "application/json")
 	public EmployeeDetailVO me(
-		@CookieValue(name = "loginId", required = true) String accountId
+		@CookieValue(name = "accesstoken", required = true) String accesstoken
 	) {
-		return employeeService.findMyInfo(accountId);
+		//토큰 해석
+		TokenParseResponseVO parseVO = jwtService.parseAccessToken(accesstoken);
+		
+		return employeeService.findMyInfo(parseVO.getAccountId());
 	}
 }

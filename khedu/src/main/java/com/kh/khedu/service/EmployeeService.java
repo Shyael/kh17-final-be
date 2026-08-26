@@ -74,7 +74,7 @@ public class EmployeeService {
 	public EmployeeDetailVO findMyInfo(String accountId) {
 		
 		//계정 존재 여부 검사
-		AccountDto accountDto = accountDao.selectone(accountId);
+		AccountDto accountDto = accountDao.selectOne(accountId);
 			//아이디가 없으면
 		if(accountDto == null) throw new TargetNotfoundException();
 			//직원이 아니면

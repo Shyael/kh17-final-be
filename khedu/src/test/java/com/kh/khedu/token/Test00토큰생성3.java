@@ -20,7 +20,7 @@ public class Test00토큰생성3 {
 	
 	@Test
 	public void test() {
-		String jwtToken = jwtService.createToken(
+		String jwtToken = jwtService.createAccessToken(
 				TokenCreateRequestVO.builder()
 					.accountId("testuser6@naver.com")
 					.accountNo(32)

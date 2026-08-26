@@ -126,7 +126,7 @@ public class SecurityConfiguration {
 	
 	//CorsConfigurationSource 생성 (Security의 기본값으로 자동 설정)
 	@Bean
-	public CorsConfigurationSource configurationSource() {
+	public CorsConfigurationSource corsConfigurationSource() {
 		//설정 객체를 생성 //data가 클 경우에만 스트리밍방식을 사용(스트리밍 방식일 때, .reactive를 import)
 		CorsConfiguration config = new CorsConfiguration();
 		
