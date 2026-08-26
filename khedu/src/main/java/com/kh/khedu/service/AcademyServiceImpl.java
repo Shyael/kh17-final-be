@@ -12,6 +12,7 @@ import com.kh.khedu.dao.AcademySubjectDao;
 import com.kh.khedu.dto.AcademyDto;
 import com.kh.khedu.dto.AcademyHistoryDto;
 import com.kh.khedu.dto.AcademySubjectDto;
+import com.kh.khedu.error.AlreadyExistsException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.academy.AcademyDetailResponseVO;
 
@@ -32,6 +33,13 @@ public class AcademyServiceImpl implements AcademyService {
 
 	@Override
 	public void insert(AcademyDto academyDto) {
+		// 학원정보가 이미 존재하면 추가 등록 금지
+		AcademyDto findAcademyDto = academyDao.selectOne();
+
+		if(findAcademyDto != null) {
+			throw new AlreadyExistsException("학원정보는 한 번만 등록할 수 있습니다.");
+		}
+		
 		int academyNo = academyDao.sequence();
 
 		academyDto.setAcademyNo(academyNo);

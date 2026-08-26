@@ -25,7 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "강사 정보 관리 서비스")
 @RestController
-@RequestMapping("/service/tutor")
+@RequestMapping("/api/tutor")
 public class TutorController {
 
 	@Autowired
