@@ -6,7 +6,7 @@
   
 <mapper namespace="mapper.account">
 	
-	<!-- 회원 등록 -->
+	<!-- 회원 등록/가입 -->
 	<select id="sequence" resultType="int">
 		select account_seq.nextval from dual
 	</select>
@@ -32,5 +32,13 @@
 	<!-- 회원 상세  -->
 	<select id="find" resultType="AccountDto">
 		select * from account where account_id = #{accountId}
+	</select>
+	
+	<!-- 존재 유무 판단(아이디(=이메일), 핸드폰) -->
+	<select id="checkAccountId" resultType="int">
+		select * count(*) from account where account_id = #{accountId}
+	</select>
+	<select id="checkAccountPhone" resultType="int">
+		select * count(*) from account where account_phone = #{accountPhone}
 	</select>
 </mapper>
