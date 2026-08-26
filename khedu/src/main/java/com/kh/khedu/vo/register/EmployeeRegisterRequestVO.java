@@ -16,7 +16,7 @@ public class EmployeeRegisterRequestVO {
 	private String accountPassword;
 	private String accountName;
 	private String accountPhone;
-	
+	private String accountType; // 직원, 학생, 학부모
 	private String employeeType; //데스크/강사/원장
 	private LocalDate employeeHtime;
 	

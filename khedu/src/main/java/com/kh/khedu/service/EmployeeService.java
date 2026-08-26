@@ -24,19 +24,20 @@ public class EmployeeService {
 	private EmployeeDao employeeDao;
 	@Autowired
 	private AccountRolesDao accountRolesDao;
+	@Autowired
+	private AccountService accountService;
 	
 	@Transactional
 	public void registerEmployee(EmployeeRegisterRequestVO request) {
 		
-		// [1] accountVO에 입력받은값(request)의 데이터를 복사해서 넣기
+		// [1] accountService를 호출
 		AccountVO accountVO = new AccountVO();
-		int accountNo = accountDao.sequence();
-		accountVO.setAccountNo(accountNo);
 		
 		BeanUtils.copyProperties(request, accountVO);
 		
-		//비밀번호 암호화하여 등록
-		accountDao.insert(accountVO);
+		accountVO.setAccountType("직원");
+		//accoutService에서 등록정보 저장 및 비밀번호 암호화 한 후 accountNo 반환
+		int accountNo = accountService.createAccount(accountVO);
 		
 		// [2] employee 생성
 		int employeeNo = employeeDao.sequence();

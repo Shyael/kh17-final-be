@@ -19,4 +19,5 @@ public class AccountDto {
 	private String accountStatus; //차단여부 Y N
 	private Timestamp accountCtime;
 	private Timestamp accountUtime;
+	private String accountType; // (직원, 학생, 학부모)
 }

@@ -22,6 +22,10 @@ public class AuthService {
 	//로그인 처리
 	public AuthLoginResponseVO login(AuthLoginRequestVO request) {
 		
+		 System.out.println("========== LOGIN ==========");
+		    System.out.println("accountId : " + request.getAccountId());
+		    System.out.println("password  : " + request.getAccountPassword());
+		
 		AccountDto accountDto = accountDao.selectone(request.getAccountId());
 		if(accountDto == null) {
 			throw new TargetNotfoundException();
@@ -33,7 +37,7 @@ public class AuthService {
 		if(!valid) throw new TargetNotfoundException();
 		
 		//차단 회원이라면?
-		if(accountDto.getAccountStatus().equals("Y")) {
+		if(accountDto.getAccountStatus().equals("N")) {
 			throw new GetOutException("차단된 회원입니다");
 		}
 		

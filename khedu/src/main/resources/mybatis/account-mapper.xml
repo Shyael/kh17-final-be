@@ -17,14 +17,16 @@
 			account_id,
 			account_password,
 			account_name,
-			account_phone
+			account_phone,
+			account_type
 		)
 		values (
 			#{accountNo},
 			#{accountId},
 			#{accountPassword},
 			#{accountName},
-			#{accountPhone}
+			#{accountPhone},
+			#{accountType}
 		)
 		
 	</insert>
