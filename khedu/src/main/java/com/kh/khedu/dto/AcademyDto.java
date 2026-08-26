@@ -19,4 +19,5 @@ public class AcademyDto {
 	private String academyAddress;
 	private Timestamp academyWtime;
 	private Timestamp academyEtime;
+	//1
 }
