@@ -12,9 +12,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.EmployeeDao;
-import com.kh.khedu.vo.register.AccountVO;
-import com.kh.khedu.vo.register.EmployeeRegisterRequestVO;
-import com.kh.khedu.vo.register.EmployeeVO;
+import com.kh.khedu.vo.account.AccountVO;
+import com.kh.khedu.vo.employee.EmployeeRegisterRequestVO;
+import com.kh.khedu.vo.employee.EmployeeVO;
 
 import lombok.extern.slf4j.Slf4j;
 

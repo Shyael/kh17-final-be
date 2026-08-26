@@ -4,7 +4,8 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import com.kh.khedu.vo.register.EmployeeVO;
+import com.kh.khedu.vo.employee.EmployeeDetailVO;
+import com.kh.khedu.vo.employee.EmployeeVO;
 
 @Repository
 public class EmployeeDaoMybatis implements EmployeeDao {
@@ -18,6 +19,10 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 	@Override
 	public void insert(EmployeeVO employeeVO) {
 		sqlSession.insert("mapper.employee.register", employeeVO);
+	}
+	@Override
+	public EmployeeDetailVO findMyInfo(String accountId) {
+		return sqlSession.selectOne("mapper.employee.findMyInfo",accountId);
 	}
 	
 }

@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kh.khedu.dao.AccountDao;
-import com.kh.khedu.vo.register.AccountVO;
+import com.kh.khedu.vo.account.AccountVO;
 
 @Service
 public class AccountService {

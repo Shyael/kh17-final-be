@@ -11,10 +11,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dao.EmployeeDao;
+import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.dto.AccountRolesDto;
-import com.kh.khedu.vo.register.AccountVO;
-import com.kh.khedu.vo.register.EmployeeRegisterRequestVO;
-import com.kh.khedu.vo.register.EmployeeVO;
+import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.error.WhoAreYouException;
+import com.kh.khedu.vo.account.AccountVO;
+import com.kh.khedu.vo.employee.EmployeeDetailVO;
+import com.kh.khedu.vo.employee.EmployeeRegisterRequestVO;
+import com.kh.khedu.vo.employee.EmployeeVO;
 
 @Service
 public class EmployeeService {
@@ -27,6 +31,7 @@ public class EmployeeService {
 	@Autowired
 	private AccountService accountService;
 	
+	//직원정보 등록
 	@Transactional
 	public void registerEmployee(EmployeeRegisterRequestVO request) {
 		
@@ -63,5 +68,18 @@ public class EmployeeService {
 					.build();
 			accountRolesDao.insert(accountRolesDto);
 		}
+	}
+	
+	//직원정보 조회
+	public EmployeeDetailVO findMyInfo(String accountId) {
+		
+		//계정 존재 여부 검사
+		AccountDto accountDto = accountDao.selectone(accountId);
+			//아이디가 없으면
+		if(accountDto == null) throw new TargetNotfoundException();
+			//직원이 아니면
+		if(!accountDto.getAccountType().equals("직원")) throw new WhoAreYouException();
+		
+		return employeeDao.findMyInfo(accountId);
 	}
 }

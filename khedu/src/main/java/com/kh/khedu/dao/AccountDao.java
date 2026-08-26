@@ -1,7 +1,7 @@
 package com.kh.khedu.dao;
 
 import com.kh.khedu.dto.AccountDto;
-import com.kh.khedu.vo.register.AccountVO;
+import com.kh.khedu.vo.account.AccountVO;
 
 public interface AccountDao {
 	int sequence(); //등록

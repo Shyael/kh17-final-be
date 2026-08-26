@@ -1,4 +1,4 @@
-package com.kh.khedu.vo.register;
+package com.kh.khedu.vo.employee;
 
 import java.time.LocalDate;
 import java.util.List;

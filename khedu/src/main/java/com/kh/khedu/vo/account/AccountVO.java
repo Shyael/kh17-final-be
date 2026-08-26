@@ -1,4 +1,4 @@
-package com.kh.khedu.vo.register;
+package com.kh.khedu.vo.account;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
