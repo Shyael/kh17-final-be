@@ -1,7 +1,9 @@
 package com.kh.khedu.configuration;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,11 +12,15 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import jakarta.servlet.http.Cookie;
 
 @Configuration
 public class SecurityConfiguration {
@@ -28,9 +34,13 @@ public class SecurityConfiguration {
 	@Bean
 	public SecurityFilterChain securityFilterChain(
 		HttpSecurity http//Spring Security가 제공하는 http 설정 객체
+		,BearerTokenResolver bearerTokenResolver
+		,JwtAuthenticationConverter jwtAuthenticationConverter
 	) throws Exception {
 		//http에 홈페이지 운영 규칙을 모두 설정하고 Build해서 반환
-		http	
+		http
+			//csrf 비활성화
+			.csrf(csrf -> csrf.disable())
 			//cors 설정 : 별도로 등록한 CorsconfigurationSource의 설정을 따르겟다(없으면 기본값)
 			.cors(Customizer.withDefaults())
 			//session 설정 : 무상태(StateLess)로 설정
@@ -60,6 +70,8 @@ public class SecurityConfiguration {
 							"/active"  //체크용 페이지 허용
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
+							//등록확인차 임시 작성
+							,"/service/employee/**"
 						).permitAll()
 						// 조건부 허용(내가 만든 요소들)
 					
@@ -81,7 +93,18 @@ public class SecurityConfiguration {
 			//JWT를 어떻게 검증할 것인지 설정 (JwtDecoder가 반드시 필요)
 			//→ BearerTokenResolver :AccessToken을 꺼내서 Jwt를 뽑아내는 도구
 			//→ JwtAuthenticationConverter : Jwt의 authority를 Spring Security용으로 변환
-			
+			.oauth2ResourceServer(
+					oauth2 -> 	oauth2
+						//하단에 @Bean으로 만든 해석도구를 oauth2의 표준 해석기로 설정
+						.bearerTokenResolver(bearerTokenResolver)
+						//하단에 @Bean으로 만든 JWT 권한 해석 및 변환기를 설정
+						.jwt(
+							jwt -> jwt.jwtAuthenticationConverter(
+									jwtAuthenticationConverter //내가 만든 도구
+							)
+						)
+						
+				)
 			//예외 상황 처리 설정
 			//→ 인증되지 않은 경우는 401 , 권한이 부족한 경우는 403으로 반환하도록 설정
 			.exceptionHandling(
@@ -138,4 +161,81 @@ public class SecurityConfiguration {
 		//완성된 객체 반환
 		return source;
 	}
+	
+	//BearerTokenResolver
+		// - Bearer는 토큰의 한 종류 (인증을 통해 무언가를 얻어내겠다는 의미의 토큰)
+		// - 토큰은 표준이 없어서 JWT앞에 어떤 접두사를 붙여도 무방
+		// - 헤더 방식인 경우 "Authorization: Bearer [토큰값]" 과 같은 형태로 전달
+		// - 카카오는 KAKAOAK 라는 자체 이름을 만들어서 토큰에 적용하여 사용하고 있음 (즉, 자율적)
+		// - 인증용 토큰을 해석하는 도구(accessToken 쿠키)
+		@Bean
+		public BearerTokenResolver bearerTokenResolver() {
+			return request -> {
+				//request는 요청정보이며 이 내부에 쿠키가 들어있으므로 
+				//accessToken을 찾아서 반환(jwtDecoder가 등록되어있으므로)
+				//만약 accessToken이 만료되어도 상관이 없는 주소라면 통과시킨다
+				Set<String> allowPaths = Set.of(
+					"/service/auth/login",
+					"/service/auth/logout",
+					"/service/auth/refresh",
+					"/service/cert/send",
+					"/service/cert/check"
+				);
+				
+				if(allowPaths.contains(request.getServletPath())) {
+					return null;//아무것도 찾지말고 통과
+				}
+				
+				//accessToken이 필요한 주소만 남았으므로 검색을 통해 찾아서 반환
+				Cookie[] cookies = request.getCookies();//모든 쿠키를 긁어온다
+				if(cookies == null) { //options 같은 상황에서 null일 수 있다
+					return null; 
+				}
+//				//클래식 자바 버전으로 쿠키 찾기
+//				String target = null; //일단 없다고 생각하고 시작하자
+//				for(Cookie cookie : cookies) {//전체 쿠키를 반복하며
+//					//이름이 accessToken인 쿠키를 찾아서
+//					if(cookie.getName().equals("accessToken")) {
+//						String token = cookie.getValue(); // 저장된 token을 꺼낸다
+//						//토큰이 없으면 skip
+//						if(token == null || token.isBlank()) continue;
+//						//토큰이 있으면 target에 저장
+//						target = token;
+//					}
+//				}
+//				return target; //찾은 결과를 반환 (null 이거나 유효한 토큰이거나)
+				
+//				모던 자바(Stream API)버전으로 쿠키 찾기
+				return Arrays.stream(cookies)
+						.filter(cookie -> cookie.getName().equals("accessToken"))
+						.map(cookie -> cookie.getValue())
+						.filter(value -> value != null && !value.isBlank())
+						.findFirst()
+						.orElse(null);
+			};
+		}
+		
+		//JwtAuthenticationConverter
+		// - JWT의 authorities 항목을 Spring Security Authority로 변환하는 역할
+		@Bean
+		public JwtAuthenticationConverter jwtAuthenticationConverter() {
+			
+			//권한 정보 변환 도구 생성
+			JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
+			
+			//jwt에서 authorities와 관련된 claim 이름을 설정
+			converter.setAuthoritiesClaimName("authorities");
+			
+			//기본 접두사 (ROLE_, SCOPE_)를 모두 제거
+			converter.setAuthorityPrefix(""); //접두사 없음
+			
+			//최종 JWT 변환 도구를 생성	
+			JwtAuthenticationConverter result = new JwtAuthenticationConverter();
+			
+			//앞서 만든 도구를 장착
+			result.setJwtGrantedAuthoritiesConverter(converter);
+			
+			//반환
+			return  result;
+		}
 }

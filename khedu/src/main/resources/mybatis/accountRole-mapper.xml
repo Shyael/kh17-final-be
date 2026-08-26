@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.accountRoles">
+	<insert id="add">
+		insert into account_roles(
+			account_no,
+			role_no
+		)
+		values (
+			#{accountNo},
+			#{roleNo}
+		)
+	</insert>
+</mapper>
