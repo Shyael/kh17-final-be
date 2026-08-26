@@ -158,7 +158,6 @@ public class SecurityConfiguration {
 			"/**", //적용할 주소
 			config //적용할 설정
 		);
-		
 		//완성된 객체 반환
 		return source;
 	}
