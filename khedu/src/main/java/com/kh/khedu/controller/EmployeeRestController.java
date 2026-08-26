@@ -63,10 +63,14 @@ public class EmployeeRestController {
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping(value = "/me", produces= "application/json")
 	public EmployeeDetailVO me(
-		@CookieValue(name = "accesstoken", required = true) String accesstoken
+		@CookieValue(name = "accesstoken", required = false) String accessToken
 	) {
+		if(accessToken == null) {
+			throw new WhoAreYouException();
+		}
+		
 		//토큰 해석
-		TokenParseResponseVO parseVO = jwtService.parseAccessToken(accesstoken);
+		TokenParseResponseVO parseVO = jwtService.parseAccessToken(accessToken);
 		
 		return employeeService.findMyInfo(parseVO.getAccountId());
 	}
