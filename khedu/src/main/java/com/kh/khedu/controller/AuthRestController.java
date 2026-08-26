@@ -180,6 +180,14 @@ public class AuthRestController {
 		String accountId = jwtService.parseRefreshToken(refreshToken);
 		//- 토큰내역조회 코드 생략
 		
+		//(+추가) 실제 DB에 존재하는 토큰과 사용자가 가지고온 토큰의 일치여부를 검사
+		//→ 만약 안맞으면 WhoAreYouException 발생
+		AccountRefreshDto accountRefreshDto = accountRefreshDao.find(accountId);
+		if(accountRefreshDto == null) //발급한 적이 없음
+			throw new WhoAreYouException(); //너 누구야? (401)
+		if(accountRefreshDto.getTokenValue().equals(refreshToken) == false)
+			throw new WhoAreYouException(); //(401)
+		
 		//아이디의 실 정보를 조회
 		AccountDto accountDto = accountDao.selectOne(accountId);
 		//권한 조회
