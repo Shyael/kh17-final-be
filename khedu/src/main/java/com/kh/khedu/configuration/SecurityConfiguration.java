@@ -71,7 +71,7 @@ public class SecurityConfiguration {
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
 							//등록확인차 임시 작성
-							,"/service/employee/**"
+							,"/service/**"
 						).permitAll()
 						// 조건부 허용(내가 만든 요소들)
 					

@@ -31,8 +31,19 @@ public class AccountDaoMybatis implements AccountDao {
 
 	@Override
 	public AccountDto selectone(String accountId) {
-		// TODO Auto-generated method stub
-		return null;
+		return sqlSession.selectOne("mapper.account.find");
+	}
+
+	@Override
+	public boolean checkAvailableId(String accountId) {
+		int count = sqlSession.selectOne("mapper.account.checkAccountId", accountId);
+		return count == 0;
+	}
+
+	@Override
+	public boolean checkAvailablePhone(String accountPhone) {
+		int count = sqlSession.selectOne("mapper.account.checkAccountPhone", accountPhone);
+		return count == 0;
 	}
 
 }
