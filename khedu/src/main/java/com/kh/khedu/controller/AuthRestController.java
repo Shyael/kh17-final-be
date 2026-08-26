@@ -2,6 +2,7 @@ package com.kh.khedu.controller;
 
 import java.time.Duration;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -14,9 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CommonsApiResponse;
+import com.kh.khedu.configuration.JwtProperties;
 import com.kh.khedu.service.AuthService;
+import com.kh.khedu.service.JwtService;
 import com.kh.khedu.vo.auth.AuthLoginRequestVO;
 import com.kh.khedu.vo.auth.AuthLoginResponseVO;
+import com.kh.khedu.vo.jwt.TokenCreateRequestVO;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,20 +33,30 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class AuthRestController {
 	@Autowired
 	private AuthService authService;
+	@Autowired
+	private JwtProperties jwtProperties;
+	@Autowired
+	private JwtService jwtService;
 	
 	@ApiResponse(responseCode = "200", description = "로그인 성공")
 	@ApiResponse(responseCode = "400", description = "정보 불일치")
 	@PostMapping(value ="/login", produces = "application/json")
-	public ResponseEntity<AuthLoginResponseVO> login(@RequestBody AuthLoginRequestVO request) {
+	public ResponseEntity<AuthLoginResponseVO> login(
+			@RequestBody AuthLoginRequestVO request) {
 		
 		//로그인 처리를 수행하고 결과를 얻어낸다
 		AuthLoginResponseVO response = authService.login(request);
+		//토큰 생성
+		TokenCreateRequestVO tokenRequest = new TokenCreateRequestVO();
+		BeanUtils.copyProperties(response, tokenRequest);
+		
+		String token = jwtService.createToken(tokenRequest);
 		
 		//쿠키 생성
 		ResponseCookie postIt = ResponseCookie
 				.from("loginId", response.getAccountId())
 				//각종 설정들
-				.maxAge(Duration.ofHours(12L))//일단 유효시간 12시간으로 설정
+				.maxAge(Duration.ofMinutes(jwtProperties.getAccessTokenValidity()))
 				.path("/")//적용범위
 				.httpOnly(false) //true : 서버전용(등뒤), false : 클라이언트 겸용(이마)
 				.secure(false) //https사용여부 (나중에 true로 하고 배포하면됨)
@@ -61,16 +75,10 @@ public class AuthRestController {
 	//- 하지만, 쿠키는 지우는 명령이 없다(제한시간을 설정해서 만드는 것 밖에 없음)
 	// - 삭제효과를 내기위해 0초 뒤에 만료되는 쿠키를 생성해서 덮어쓰기 처리
 	@DeleteMapping("/logout")
-	public ResponseEntity<Void> logout( //required가 false면 유효기간이 만료된것
-			@CookieValue(name="loginId", required= false) String accountId
-	) {
-//		if() {
-//			
-//		}
-		
+	public ResponseEntity<Void> logout() {
 		//삭제를 위한 쿠키 생성(생성시와 똑같지만 만료시간이 0초여야함)
 		ResponseCookie postIt = ResponseCookie
-				.from("loginId", accountId)
+				.from("token", "")
 				//각종 설정들
 				.maxAge(Duration.ZERO)//유효시간 제거
 				.path("/")//적용범위
@@ -81,7 +89,7 @@ public class AuthRestController {
 		
 		//응답 생성
 		return ResponseEntity.noContent()
-				.header(HttpHeaders.SET_COOKIE, "지울 쿠키의 내용")
+				.header(HttpHeaders.SET_COOKIE, postIt.toString())
 				.build();
 	}
 }

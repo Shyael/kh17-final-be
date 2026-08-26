@@ -1,10 +1,13 @@
 package com.kh.khedu.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.kh.khedu.dao.AccountDao;
+import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
@@ -17,14 +20,12 @@ public class AuthService {
 	@Autowired
 	private AccountDao accountDao;
 	@Autowired
+	private AccountRolesDao accountRolesDao;
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 	
 	//로그인 처리
 	public AuthLoginResponseVO login(AuthLoginRequestVO request) {
-		
-		 System.out.println("========== LOGIN ==========");
-		    System.out.println("accountId : " + request.getAccountId());
-		    System.out.println("password  : " + request.getAccountPassword());
 		
 		AccountDto accountDto = accountDao.selectone(request.getAccountId());
 		if(accountDto == null) {
@@ -43,11 +44,16 @@ public class AuthService {
 		
 		//비밀번호 변경한 지 30일 지난 경우
 		
+		//accountNo를 통해 roleNo도 가져오기 (계정번호를 통해 계정에 할당된 권한(role_no)가져오기)
+		List<Integer> roleNos = accountRolesDao.selectRoleNos(accountDto.getAccountNo());
+		
 		//로그인 성공
 		return AuthLoginResponseVO.builder()
 				.accountNo(accountDto.getAccountNo())
 				.accountId(accountDto.getAccountId())
 				.accountName(accountDto.getAccountName())
+				.accountType(accountDto.getAccountType())
+				.roleNos(roleNos)
 			.build();
 	}
 }

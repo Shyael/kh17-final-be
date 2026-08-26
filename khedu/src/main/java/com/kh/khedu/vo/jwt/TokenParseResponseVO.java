@@ -1,5 +1,16 @@
 package com.kh.khedu.vo.jwt;
 
-public class TokenParseResponseVO {
+import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
+public class TokenParseResponseVO {
+	private int accountNo;
+	private String accountId;	
+	private String accountType; // 직원, 학생, 학부모
+	private List<Integer> roleNos;//권한 
 }

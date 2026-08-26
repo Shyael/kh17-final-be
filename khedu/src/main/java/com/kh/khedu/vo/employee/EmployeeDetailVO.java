@@ -21,7 +21,6 @@ public class EmployeeDetailVO {
     private String accountId;
     private String accountName;
     private String accountPhone;
-    private String accountEmail;
     private String accountStatus;
     private String accountType;
 }

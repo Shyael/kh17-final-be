@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -70,15 +71,15 @@ public class SecurityConfiguration {
 							"/active"  //체크용 페이지 허용
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
-							//등록확인차 임시 작성
 							,"/service/**"
-						).permitAll()
+						).permitAll()					
 						// 조건부 허용(내가 만든 요소들)
 					
 						// 로그인만 필요한 경우
 						.requestMatchers(
 								//예시
-								"/api/account/me" //내정보
+								"/api/auth/login" //로그인 페이지
+								,"/api/auth/logout" //로그아웃 페이지
 						).authenticated()//인증필요	
 						
 						// 설정한 권한들 필요 
