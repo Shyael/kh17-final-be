@@ -212,7 +212,7 @@ public class AuthRestController {
 				.maxAge(Duration.ofMinutes( //유효시간 설정 (JWT와 동일하게)
 						jwtProperties.getRefreshTokenValidity()
 				))
-				.path("/service/auth/refresh") //정확하게 갱신매핑에서만 사용되도록
+				.path("/service/auth/") //정확하게 갱신매핑에서만 사용되도록
 				.httpOnly(true)
 				.secure(false)
 				.sameSite("Lax")
