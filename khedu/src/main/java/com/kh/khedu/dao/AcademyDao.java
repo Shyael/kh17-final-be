@@ -8,4 +8,5 @@ public interface AcademyDao {
 	AcademyDto selectOne();
 	boolean update(AcademyDto academyDto);
 	boolean delete(int academyNo);
+//	abc
 }
