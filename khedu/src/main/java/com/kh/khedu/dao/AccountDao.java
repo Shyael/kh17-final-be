@@ -10,7 +10,4 @@ public interface AccountDao {
 	
 	//아이디 중복검사 (가능하면 true)
 	boolean checkAvailableId(String accountId);
-	
-	//핸드폰 중복검사 (가능하면 true)
-	boolean checkAvailablePhone(String accountPhone);
 }

@@ -33,7 +33,7 @@ public class EmployeeRestController {
 	private AccountDao accountDao;
 	@Autowired
 	private EmployeeService employeeService;
-	//회원 등록
+	//직원 등록
 	@ApiResponse(responseCode = "200", description = "등록 성공")
 	@PostMapping(value ="/", produces = "application/json")
 	public void register(@RequestBody EmployeeRegisterRequestVO request){
@@ -41,7 +41,14 @@ public class EmployeeRestController {
 		employeeService.registerEmployee(request);
 	}
 	
-	//회원 정보를 반환하는 매핑(주의 : 내 정보 아님)
+	//아이디(=dlapdlf) 중복검사 - 사용가능하면 true, 불가능하면 false를 반환
+	@ApiResponse(responseCode = "200", description = "존재하는 아이디")
+	@GetMapping(value ="/check-id/{accountId}", produces = "application/json")
+	public boolean checkAccountId(@PathVariable String accountId) {
+		return accountDao.checkAvailableId(accountId);
+	}
+	
+	//직원 정보를 반환하는 매핑(주의 : 내 정보 아님)
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping(value = "/{accountId}", produces = "application/json")
 	public AccountFindResponseVO find(@PathVariable String accountId) {
