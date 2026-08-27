@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CommonsApiResponse;
 import com.kh.khedu.annotation.CurrentUser;
+import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
+import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.requestvo.payroll.ContractAddRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployeeSignRequestVO;
@@ -26,6 +28,7 @@ import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
 import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractUpdateDraftResponseVO;
 import com.kh.khedu.service.payroll.ContractService;
+import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,15 +50,24 @@ public class ContractController {
 	@Autowired
 	private ContractDao contractDao;
 	
+	@Autowired
+	private EmployeeDao employeeDao;
+	
 	//계약 조회
 	@GetMapping("/detail/{contractNo}")
 	public ContractDto find (@PathVariable long contractNo, @CurrentUser TokenParseResponseVO parseVO) {
-		
-//		String role = parseVO.getRoleNos();
-//		
-//		if(role.contains("3")||role.contains("4")) throw new GetOutException();
-//		
 		ContractDto find = contractDao.find(contractNo);
+		List<String> permission = parseVO.getRoleNames();
+		
+		String id = parseVO.getAccountId();
+		int compare = find.getEmployeeNo();
+		
+		EmployeeDetailVO employee = employeeDao.findMyInfo(id);
+		
+		int no = employee.getAccountNo();
+		
+		if(!permission.contains("admin")||no!=compare) throw new GetOutException();
+		
 		return find;
 	}
 	

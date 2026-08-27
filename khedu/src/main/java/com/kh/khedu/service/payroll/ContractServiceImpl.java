@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.error.GetOutException;
@@ -20,6 +21,7 @@ import com.kh.khedu.requestvo.payroll.ContractEmployerSignRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
 import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
 import com.kh.khedu.util.SignatureEncryptor;
+import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 @Service
@@ -30,6 +32,9 @@ public class ContractServiceImpl implements ContractService {
 
 	@Autowired
 	private SignatureEncryptor signatureEncryptor;
+	
+	@Autowired
+	private EmployeeDao employeeDao;
 
 	// 근로계약 등록 //권한 설정 완
 	@Transactional
@@ -141,14 +146,19 @@ public class ContractServiceImpl implements ContractService {
 		
 		if(permission.contains("admin")) throw new GetOutException();
 
-	
+		
 
 		// "을"을 검증
-		int employeeNo = parseVO.getAccountNo();
-
 		ContractDto find = contractDao.find(contractNo);
-		if (find.getEmployeeNo() != employeeNo)
-			throw new GetOutException();
+		
+		String id = parseVO.getAccountId();
+		int compare = find.getEmployeeNo();
+		
+		EmployeeDetailVO employee = employeeDao.findMyInfo(id);
+		
+		int no = employee.getAccountNo();
+		
+		if(no!=compare) throw new GetOutException();
 
 		// [1] 서명정보 조회
 		ContractDto currentContract = contractDao.findSignature(contractNo);
@@ -203,7 +213,7 @@ public class ContractServiceImpl implements ContractService {
 		if (currentContract.getSignedTime() != null)
 			throw new GetOutException();
 
-		// 원장인지 확인(추후 작성)
+		// 원장인지 확인
 		
 		List<String> permission = parseVO.getRoleNames();
 		
@@ -238,6 +248,8 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public ContractDto findCurrent(long employeeNo) {
 
+		
+		
 		ContractDto contractDto = contractDao.findCurrent(employeeNo);
 
 		if (contractDto == null)
