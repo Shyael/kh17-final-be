@@ -135,8 +135,6 @@ public class ContractServiceImpl implements ContractService {
 	@Transactional
 	@Override
 	public void employeeSign(long contractNo, ContractEmployeeSignRequestVO request, TokenParseResponseVO parseVO) {
-		// 권한은 을만
-		
 		
 		// 원장 내보내기
 		List<String> permission = parseVO.getRoleNames();
@@ -149,7 +147,7 @@ public class ContractServiceImpl implements ContractService {
 		int employeeNo = parseVO.getAccountNo();
 
 		ContractDto find = contractDao.find(contractNo);
-		if (find.getContractNo() != employeeNo)
+		if (find.getEmployeeNo() != employeeNo)
 			throw new GetOutException();
 
 		// [1] 서명정보 조회
@@ -206,7 +204,11 @@ public class ContractServiceImpl implements ContractService {
 			throw new GetOutException();
 
 		// 원장인지 확인(추후 작성)
-
+		
+		List<String> permission = parseVO.getRoleNames();
+		
+		if(!permission.contains("admin")) throw new GetOutException();
+		
 		// [3] 원장 서명 설정
 		currentContract.setEmployerSignature(request.getEmployerSignature());
 
