@@ -93,12 +93,12 @@ public class SecurityConfiguration {
 						//외부화면은 전체 공개
 						.requestMatchers("/academy/**").permitAll() 
 						
-						
+						// 조건부 허용(내가 만든 요소들)
 						.requestMatchers(
 								"/api/employee/me" // 직원 내정보
-						).authenticated()//인증필요	
+						).authenticated()//인증필요
+						//.hasAnyAuthority(3, 4, 5) //데스크 직원 원장
 						
-						// 조건부 허용(내가 만든 요소들)
 						//직원 기능 - Jwt에 authorities 클레임에 "마스터"가 포함되어 있어야 한다
 						.requestMatchers("/api/employee/**")
 							.hasAuthority("직원")
