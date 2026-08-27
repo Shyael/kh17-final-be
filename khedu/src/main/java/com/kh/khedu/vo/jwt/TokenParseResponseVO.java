@@ -12,5 +12,5 @@ public class TokenParseResponseVO {
 	private int accountNo;
 	private String accountId;	
 	private String accountType; // 직원, 학생, 학부모
-	private List<Integer> roleNos;//권한 
+	private List<String> roleNames;//권한 
 }
