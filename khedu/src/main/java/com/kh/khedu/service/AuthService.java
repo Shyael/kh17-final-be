@@ -45,15 +45,16 @@ public class AuthService {
 		//비밀번호 변경한 지 30일 지난 경우
 		
 		//accountNo를 통해 roleNo도 가져오기 (계정번호를 통해 계정에 할당된 권한(role_no)가져오기)
-		List<Integer> roleNos = accountRolesDao.selectRoleNos(accountDto.getAccountNo());
-		
+		//List<Integer> roleNos = accountRolesDao.selectRoleNos(accountDto.getAccountNo());
+		//accountNo를 통해 roleName가져오기
+		List<String> roleNames =accountRolesDao.selectRoleNames(accountDto.getAccountNo());
 		//로그인 성공
 		return AuthLoginResponseVO.builder()
 				.accountNo(accountDto.getAccountNo())
 				.accountId(accountDto.getAccountId())
 				.accountName(accountDto.getAccountName())
 				.accountType(accountDto.getAccountType())
-				.roleNos(roleNos)
+				.roleNames(roleNames)
 			.build();
 	}
 }

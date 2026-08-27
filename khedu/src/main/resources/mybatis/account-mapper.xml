@@ -18,6 +18,8 @@
 			account_password,
 			account_name,
 			account_phone,
+			account_birth,
+			account_status,
 			account_type
 		)
 		values (
@@ -26,6 +28,8 @@
 			#{accountPassword},
 			#{accountName},
 			#{accountPhone},
+			#{accountBirth},
+			#{accountStatus},
 			#{accountType}
 		)
 		

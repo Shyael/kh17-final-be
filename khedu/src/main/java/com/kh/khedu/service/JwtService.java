@@ -47,17 +47,12 @@ public class JwtService {
 				.claim("accountNo", request.getAccountNo())
 				.claim("accountId", request.getAccountId())
 				.claim("accountType", request.getAccountType())
-				.claim("roleNos", request.getRoleNos())
+				.claim("roleNames", request.getRoleNames())
 				//spring Security 검사를 위한 항목을 추가
 				//- 이름은 authorities 고정 → hasAuthority()로 검사
 				//- 이름을 roles로 설정하면 → hasRoles()로 검사 (ROLE_접두사 필요)
 				//.claim("authorities", request.getRoleNos())
-				.claim(
-					    "authorities",
-					    request.getRoleNos().stream()
-					        .map(String::valueOf)
-					        .toList()
-					)
+				.claim( "authorities", request.getRoleNames())
 			.build();
 		
 		//토큰 최종 생성 및 결과 반환

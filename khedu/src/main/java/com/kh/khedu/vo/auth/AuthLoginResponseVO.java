@@ -15,5 +15,5 @@ public class AuthLoginResponseVO {
 	private String accountId;
 	private String accountName;
 	private String accountType;
-	private List<Integer> roleNos;
+	private List<String> roleNames;
 }
