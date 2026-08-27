@@ -36,6 +36,11 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public ContractDto add(ContractAddRequestVO request, TokenParseResponseVO parseVO) {
 
+		List<String> permission = parseVO.getRoleNames();
+		
+		if(!permission.contains("admin")) throw new GetOutException();
+		
+		
 		// [1] 계약 대상 직원의 현재 계약 확인
 		ContractDto currentContract = contractDao.findCurrent(request.getEmployeeNo());
 
@@ -83,6 +88,10 @@ public class ContractServiceImpl implements ContractService {
 	public void updateDraft(long contractNo, ContractUpdateDraftRequestVO request, TokenParseResponseVO parseVO) {
 
 		
+	List<String> permission = parseVO.getRoleNames();
+		
+		if(!permission.contains("admin")) throw new GetOutException();
+		
 		// [1] 계약 조회
 		ContractDto currentContract = contractDao.find(contractNo);
 
@@ -127,9 +136,12 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public void employeeSign(long contractNo, ContractEmployeeSignRequestVO request, TokenParseResponseVO parseVO) {
 		// 권한은 을만
-
-		// 원장 내보내기
 		
+		
+		// 원장 내보내기
+		List<String> permission = parseVO.getRoleNames();
+		
+		if(permission.contains("admin")) throw new GetOutException();
 
 	
 
