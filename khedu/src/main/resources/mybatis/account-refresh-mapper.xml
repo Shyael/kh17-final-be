@@ -10,24 +10,39 @@
 	<insert id="add">
 		insert into account_refresh(
 			account_id,
+			user_agent,
+			user_address,
 			token_value		
 		)
-		values(#{accountId}, #{tokenValue})
+		values(#{accountId}, #{userAgent}, #{userAddress}, #{tokenValue})
 	</insert>
 	<update id="change">
 		update account_refresh
 		set token_value = #{tokenValue}
-		where account_id = #{accountId}
+		where 	account_id = #{accountId}	
+				and 
+				user_agent = #{userAgent}
+				and
+				user_address = #{userAddress}
 	</update>
 	
 	<!-- 상세 조회구문 -->
 	<select id="find" resultType="AccountRefreshDto">
 		select * from account_refresh
-		where account_id = #{accountId}
+		where 	account_id = #{accountId}	
+				and 
+				user_agent = #{userAgent}
+				and
+				user_address = #{userAddress}
 	</select>
 	
 	<!-- 삭제 -->
 	<delete id="delete">
-		delete account_refresh where account_id = #{accountId}
+		delete account_refresh
+		where 	account_id = #{accountId}	
+				and 
+				user_agent = #{userAgent}
+				and
+				user_address = #{userAddress}
 	</delete>
 </mapper>

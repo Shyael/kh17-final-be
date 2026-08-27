@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,10 +33,13 @@ import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 @Tag(name="인증 처리 서비스", description = "stateless 서버의 인증 처리 로직 구현")
 @CommonsApiResponse
 
+@Slf4j
 @RestController
 @RequestMapping("/service/auth")
 public class AuthRestController {
@@ -56,7 +60,13 @@ public class AuthRestController {
 	@ApiResponse(responseCode = "400", description = "정보 불일치")
 	@PostMapping(value ="/login", produces = "application/json")
 	public ResponseEntity<AuthLoginResponseVO> login(
-			@RequestBody AuthLoginRequestVO request) {
+			@RequestHeader(
+				value = "User-Agent",
+						required = false,
+						defaultValue = "UNKNOWN"
+				) String userAgent, //브라우저 정보
+			@RequestBody AuthLoginRequestVO request,
+			HttpServletRequest req) {
 		
 		//로그인 처리를 수행하고 결과를 얻어낸다
 		AuthLoginResponseVO response = authService.login(request);
@@ -92,6 +102,8 @@ public class AuthRestController {
 		accountRefreshDao.insertOrUpdate(
 			AccountRefreshDto.builder()
 				.accountId(response.getAccountId())
+				.userAgent(userAgent)
+				.userAddress(req.getRemoteAddr())
 				.tokenValue(refreshToken)
 			.build()
 		);
@@ -115,8 +127,14 @@ public class AuthRestController {
 	// - 삭제효과를 내기위해 0초 뒤에 만료되는 쿠키를 생성해서 덮어쓰기 처리
 	@DeleteMapping("/logout")
 	public ResponseEntity<Void> logout(
-			@CookieValue(name = "accessToken", required = false) String accessToken,
-			@CookieValue(name = "refreshToken", required = false) String refreshToken 
+			@RequestHeader(
+					value = "User-Agent",
+							required = false,
+							defaultValue = "UNKNOWN"
+					) String userAgent,
+			HttpServletRequest req,
+			@CookieValue(value = "accessToken", required = false) String accessToken,
+			@CookieValue(value = "refreshToken", required = false) String refreshToken 
 	) {
 		//삭제를 위한 쿠키 생성(생성시와 똑같지만 만료시간이 0초여야함)
 		ResponseCookie accessCookie = ResponseCookie
@@ -144,11 +162,23 @@ public class AuthRestController {
 		try {
 			if(accessToken != null) {
 				TokenParseResponseVO parseVO = jwtService.parseAccessToken(accessToken);
-				accountRefreshDao.delete(parseVO.getAccountId());
+				accountRefreshDao.delete(
+					AccountRefreshDto.builder()
+						.accountId(parseVO.getAccountId())
+						.userAgent(userAgent)
+						.userAddress(req.getRemoteAddr())
+					.build()
+				);
 			}
 			else if(refreshToken != null) {
 				String accountId = jwtService.parseRefreshToken(refreshToken);
-				accountRefreshDao.delete(accountId);
+				accountRefreshDao.delete(
+					AccountRefreshDto.builder()
+						.accountId(accountId)
+						.userAgent(userAgent)
+						.userAddress(req.getRemoteAddr())
+					.build()
+				);
 			}
 		}
 		catch(Exception e) { /* 문제가 생겨도 pass */}
@@ -169,7 +199,12 @@ public class AuthRestController {
 	// - 통과하면 login과 동일한 작업을 수행, 통과 못하면 401(Unauthorized) 발송
 	@PostMapping(value ="/refresh", produces = "application/json")
 	public ResponseEntity<AuthLoginResponseVO> refresh(
-		@CookieValue(name = "refreshToken", required = false) String refreshToken
+		@RequestHeader(
+				value="User-Agent",
+				required=false,
+				defaultValue = "UNKNOWN") String userAgent,
+				HttpServletRequest req,
+		@CookieValue(value = "refreshToken", required = false) String refreshToken
 	){
 		//만약 쿠키가 없으면 로그인 상태가 아닌 것
 		if(refreshToken == null)
@@ -182,9 +217,20 @@ public class AuthRestController {
 		
 		//(+추가) 실제 DB에 존재하는 토큰과 사용자가 가지고온 토큰의 일치여부를 검사
 		//→ 만약 안맞으면 WhoAreYouException 발생
-		AccountRefreshDto accountRefreshDto = accountRefreshDao.find(accountId);
+		AccountRefreshDto accountRefreshDto = 
+				accountRefreshDao.find(
+					AccountRefreshDto.builder()
+						.accountId(accountId)
+						.userAgent(userAgent)
+						.userAddress(req.getRemoteAddr())
+					.build()
+				);
+		log.debug("accountRefreshDto = {}", accountRefreshDto);
 		if(accountRefreshDto == null) //발급한 적이 없음
 			throw new WhoAreYouException(); //너 누구야? (401)
+		log.debug("token1 = {}", refreshToken);
+		log.debug("token2 = {}", accountRefreshDto.getTokenValue());
+		log.debug("token3 = {}", accountRefreshDto.getTokenValue().equals(refreshToken));
 		if(accountRefreshDto.getTokenValue().equals(refreshToken) == false)
 			throw new WhoAreYouException(); //(401)
 		
@@ -230,7 +276,9 @@ public class AuthRestController {
 		accountRefreshDao.insertOrUpdate(
 			AccountRefreshDto.builder()
 				.accountId(accountId)
-				.tokenValue(refreshToken)
+				.userAgent(userAgent)
+				.userAddress(req.getRemoteAddr())
+				.tokenValue(newRefreshToken)
 			.build()
 		);
 		

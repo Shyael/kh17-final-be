@@ -4,6 +4,6 @@ import com.kh.khedu.dto.AccountRefreshDto;
 
 public interface AccountRefreshDao {
 	void insertOrUpdate(AccountRefreshDto accountRefreshDto);
-	void delete(String accountId);
-	AccountRefreshDto find(String accountId);
+	void delete(AccountRefreshDto accountRefreshDto);
+	AccountRefreshDto find(AccountRefreshDto accountRefreshDto);
 }

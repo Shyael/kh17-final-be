@@ -10,5 +10,7 @@ import lombok.NoArgsConstructor;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class AccountRefreshDto {
 	private String accountId;
+	private String userAgent;
+	private String userAddress;
 	private String tokenValue;
 }
