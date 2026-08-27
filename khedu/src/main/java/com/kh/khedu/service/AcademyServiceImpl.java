@@ -52,6 +52,10 @@ public class AcademyServiceImpl implements AcademyService {
 
 		// 학원정보는 항상 1개만 존재
 		AcademyDto academy = academyDao.selectOne();
+		
+		if (academy == null) {
+	        return null;
+	    }
 
 		int academyNo = academy.getAcademyNo();
 

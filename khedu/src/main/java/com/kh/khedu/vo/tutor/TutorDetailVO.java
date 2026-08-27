@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import com.kh.khedu.dto.TutorCareerDto;
+import com.kh.khedu.dto.TutorSubjectDto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -27,7 +28,7 @@ public class TutorDetailVO {
 	private Timestamp tutorWtime;
 	private Timestamp tutorEtime;
 
-	private List<String> subjectList;
+	private List<TutorSubjectDto> subjectList;
 	private List<TutorCareerDto> careerList;
 
 }

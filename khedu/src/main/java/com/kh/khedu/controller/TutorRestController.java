@@ -26,7 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "강사 정보 관리 서비스")
 @RestController
 @RequestMapping("/api/tutor")
-public class TutorController {
+public class TutorRestController {
 
 	@Autowired
 	private TutorService tutorService;
@@ -36,8 +36,8 @@ public class TutorController {
 
 	@ApiResponse(responseCode = "200", description = "강사 등록 성공")
 	@PostMapping(value = "/", produces = "application/json")
-	public void insert(@RequestBody TutorDto tutorDto) {
-		tutorService.insert(tutorDto);
+	public TutorDto insert(@RequestBody TutorDto tutorDto) {
+	    return tutorService.insert(tutorDto);
 	}
 
 	@ApiResponse(responseCode = "200", description = "강사 전체 목록 조회 성공")

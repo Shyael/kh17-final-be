@@ -87,12 +87,14 @@ public class SecurityConfiguration {
 							,"/service/auth/refresh" //로그인 갱신페이지
 						).permitAll()
 						
+						
 						//cert service
 						.requestMatchers("/service/cert/**").permitAll()
 						
-						//외부화면은 전체 공개
-						.requestMatchers("/academy/**").permitAll() 
-						
+						//직원(학원 정보 수정)
+						.requestMatchers("/api/academy/**").permitAll() 
+						//직원(강사 정보 수정)
+						.requestMatchers("/api/tutor/**").permitAll() 
 						// 조건부 허용(내가 만든 요소들)
 						.requestMatchers(
 								"/api/employee/me" // 직원 내정보

@@ -13,7 +13,7 @@ public interface TutorService {
 
 	// ==================== 강사 기본정보 ====================
 	// 강사 등록
-	void insert(TutorDto tutorDto);
+	TutorDto insert(TutorDto tutorDto);
 
 	// 강사 목록 조회
 	List<TutorListVO> selectList();

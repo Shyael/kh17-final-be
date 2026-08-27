@@ -38,12 +38,15 @@ public class TutorServiceImpl implements TutorService {
 	// ==================== 강사 기본정보 ====================
 
 	@Override
-	public void insert(TutorDto tutorDto) {
-		int tutorNo = tutorDao.sequence();
+	public TutorDto insert(TutorDto tutorDto) {
 
-		tutorDto.setTutorNo(tutorNo);
+	    int tutorNo = tutorDao.sequence();
 
-		tutorDao.insert(tutorDto);
+	    tutorDto.setTutorNo(tutorNo);
+
+	    tutorDao.insert(tutorDto);
+
+	    return tutorDto;
 	}
 
 	@Override
@@ -59,40 +62,25 @@ public class TutorServiceImpl implements TutorService {
 	@Override
 	public TutorDetailVO selectDetail(int tutorNo) {
 
-		TutorDetailVO tutorDetail = tutorDao.selectDetail(tutorNo);
+	    TutorDetailVO tutorDetail = tutorDao.selectDetail(tutorNo);
 
-		if(tutorDetail == null) {
-			return null;
-		}
+	    if (tutorDetail == null) {
+	        return null;
+	    }
 
-		// 강사 담당과목 조회
-		List<TutorSubjectDto> tutorSubjectList =
-				tutorSubjectDao.selectList(tutorNo);
+	    // 강사 담당과목 조회
+	    List<TutorSubjectDto> subjectList =
+	            tutorSubjectDao.selectList(tutorNo);
 
-		List<String> subjectList = tutorSubjectList.stream()
-				.map(tutorSubject -> {
+	    tutorDetail.setSubjectList(subjectList);
 
-					AcademySubjectDto academySubjectDto =
-							academySubjectDao.selectOne(
-									tutorSubject.getAcademySubjectNo()
-							);
+	    // 강사 학력/경력 조회
+	    List<TutorCareerDto> careerList =
+	            tutorCareerDao.selectList(tutorNo);
 
-					return academySubjectDto.getAcademySubjectName();
+	    tutorDetail.setCareerList(careerList);
 
-				})
-				.toList();
-
-		tutorDetail.setSubjectList(subjectList);
-
-
-		// 강사 학력/경력 조회
-		List<TutorCareerDto> careerList =
-				tutorCareerDao.selectList(tutorNo);
-
-		tutorDetail.setCareerList(careerList);
-
-
-		return tutorDetail;
+	    return tutorDetail;
 	}
 
 	@Override

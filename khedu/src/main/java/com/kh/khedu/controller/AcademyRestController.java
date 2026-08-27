@@ -22,7 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "학원 정보 관리 서비스")
 @RestController
 @RequestMapping("/api/academy")
-public class AcademyController {
+public class AcademyRestController {
 
 	@Autowired
 	private AcademyService academyService;
