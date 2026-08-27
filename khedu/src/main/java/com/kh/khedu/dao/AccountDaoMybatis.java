@@ -6,7 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.AccountDto;
-import com.kh.khedu.vo.register.AccountVO;
+import com.kh.khedu.vo.account.AccountVO;
 
 @Repository
 public class AccountDaoMybatis implements AccountDao {
@@ -30,8 +30,8 @@ public class AccountDaoMybatis implements AccountDao {
 	}
 
 	@Override
-	public AccountDto selectone(String accountId) {
-		return sqlSession.selectOne("mapper.account.find");
+	public AccountDto selectOne(String accountId) {
+		return sqlSession.selectOne("mapper.account.find", accountId);
 	}
 
 	@Override
