@@ -40,10 +40,4 @@ public class AccountDaoMybatis implements AccountDao {
 		return count == 0;
 	}
 
-	@Override
-	public boolean checkAvailablePhone(String accountPhone) {
-		int count = sqlSession.selectOne("mapper.account.checkAccountPhone", accountPhone);
-		return count == 0;
-	}
-
 }

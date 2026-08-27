@@ -59,7 +59,7 @@ public class EmployeeService {
 				.build();
 		employeeDao.insert(employeeVO);
 		
-		//[3] employee의 권한 연결 
+		//[3] employee의 권한 등록 
 		List<Integer> roleNos = request.getRoleNos();
 		for(Integer roleNo : roleNos) {
 			AccountRolesDto accountRolesDto = AccountRolesDto.builder()
