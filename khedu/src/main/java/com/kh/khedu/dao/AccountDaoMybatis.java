@@ -6,7 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.AccountDto;
-import com.kh.khedu.vo.account.AccountVO;
+import com.kh.khedu.vo.account.AccountRegisterVO;
 
 @Repository
 public class AccountDaoMybatis implements AccountDao {
@@ -22,7 +22,7 @@ public class AccountDaoMybatis implements AccountDao {
 	}
 	
 	@Override
-	public void insert(AccountVO accountVO) {
+	public void insert(AccountRegisterVO accountVO) {
 		String orgin = accountVO.getAccountPassword(); 
 		String encrypt = passwordEncdoer.encode(orgin);
 		accountVO.setAccountPassword(encrypt);

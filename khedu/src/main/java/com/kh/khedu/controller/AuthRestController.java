@@ -237,7 +237,7 @@ public class AuthRestController {
 		//아이디의 실 정보를 조회
 		AccountDto accountDto = accountDao.selectOne(accountId);
 		//권한 조회
-		List<Integer> roleNos = accountRolesDao.selectRoleNos(accountDto.getAccountNo());
+		List<String> roleNames = accountRolesDao.selectRoleNames(accountDto.getAccountNo());
 		
 		//토큰 및 Cookie 생성
 		TokenCreateRequestVO createVO = new TokenCreateRequestVO();
@@ -245,7 +245,7 @@ public class AuthRestController {
 		//아이디 정보 추가(필요한 항목만 취사)
 		BeanUtils.copyProperties(accountDto, createVO);//필요한 항목 복사(부족)
 		//권한 정보 추가
-		createVO.setRoleNos(roleNos);
+		createVO.setRoleNames(roleNames);
 		
 		String accessToken = jwtService.createAccessToken(createVO);
 		String newRefreshToken = jwtService.createRefreshToken(accountId);
