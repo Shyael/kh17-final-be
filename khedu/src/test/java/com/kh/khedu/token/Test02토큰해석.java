@@ -28,7 +28,7 @@ public class Test02토큰해석 {
 		log.debug("accountNo = {}", response.getAccountNo());
 		log.debug("accountId = {}", response.getAccountId());
 		log.debug("accountType = {}", response.getAccountType());
-		log.debug("roleNos = {}", response.getRoleNos());
+		log.debug("roleNos = {}", response.getRoleNames());
 	}
 	
 }

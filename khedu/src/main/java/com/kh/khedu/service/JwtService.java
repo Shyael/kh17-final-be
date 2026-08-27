@@ -54,7 +54,6 @@ public class JwtService {
 				//.claim("authorities", request.getRoleNos())
 				.claim( "authorities", request.getRoleNames())
 			.build();
-		
 		//토큰 최종 생성 및 결과 반환
 		return jwtEncoder
 				.encode(JwtEncoderParameters.from(jwsHeader, claims))
@@ -69,7 +68,7 @@ public class JwtService {
 					.accountNo(((Long)jwt.getClaim("accountNo")).intValue())
 					.accountId(jwt.getClaimAsString("accountId"))
 					.accountType(jwt.getClaimAsString("accountType"))
-					.roleNos(jwt.getClaim("roleNos"))
+					.roleNames(jwt.getClaim("roleNames"))
 				.build();
 	}
 	
@@ -79,7 +78,7 @@ public class JwtService {
 				.accountNo(((Long)jwt.getClaim("accountNo")).intValue())
 				.accountId(jwt.getClaimAsString("accountId"))
 				.accountType(jwt.getClaimAsString("accountType"))
-				.roleNos(jwt.getClaim("roleNos"))
+				.roleNames(jwt.getClaim("roleNames"))
 			.build();
 	}
 	
