@@ -3,6 +3,8 @@ package com.kh.khedu.dao.payroll;
 import java.util.List;
 
 import com.kh.khedu.dto.payroll.ContractDto;
+import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
+import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
 
 public interface ContractDao {
 
@@ -39,8 +41,11 @@ public interface ContractDao {
 	// 계약 서명정보 조회
 	ContractDto findSignature(long contractNo);
 
+	//서명 후 근무 조건 계약 내용 수정
+	boolean changeContractCondition(ContractChangeConditionRequestVO request);
+	
 	// 양측 서명 완료 전 계약내용 수정
-	boolean updateDraft(ContractDto contractDto);
+	boolean updateDraft(ContractUpdateDraftRequestVO request);
 
 	// 을(직원) 서명
 	boolean employeeSign(ContractDto contractDto);
@@ -55,8 +60,13 @@ public interface ContractDao {
 	boolean changeStatus(ContractDto contractDto);
 
 	// 시작일이 도래한 체결완료 계약 활성화
-	int activateContracts();
+	boolean activateContracts(long contactNo);
 
 	// 종료일이 도래한 계약 종료
-	int endContracts();
+	boolean endContracts(long contactNo);
+	
+	//도중 퇴사
+	boolean exitContracts(long contactNo);
+	
+	
 }

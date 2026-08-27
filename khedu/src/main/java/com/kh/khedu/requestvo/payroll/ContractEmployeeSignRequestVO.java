@@ -4,9 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class ContractSignRequestVO {
+public class ContractEmployeeSignRequestVO {
  @NotBlank
  private String employeeSignature;
- @NotBlank
- private String employerSignature;
+ 
 }

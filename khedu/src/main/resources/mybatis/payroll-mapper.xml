@@ -151,19 +151,46 @@
 	</select>
 
 
-	<!-- 근로계약 내용 수정 -->
-	<update id="update">
-		update employment_contract
-		set wage_type = #{wageType},
-			base_wage = #{baseWage},
-			daily_work_hours = #{dailyWorkHours},
-			weekly_work_hours = #{weeklyWorkHours},
-			contract_start = #{contractStart},
-			contract_end = #{contractEnd},
-			payday = #{payday},
-			contract_content = #{contractContent}
-		where contract_no = #{contractNo}
-	</update>
+	<!-- 계약 도중 근로계약 내용 수정 -->
+<update id="update">
+    update employment_contract
+
+    <set>
+        <if test="wageType != null">
+            wage_type = #{wageType},
+        </if>
+
+        <if test="baseWage != null">
+            base_wage = #{baseWage},
+        </if>
+
+        <if test="dailyWorkHours != null">
+            daily_work_hours = #{dailyWorkHours},
+        </if>
+
+        <if test="weeklyWorkHours != null">
+            weekly_work_hours = #{weeklyWorkHours},
+        </if>
+
+        <if test="contractStart != null">
+            contract_start = #{contractStart},
+        </if>
+
+        <if test="contractEnd != null">
+            contract_end = #{contractEnd},
+        </if>
+
+        <if test="payday != null">
+            payday = #{payday},
+        </if>
+
+        <if test="contractContent != null">
+            contract_content = #{contractContent},
+        </if>
+    </set>
+
+    where contract_no = #{contractNo}
+</update>
 
 
 	<!-- 계약상태 및 종료일 변경 -->
@@ -175,23 +202,50 @@
 	</update>
 
 
-	<!-- 양측 서명 완료 전 근로계약 내용 수정 -->
+<!-- 양측 서명 완료 전 근로계약 내용 수정 -->
 <update id="updateDraft">
-	update employment_contract
-	set wage_type = #{wageType},
-		base_wage = #{baseWage},
-		daily_work_hours = #{dailyWorkHours},
-		weekly_work_hours = #{weeklyWorkHours},
-		contract_start = #{contractStart},
-		contract_end = #{contractEnd},
-		payday = #{payday},
-		contract_content = #{contractContent}
-	where contract_no = #{contractNo}
-		and signed_time is null
-		and (
-			employee_signature is null
-			or employer_signature is null
-		)
+    update employment_contract
+
+    <set>
+        <if test="wageType != null">
+            wage_type = #{wageType},
+        </if>
+
+        <if test="baseWage != null">
+            base_wage = #{baseWage},
+        </if>
+
+        <if test="dailyWorkHours != null">
+            daily_work_hours = #{dailyWorkHours},
+        </if>
+
+        <if test="weeklyWorkHours != null">
+            weekly_work_hours = #{weeklyWorkHours},
+        </if>
+
+        <if test="contractStart != null">
+            contract_start = #{contractStart},
+        </if>
+
+        <if test="contractEnd != null">
+            contract_end = #{contractEnd},
+        </if>
+
+        <if test="payday != null">
+            payday = #{payday},
+        </if>
+
+        <if test="contractContent != null">
+            contract_content = #{contractContent},
+        </if>
+    </set>
+
+    where contract_no = #{contractNo}
+      and signed_time is null
+      and (
+            employee_signature is null
+            or employer_signature is null
+      )
 </update>
 
 
@@ -238,6 +292,7 @@
 				contract_end is null
 				or contract_end <![CDATA[ > ]]> systimestamp
 			)
+			and contract_no=#{contractNo}
 	</update>
 
 
@@ -248,7 +303,14 @@
 		where contract_status = 'active'
 			and contract_end is not null
 			and contract_end <![CDATA[ <= ]]> systimestamp
+			and contract_no = #{contractNo}
 	</update>
 
-
+<!--도중 종료 하는 경우  -->
+<update id="exitContracts">
+	update employment_contract
+	set contract_status='ended'
+	where contract_status = 'active'
+	and contract_no=#{contractNo}
+</update>
 </mapper>

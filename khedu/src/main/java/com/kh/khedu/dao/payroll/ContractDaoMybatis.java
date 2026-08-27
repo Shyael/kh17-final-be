@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.payroll.ContractDto;
+import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
+import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
 import com.kh.khedu.util.SignatureEncryptor;
 
 @Repository
@@ -130,13 +132,18 @@ public class ContractDaoMybatis implements ContractDao {
 
 	// 양측 서명 완료 전 계약내용 수정
 	@Override
-	public boolean updateDraft(ContractDto contractDto) {
+	public boolean updateDraft(ContractUpdateDraftRequestVO request) {
 		return sqlSession.update(
 			"mapper.payroll.updateDraft",
-			contractDto
+			request
 		) > 0;
 	}
-
+	
+	// 서명 후 근무 조건 계약 내용 수정
+	@Override
+	public boolean changeContractCondition(ContractChangeConditionRequestVO request) {
+		return sqlSession.update("mapper.payroll.update",request)>0;
+	}
 
 	// 을(직원) 서명
 	@Override
@@ -202,19 +209,24 @@ public class ContractDaoMybatis implements ContractDao {
 
 	// 시작일이 도래한 체결완료 계약 활성화
 	@Override
-	public int activateContracts() {
+	public boolean activateContracts(long contractNo) {
 		return sqlSession.update(
-			"mapper.payroll.activateContracts"
-		);
+			"mapper.payroll.activateContracts")>0
+		;
 	}
 
 
 	// 종료일이 도래한 계약 종료
 	@Override
-	public int endContracts() {
+	public boolean endContracts(long contractNo) {
 		return sqlSession.update(
-			"mapper.payroll.endContracts"
-		);
+			"mapper.payroll.endContracts")>0
+		;
 	}
 
+	//도중 퇴사
+	@Override
+	public boolean exitContracts(long contractNo) {
+		return sqlSession.update("mapper.payroll.exitContracts")>0;
+	}
 }

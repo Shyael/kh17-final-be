@@ -1,6 +1,5 @@
 package com.kh.khedu.requestvo.payroll;
 
-
 import java.sql.Timestamp;
 
 import jakarta.validation.constraints.DecimalMin;
@@ -11,7 +10,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 @Data
-public class ContractUpdateRequestVO {
+public class ContractChangeConditionRequestVO {
+
 	@NotBlank
 	@Pattern(regexp = "monthly|hourly|daily")
 	private String wageType;
@@ -21,23 +21,25 @@ public class ContractUpdateRequestVO {
 	private long baseWage;
 	
 	@NotNull
-	@DecimalMin("0")
-	private int dailyWorkHours;
+	@DecimalMin("0.5")
+	private double dailyWorkHours;
 	
 	@NotNull
-	@DecimalMin("0")
-	private int weeklyWorkHours;
+	@DecimalMin("0.5")
+	private double weeklyWorkHours;
 	
 	@NotNull
 	private Timestamp contractStart;
 	
 	private Timestamp contractEnd;
 	
-	@NotNull
+	
 	@Min(1)
 	@Max(31)
 	private int payday;
 	
 	@NotBlank
 	private String contractContent;
+	
+	private long contractNo;
 }

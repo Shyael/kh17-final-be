@@ -14,8 +14,10 @@ import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.requestvo.payroll.ContractAddRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractSignRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractUpdateRequestVO;
+import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
+import com.kh.khedu.requestvo.payroll.ContractEmployeeSignRequestVO;
+import com.kh.khedu.requestvo.payroll.ContractEmployerSignRequestVO;
+import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
 import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
 import com.kh.khedu.util.SignatureEncryptor;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
@@ -30,11 +32,12 @@ public class ContractServiceImpl implements ContractService {
 	private SignatureEncryptor signatureEncryptor;
 
 
-	// 근로계약 등록
+	// 근로계약 등록 //권한 설정 완
 	@Transactional
 	@Override
-	public ContractDto add(ContractAddRequestVO request) {
+	public ContractDto add(ContractAddRequestVO request,TokenParseResponseVO parseVO) {
 
+		
 		// [1] 계약 대상 직원의 현재 계약 확인
 		ContractDto currentContract =
 				contractDao.findCurrent(request.getEmployeeNo());
@@ -56,15 +59,14 @@ public class ContractServiceImpl implements ContractService {
 					.before(contractDto.getContractStart())) {
 			throw new GetOutException();
 		}
+		
+		//[5] 소정근로시간 확인
+		if(contractDto.getDailyWorkHours()
+		        > contractDto.getWeeklyWorkHours()) {
+		    throw new GetOutException();
+		}
 
-
-		// [5] 신규 계약은 미래 시작 계약만 등록 가능
-		Timestamp current =
-				Timestamp.valueOf(LocalDateTime.now());
-
-		if(!contractDto.getContractStart().after(current))
-			throw new GetOutException();
-
+		
 
 		// [6] 최초 등록 상태는 서명대기
 		contractDto.setContractStatus("pending");
@@ -91,13 +93,18 @@ public class ContractServiceImpl implements ContractService {
 	}
 
 
-	// 양측 서명 완료 전 근로계약 내용 수정
+	// 양측 서명 완료 전 근로계약 내용 수정 //권한 설정 완
 	@Override
-	public void update(
+	public void updateDraft(
 			long contractNo,
-			ContractUpdateRequestVO request,
+			ContractUpdateDraftRequestVO request,
 			TokenParseResponseVO parseVO) {
 
+		//권한은 원장만
+		List<String> role = parseVO.getRoleNos().stream().map(String::valueOf).toList();
+		
+		if(role.contains("3")||role.contains("4")) throw new GetOutException();
+		
 		// [1] 계약 조회
 		ContractDto currentContract =
 				contractDao.find(contractNo);
@@ -135,25 +142,44 @@ public class ContractServiceImpl implements ContractService {
 					.before(currentContract.getContractStart())) {
 			throw new GetOutException();
 		}
+		//[7] 새 소정근로시간 확인
+		if(currentContract.getDailyWorkHours()
+		        > currentContract.getWeeklyWorkHours()) {
+		    throw new GetOutException();
+		}
 
 
 		// [6] 계약내용 수정
 		boolean result =
-				contractDao.updateDraft(currentContract);
+				contractDao.updateDraft(request);
 
 		if(result == false)
 			throw new GetOutException();
 	}
 
 
-	// 을(직원) 서명
+	// 을(직원) 서명 //권한 설정 완
 	@Transactional
 	@Override
 	public void employeeSign(
 			long contractNo,
-			ContractSignRequestVO request,
+			ContractEmployeeSignRequestVO request,
 			TokenParseResponseVO parseVO) {
+		//권한은 을만
+		
+		//원장 내보내기
+		List<String> role = parseVO.getRoleNos().stream().map(String::valueOf).toList();
+		
+		if(role.contains("5")) throw new GetOutException();
+		
+		//"을"을 검증
+		int employeeNo = parseVO.getAccountNo();
 
+		ContractDto find = contractDao.find(contractNo);
+		if(find.getContractNo()!=employeeNo) throw new GetOutException();
+		
+		
+		
 		// [1] 서명정보 조회
 		ContractDto currentContract =
 				contractDao.findSignature(contractNo);
@@ -204,13 +230,16 @@ public class ContractServiceImpl implements ContractService {
 	}
 
 
-	// 갑(원장) 서명
+	// 갑(원장) 서명 //권한 설정 완
 	@Transactional
 	@Override
 	public void employerSign(
 			long contractNo,
-			ContractSignRequestVO request,
+			ContractEmployerSignRequestVO request,
 			TokenParseResponseVO parseVO) {
+		List<String> role = parseVO.getRoleNos().stream().map(String::valueOf).toList();
+		
+		if(role.contains("3")||role.contains("4")) throw new GetOutException();
 
 		// [1] 서명정보 조회
 		ContractDto currentContract =
@@ -296,10 +325,6 @@ public class ContractServiceImpl implements ContractService {
 
 		List<ContractDto> contracts =
 				contractDao.findAllByEmployee(employeeNo);
-
-		if(contracts.size() == 0)
-			throw new TargetNotfoundException();
-
 		return contracts;
 	}
 
@@ -344,7 +369,7 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public ContractDto changeWorkCondition(
 			long contractNo,
-			ContractUpdateRequestVO request) {
+			ContractChangeConditionRequestVO request) {
 
 		// [1] 기존 계약 전체 조회
 		ContractDto originDto =
@@ -385,7 +410,12 @@ public class ContractServiceImpl implements ContractService {
 					.before(newContractDto.getContractStart())) {
 			throw new GetOutException();
 		}
-
+		
+		//[7] 새 소정근로시간 확인
+		if(newContractDto.getDailyWorkHours()
+		        > newContractDto.getWeeklyWorkHours()) {
+		    throw new GetOutException();
+		}
 
 		// [7] 변경 계약은 미래 시점부터 적용
 		Timestamp current =
@@ -483,13 +513,20 @@ public class ContractServiceImpl implements ContractService {
 	// 계약기간에 따른 상태 갱신
 	@Transactional
 	@Override
-	public void refreshContractStatus() {
+	public void refreshContractStatus(long contractNo) {
 
 		// [1] 종료일이 도래한 기존 계약 종료
-		contractDao.endContracts();
+		contractDao.endContracts(contractNo);
 
 		// [2] 시작일이 도래한 체결완료 계약 활성화
-		contractDao.activateContracts();
+		contractDao.activateContracts(contractNo);
+	}
+	
+	@Transactional
+	@Override
+	public void exitContract(long contractNo) {
+		
+		contractDao.exitContracts(contractNo);
 	}
 
 }

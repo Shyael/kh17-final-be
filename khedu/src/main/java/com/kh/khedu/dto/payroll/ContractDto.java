@@ -27,10 +27,10 @@ public class ContractDto {
     private long baseWage;
 
     // 1일 소정근로시간
-    private int dailyWorkHours;
+    private double dailyWorkHours;
 
     // 주 소정근로시간
-    private int weeklyWorkHours;
+    private double weeklyWorkHours;
 
     // 계약 시작일
     private Timestamp contractStart;
