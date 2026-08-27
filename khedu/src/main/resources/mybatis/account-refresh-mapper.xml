@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.accountRefresh">
+	
+	<!-- 등록/갱신 구문 -->
+	<insert id="add">
+		insert into account_refresh(
+			account_id,
+			user_agent,
+			user_address,
+			token_value		
+		)
+		values(#{accountId}, #{userAgent}, #{userAddress}, #{tokenValue})
+	</insert>
+	<update id="change">
+		update account_refresh
+		set token_value = #{tokenValue}
+		where 	account_id = #{accountId}	
+				and 
+				user_agent = #{userAgent}
+				and
+				user_address = #{userAddress}
+	</update>
+	
+	<!-- 상세 조회구문 -->
+	<select id="find" resultType="AccountRefreshDto">
+		select * from account_refresh
+		where 	account_id = #{accountId}	
+				and 
+				user_agent = #{userAgent}
+				and
+				user_address = #{userAddress}
+	</select>
+	
+	<!-- 삭제 -->
+	<delete id="delete">
+		delete account_refresh
+		where 	account_id = #{accountId}	
+				and 
+				user_agent = #{userAgent}
+				and
+				user_address = #{userAddress}
+	</delete>
+</mapper>

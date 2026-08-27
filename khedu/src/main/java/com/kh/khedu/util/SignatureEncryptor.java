@@ -25,13 +25,24 @@ public class SignatureEncryptor {
 	private final SecretKeySpec secretKey;
 
 	public SignatureEncryptor(
-			@Value("${security.signature-key}") String key) {
+	        @Value("${security.signature-key:khedu-signature-key-2026-1234567}") String key) {
 
-		this.secretKey = new SecretKeySpec(
-				key.getBytes(StandardCharsets.UTF_8),
-				ALGORITHM
-		);
+	    byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
+
+	    if (keyBytes.length != 16
+	            && keyBytes.length != 24
+	            && keyBytes.length != 32) {
+	        throw new IllegalArgumentException(
+	                "security.signature-key는 16, 24, 32바이트여야 합니다."
+	        );
+	    }
+
+	    this.secretKey = new SecretKeySpec(
+	            keyBytes,
+	            ALGORITHM
+	    );
 	}
+	
 
 	//암호화
 	public String encrypt(String plainText) {

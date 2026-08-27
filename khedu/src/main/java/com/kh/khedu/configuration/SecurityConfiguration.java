@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -34,8 +35,8 @@ public class SecurityConfiguration {
 	@Bean
 	public SecurityFilterChain securityFilterChain(
 		HttpSecurity http//Spring Security가 제공하는 http 설정 객체
-		,BearerTokenResolver bearerTokenResolver
-		,JwtAuthenticationConverter jwtAuthenticationConverter
+		,BearerTokenResolver bearerTokenResolver // 내가 만든 토큰해석기
+		,JwtAuthenticationConverter jwtAuthenticationConverter // 내가 jwt에서 만든 권한을 securityfilterChain에 맞게 변환
 	) throws Exception {
 		//http에 홈페이지 운영 규칙을 모두 설정하고 Build해서 반환
 		http
@@ -66,26 +67,41 @@ public class SecurityConfiguration {
 			.authorizeHttpRequests(
 				auth -> auth	
 					.requestMatchers(
-						// 인증과 상관없이 허용가능 페이지
+						// 무조건 허용
 							"/active"  //체크용 페이지 허용
+							
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
-							//등록확인차 임시 작성
-							,"/service/**"
 						).permitAll()
-						// 조건부 허용(내가 만든 요소들)
-					
-						// 로그인만 필요한 경우
-						.requestMatchers(
-								//예시
-								"/api/account/me" //내정보
-						).authenticated()//인증필요	
 						
-						// 설정한 권한들 필요 
-						//강의 security filter chain 1시간 29분 참조
+						
+						//메소드(crud) 중 일부 메소드만 허용하고 싶은경우 아래와 같이 추가
+						//예시
+						//.requestMatchers(HttpMethod.POST, "/api/lecture").authenticated()
+						//.requestMatchers(HttpMethod.PUT, "/api/lecture/**").authenticated()
+						
+						//auth service
 						.requestMatchers(
-								"/desk/info/**"
-						).hasAuthority("학생조회")
+							"/service/auth/login" //로그인 페이지
+							,"/service/auth/logout" //로그아웃 페이지
+							,"/service/auth/refresh" //로그인 갱신페이지
+						).permitAll()
+						
+						//cert service
+						.requestMatchers("/service/cert/**").permitAll()
+						
+						//외부화면은 전체 공개
+						.requestMatchers("/academy/**").permitAll() 
+						
+						// 조건부 허용(내가 만든 요소들)
+						.requestMatchers(
+								"/api/employee/me" // 직원 내정보
+						).authenticated()//인증필요
+						//.hasAnyAuthority(3, 4, 5) //데스크 직원 원장
+						
+						//직원 기능 - Jwt에 authorities 클레임에 "마스터"가 포함되어 있어야 한다
+						.requestMatchers("/api/employee/**")
+							.hasAuthority("직원")
 						
 						// 위 페이지 외에는 전부 거절
 						.anyRequest().denyAll()
@@ -125,7 +141,7 @@ public class SecurityConfiguration {
 	
 	//CorsConfigurationSource 생성 (Security의 기본값으로 자동 설정)
 	@Bean
-	public CorsConfigurationSource configurationSource() {
+	public CorsConfigurationSource corsConfigurationSource() {
 		//설정 객체를 생성 //data가 클 경우에만 스트리밍방식을 사용(스트리밍 방식일 때, .reactive를 import)
 		CorsConfiguration config = new CorsConfiguration();
 		
@@ -141,6 +157,7 @@ public class SecurityConfiguration {
 				//OPTIONS는 불확실한 상황일 때 보내는 사전 답사용 요청
 				//불확실한 상황 : origin이 다른데 GET/HEAD가 아닌 요청을 보내면 불확실하다고 판단
 				"OPTIONS",
+				//HEAD는 GET과 같은데 응답 본문을 가져오지 않는 요청방식
 				"HEAD"
 		));
 		//[3] 허용할 HTTP헤더 설정
@@ -188,22 +205,9 @@ public class SecurityConfiguration {
 				
 				//accessToken이 필요한 주소만 남았으므로 검색을 통해 찾아서 반환
 				Cookie[] cookies = request.getCookies();//모든 쿠키를 긁어온다
-				if(cookies == null) { //options 같은 상황에서 null일 수 있다
+				if(cookies == null) { //options(불확실한 요청 : 남의 서버에 get이 아닌 요청) 같은 상황에서 null일 수 있다
 					return null; 
 				}
-//				//클래식 자바 버전으로 쿠키 찾기
-//				String target = null; //일단 없다고 생각하고 시작하자
-//				for(Cookie cookie : cookies) {//전체 쿠키를 반복하며
-//					//이름이 accessToken인 쿠키를 찾아서
-//					if(cookie.getName().equals("accessToken")) {
-//						String token = cookie.getValue(); // 저장된 token을 꺼낸다
-//						//토큰이 없으면 skip
-//						if(token == null || token.isBlank()) continue;
-//						//토큰이 있으면 target에 저장
-//						target = token;
-//					}
-//				}
-//				return target; //찾은 결과를 반환 (null 이거나 유효한 토큰이거나)
 				
 //				모던 자바(Stream API)버전으로 쿠키 찾기
 				return Arrays.stream(cookies)

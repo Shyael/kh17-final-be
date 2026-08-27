@@ -1,5 +1,5 @@
 package com.kh.khedu.dto;
 
-public class parentDto {
+public class ParentDto {
 
 }
