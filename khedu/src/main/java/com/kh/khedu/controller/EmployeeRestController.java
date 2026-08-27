@@ -2,7 +2,6 @@ package com.kh.khedu.controller;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.error.TargetNotfoundException;
@@ -33,8 +33,6 @@ public class EmployeeRestController {
 	private AccountDao accountDao;
 	@Autowired
 	private EmployeeService employeeService;
-	@Autowired
-	private JwtService jwtService;
 	//회원 등록
 	@ApiResponse(responseCode = "200", description = "등록 성공")
 	@PostMapping(value ="/", produces = "application/json")
@@ -63,15 +61,9 @@ public class EmployeeRestController {
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping(value = "/me", produces= "application/json")
 	public EmployeeDetailVO me(
-		@CookieValue(name = "accesstoken", required = false) String accessToken
+		//@CookieValue(name = "accesstoken", required = false) String accessToken
+		@CurrentUser TokenParseResponseVO parseVO
 	) {
-		if(accessToken == null) {
-			throw new WhoAreYouException();
-		}
-		
-		//토큰 해석
-		TokenParseResponseVO parseVO = jwtService.parseAccessToken(accessToken);
-		
 		return employeeService.findMyInfo(parseVO.getAccountId());
 	}
 }
