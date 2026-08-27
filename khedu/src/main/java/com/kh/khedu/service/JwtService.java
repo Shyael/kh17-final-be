@@ -1,7 +1,6 @@
 package com.kh.khedu.service;
 
 import java.time.Instant;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.jwt.JwsHeader;
@@ -71,6 +70,16 @@ public class JwtService {
 					.accountType(jwt.getClaimAsString("accountType"))
 					.roleNos(jwt.getClaim("roleNos"))
 				.build();
+	}
+	
+	//액세스 토큰 해석 메소드
+	public TokenParseResponseVO parseAccessToken(Jwt jwt) {
+		return TokenParseResponseVO.builder()
+				.accountNo(((Long)jwt.getClaim("accountNo")).intValue())
+				.accountId(jwt.getClaimAsString("accountId"))
+				.accountType(jwt.getClaimAsString("accountType"))
+				.roleNos(jwt.getClaim("roleNos"))
+			.build();
 	}
 	
 	//리프레시 토큰 생성 메소드(액세스와 다르게 customData가 없음)
