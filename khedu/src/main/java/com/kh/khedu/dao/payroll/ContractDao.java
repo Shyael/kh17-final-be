@@ -60,10 +60,10 @@ public interface ContractDao {
 	boolean changeStatus(ContractDto contractDto);
 
 	// 시작일이 도래한 체결완료 계약 활성화
-	boolean activateContracts(long contactNo);
+	boolean activateContracts();
 
 	// 종료일이 도래한 계약 종료
-	boolean endContracts(long contactNo);
+	boolean endContracts();
 	
 	//도중 퇴사
 	boolean exitContracts(long contactNo);

@@ -41,6 +41,7 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public ContractDto add(ContractAddRequestVO request, TokenParseResponseVO parseVO) {
 
+		//권한은 원장만
 		List<String> permission = parseVO.getRoleNames();
 		
 		if(!permission.contains("admin")) throw new GetOutException();
@@ -202,7 +203,8 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public void employerSign(long contractNo, ContractEmployerSignRequestVO request, TokenParseResponseVO parseVO) {
 		
-
+		
+		
 		// [1] 서명정보 조회
 		ContractDto currentContract = contractDao.findSignature(contractNo);
 
@@ -246,35 +248,100 @@ public class ContractServiceImpl implements ContractService {
 
 	// 현재 근로계약 조회
 	@Override
-	public ContractDto findCurrent(long employeeNo) {
-
-		
+	public ContractDto findCurrent(int employeeNo,TokenParseResponseVO parseVO) {
 		
 		ContractDto contractDto = contractDao.findCurrent(employeeNo);
 
 		if (contractDto == null)
 			throw new TargetNotfoundException();
+		
+		//권한은 당사자, 데스크, 원장만
+		
+		List<String> roleNames = parseVO.getRoleNames();
+		
+		String id = parseVO.getAccountId();
+		int compare = contractDto.getEmployeeNo();
+		
+		EmployeeDetailVO employee = employeeDao.findMyInfo(id);
+		
+		int no = employee.getAccountNo();
+		
+		boolean informer = roleNames.contains("admin")||roleNames.contains("desk");
+		
+		boolean partyB = no==compare;
+		
+		boolean valid = !informer||!partyB;
+		
+		if(!valid) throw new GetOutException();
+		
+		
+		
 
 		return contractDto;
 	}
 
 	// 과거 근로계약 조회
 	@Override
-	public List<ContractDto> findPast(long employeeNo) {
+	public List<ContractDto> findPast(int employeeNo, TokenParseResponseVO parseVO) {
 
 		List<ContractDto> history = contractDao.findPast(employeeNo);
 
 		if (history.size() == 0)
 			throw new TargetNotfoundException();
 
+
+		//권한은 당사자, 데스크, 원장만
+		
+		ContractDto contractDto = contractDao.findCurrent(employeeNo);
+		
+		List<String> roleNames = parseVO.getRoleNames();
+		
+		String id = parseVO.getAccountId();
+		int compare = contractDto.getEmployeeNo();
+		
+		EmployeeDetailVO employee = employeeDao.findMyInfo(id);
+		
+		int no = employee.getAccountNo();
+		
+		boolean informer = roleNames.contains("admin")||roleNames.contains("desk");
+		
+		boolean partyB = no==compare;
+		
+		boolean valid = !informer||!partyB;
+		
+		if(!valid) throw new GetOutException();
+		
 		return history;
 	}
 
 	// 직원의 전체 근로계약 조회
 	@Override
-	public List<ContractDto> findAllByEmployee(long employeeNo) {
+	public List<ContractDto> findAllByEmployee(int employeeNo, TokenParseResponseVO parseVO) {
 
 		List<ContractDto> contracts = contractDao.findAllByEmployee(employeeNo);
+		
+		//권한은 당사자, 데스크, 원장만
+		
+				ContractDto contractDto = contractDao.findCurrent(employeeNo);
+				
+				List<String> roleNames = parseVO.getRoleNames();
+				
+				String id = parseVO.getAccountId();
+				int compare = contractDto.getEmployeeNo();
+				
+				EmployeeDetailVO employee = employeeDao.findMyInfo(id);
+				
+				int no = employee.getAccountNo();
+				
+				boolean informer = roleNames.contains("admin")||roleNames.contains("desk");
+				
+				boolean partyB = no==compare;
+				
+				boolean valid = !informer||!partyB;
+				
+				if(!valid) throw new GetOutException();
+				
+		
 		return contracts;
 	}
 
@@ -308,7 +375,13 @@ public class ContractServiceImpl implements ContractService {
 	// 체결 후 근로조건 변경
 	@Transactional
 	@Override
-	public ContractDto changeWorkCondition(long contractNo, ContractChangeConditionRequestVO request) {
+	public ContractDto changeWorkCondition(long contractNo, ContractChangeConditionRequestVO request
+			,TokenParseResponseVO parseVO) {
+		
+		//원장 확인
+		List<String> permission = parseVO.getRoleNames();
+		
+		if(!permission.contains("admin")) throw new GetOutException();
 
 		// [1] 기존 계약 전체 조회
 		ContractDto originDto = contractDao.find(contractNo);
@@ -380,48 +453,76 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public ContractSignResponseVO findSignature(long contractNo, TokenParseResponseVO parseVO) {
 
-		ContractDto contractDto = contractDao.findSignature(contractNo);
+		ContractDto target = contractDao.findSignature(contractNo);
 
-		if (contractDto == null)
+		if (target == null)
 			throw new TargetNotfoundException();
 
-		// 권한 확인 작업 추후 필요
+		//권한은 당사자, 데스크, 원장만
+		
+				ContractDto contractDto = contractDao.find(contractNo);
+				
+				List<String> roleNames = parseVO.getRoleNames();
+				
+				String id = parseVO.getAccountId();
+				int compare = contractDto.getEmployeeNo();
+				
+				EmployeeDetailVO employee = employeeDao.findMyInfo(id);
+				
+				int no = employee.getAccountNo();
+				
+				boolean informer = roleNames.contains("admin")||roleNames.contains("desk");
+				
+				boolean partyB = no==compare;
+				
+				boolean valid = !informer||!partyB;
+				
+				if(!valid) throw new GetOutException();
 
 		// 서명하지 않은 쪽은 null 유지
 		String employeeSignature = null;
 		String employerSignature = null;
 
-		if (contractDto.getEmployeeSignature() != null) {
+		if (target.getEmployeeSignature() != null) {
 
-			employeeSignature = signatureEncryptor.decrypt(contractDto.getEmployeeSignature());
+			employeeSignature = signatureEncryptor.decrypt(target.getEmployeeSignature());
 		}
 
-		if (contractDto.getEmployerSignature() != null) {
+		if (target.getEmployerSignature() != null) {
 
-			employerSignature = signatureEncryptor.decrypt(contractDto.getEmployerSignature());
+			employerSignature = signatureEncryptor.decrypt(target.getEmployerSignature());
 		}
 
-		return ContractSignResponseVO.builder().contractNo(contractDto.getContractNo())
+		return ContractSignResponseVO.builder().contractNo(target.getContractNo())
 				.employeeSignature(employeeSignature).employerSignature(employerSignature)
-				.signedTime(contractDto.getSignedTime()).build();
+				.signedTime(target.getSignedTime()).build();
 	}
 
 	// 계약기간에 따른 상태 갱신
 	@Transactional
 	@Override
-	public void refreshContractStatus(long contractNo) {
+	public void refreshContractStatus() {
 
+		
 		// [1] 종료일이 도래한 기존 계약 종료
-		contractDao.endContracts(contractNo);
+		contractDao.endContracts();
 
 		// [2] 시작일이 도래한 체결완료 계약 활성화
-		contractDao.activateContracts(contractNo);
+		contractDao.activateContracts();
+		
+		
 	}
 
 	@Transactional
 	@Override
-	public void exitContract(long contractNo) {
+	public void exitContract(long contractNo, TokenParseResponseVO parseVO) {
 
+		//권한은 원장만
+				List<String> permission = parseVO.getRoleNames();
+				
+				if(!permission.contains("admin")) throw new GetOutException();
+		
+		
 		contractDao.exitContracts(contractNo);
 	}
 

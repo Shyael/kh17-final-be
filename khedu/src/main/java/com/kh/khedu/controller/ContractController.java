@@ -139,10 +139,12 @@ public class ContractController {
 	// 직원의 현재 근로계약 조회
 	@GetMapping("/{employeeNo}/current")
 	public ContractDto findCurrent(
-			@PathVariable long employeeNo) {
-
+			@PathVariable int employeeNo
+			,@CurrentUser TokenParseResponseVO parseVO) {
+		
+		
 		return contractService.findCurrent(
-				employeeNo
+				employeeNo,parseVO
 		);
 	}
 
@@ -150,10 +152,11 @@ public class ContractController {
 	// 직원의 과거(종료) 근로계약 조회
 	@GetMapping("/{employeeNo}/past")
 	public List<ContractDto> findPast(
-			@PathVariable long employeeNo) {
+			@PathVariable int employeeNo
+			,@CurrentUser TokenParseResponseVO parseVO) {
 
 		return contractService.findPast(
-				employeeNo
+				employeeNo,parseVO
 		);
 	}
 
@@ -161,10 +164,11 @@ public class ContractController {
 	// 직원의 전체 근로계약 조회
 	@GetMapping("/{employeeNo}")
 	public List<ContractDto> findAllByEmployee(
-			@PathVariable long employeeNo) {
+			@PathVariable int employeeNo
+			,@CurrentUser TokenParseResponseVO parseVO) {
 
 		return contractService.findAllByEmployee(
-				employeeNo
+				employeeNo, parseVO
 		);
 	}
 
@@ -173,30 +177,23 @@ public class ContractController {
 	@PostMapping("/{contractNo}/changeWorkCondition")
 	public ContractDto changeWorkCondition(
 			@PathVariable long contractNo,
-			@RequestBody ContractChangeConditionRequestVO request) {
+			@RequestBody ContractChangeConditionRequestVO request
+			,@CurrentUser TokenParseResponseVO parseVO) {
 
 		return contractService.changeWorkCondition(
 				contractNo,
 				request
+				,parseVO
 		);
 	}
 
-
-	// 근로계약 종료(종료일 도래로 인한)
-	@PatchMapping("/{contractNo}/end")
-	public void endContract(
-			@PathVariable long contractNo) {
-
-		contractService.endContract(
-				contractNo
-		);
-	}
 	
 	//근로계약 종료(도중 퇴사)
 	@PatchMapping("/{contractNo}/exit")
 	public void exitContract(
-			@PathVariable long contractNo) {
-		contractService.exitContract(contractNo);
+			@PathVariable long contractNo
+			,@CurrentUser TokenParseResponseVO parseVO) {
+		contractService.exitContract(contractNo,parseVO);
 	}
 
 
@@ -204,7 +201,7 @@ public class ContractController {
 	@GetMapping("/{contractNo}/findSignature")
 	public ContractSignResponseVO findSignature(
 			@PathVariable long contractNo,
-			TokenParseResponseVO parseVO) {
+			@CurrentUser TokenParseResponseVO parseVO) {
 
 		return contractService.findSignature(
 				contractNo,

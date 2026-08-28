@@ -41,23 +41,24 @@ public interface ContractService {
 
 	// 현재 근로계약 조회
 	ContractDto findCurrent(
-			long employeeNo
+			int employeeNo , TokenParseResponseVO parseVO
 	);
 
 	// 과거(종료) 근로계약 조회
 	List<ContractDto> findPast(
-			long employeeNo
+			int employeeNo, TokenParseResponseVO parseVO
 	);
 
 	// 직원의 전체 근로계약 조회
 	List<ContractDto> findAllByEmployee(
-			long employeeNo
+			int employeeNo, TokenParseResponseVO parseVO
 	);
 
 	// 체결 후 근로조건 변경
 	ContractDto changeWorkCondition(
 			long contractNo,
 			ContractChangeConditionRequestVO request
+			,TokenParseResponseVO parseVO
 	);
 
 	// 근로계약 종료
@@ -72,10 +73,10 @@ public interface ContractService {
 	);
 
 	// 시작일 도래 계약 활성화 및 종료일 도래 계약 종료
-	void refreshContractStatus(long contractNo);
+	void refreshContractStatus();
 	
 	//도중 퇴사
 	
-	void exitContract(long contractNo);
+	void exitContract(long contractNo, TokenParseResponseVO parseVO);
 
 }

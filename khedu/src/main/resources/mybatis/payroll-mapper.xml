@@ -292,7 +292,7 @@
 				contract_end is null
 				or contract_end <![CDATA[ > ]]> systimestamp
 			)
-			and contract_no=#{contractNo}
+			
 	</update>
 
 
@@ -303,7 +303,7 @@
 		where contract_status = 'active'
 			and contract_end is not null
 			and contract_end <![CDATA[ <= ]]> systimestamp
-			and contract_no = #{contractNo}
+			
 	</update>
 
 <!--도중 종료 하는 경우  -->

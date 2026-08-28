@@ -209,7 +209,7 @@ public class ContractDaoMybatis implements ContractDao {
 
 	// 시작일이 도래한 체결완료 계약 활성화
 	@Override
-	public boolean activateContracts(long contractNo) {
+	public boolean activateContracts() {
 		return sqlSession.update(
 			"mapper.payroll.activateContracts")>0
 		;
@@ -218,7 +218,7 @@ public class ContractDaoMybatis implements ContractDao {
 
 	// 종료일이 도래한 계약 종료
 	@Override
-	public boolean endContracts(long contractNo) {
+	public boolean endContracts() {
 		return sqlSession.update(
 			"mapper.payroll.endContracts")>0
 		;
