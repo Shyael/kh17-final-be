@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.student">
+	<!-- 학생정보 등록 -->
+	<select id="sequence" resultType="int">
+		select student_seq.nextval from dual
+	</select>
+	<insert id="join">
+		insert into student(
+			student_no,
+			account_no,
+			student_school,
+			student_grade,
+			student_gender,
+			student_status,
+			student_etc
+		)
+		values(
+			#{studnetNo},
+			#{accountNo},
+			#{studentSchool},
+			#{studentGrade},
+			#{studentGender},
+			#{studentStatus},
+			#{studentEtc}
+		)
+	</insert>
+	
+</mapper>
