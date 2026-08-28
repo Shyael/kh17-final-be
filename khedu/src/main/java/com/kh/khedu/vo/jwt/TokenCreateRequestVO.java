@@ -9,8 +9,10 @@ import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class TokenCreateRequestVO {
+
 	private int accountNo;
 	private String accountId;	
 	private String accountType; // 직원, 학생, 학부모
 	private List<String> roleNames;//권한 
 }
+

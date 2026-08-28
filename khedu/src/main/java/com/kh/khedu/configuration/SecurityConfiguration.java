@@ -92,6 +92,7 @@ public class SecurityConfiguration {
 						//임시 전부 공개화면 
 						.requestMatchers(
 								"/api/employee/**" // 원장, 데스크만 접근 가능하게
+								,"/api/contract/**"// 계약 관련
 						).permitAll()
 						
 						//cert service
