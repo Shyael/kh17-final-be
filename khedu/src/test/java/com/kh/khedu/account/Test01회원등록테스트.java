@@ -12,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.EmployeeDao;
-import com.kh.khedu.vo.account.AccountVO;
+import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.employee.EmployeeRegisterRequestVO;
 import com.kh.khedu.vo.employee.EmployeeVO;
 
@@ -47,7 +47,7 @@ public class Test01회원등록테스트 {
 				.build();
 		
 		//[1] account 테이블 등록
-		AccountVO accountVO = AccountVO.builder()
+		AccountRegisterVO accountVO = AccountRegisterVO.builder()
 					.accountNo(accountNo)
 					.accountId(registerVO.getAccountId())
 					.accountPassword(registerVO.getAccountPassword())

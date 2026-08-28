@@ -6,7 +6,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.AccountDto;
-import com.kh.khedu.vo.account.AccountVO;
+import com.kh.khedu.vo.account.AccountRegisterVO;
+import com.kh.khedu.vo.account.AccountTypeNoVO;
 
 @Repository
 public class AccountDaoMybatis implements AccountDao {
@@ -22,7 +23,7 @@ public class AccountDaoMybatis implements AccountDao {
 	}
 	
 	@Override
-	public void insert(AccountVO accountVO) {
+	public void insert(AccountRegisterVO accountVO) {
 		String orgin = accountVO.getAccountPassword(); 
 		String encrypt = passwordEncdoer.encode(orgin);
 		accountVO.setAccountPassword(encrypt);
@@ -41,9 +42,8 @@ public class AccountDaoMybatis implements AccountDao {
 	}
 
 	@Override
-	public boolean checkAvailablePhone(String accountPhone) {
-		int count = sqlSession.selectOne("mapper.account.checkAccountPhone", accountPhone);
-		return count == 0;
+	public AccountTypeNoVO selectTypeNo(int accountNo) {
+		return sqlSession.selectOne("mapper.account.findCorrectly", accountNo);
 	}
 
 }

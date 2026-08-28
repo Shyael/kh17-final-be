@@ -2,6 +2,7 @@ package com.kh.khedu.controller;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,7 +16,6 @@ import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.service.EmployeeService;
-import com.kh.khedu.service.JwtService;
 import com.kh.khedu.vo.account.AccountFindResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeRegisterRequestVO;
@@ -33,15 +33,25 @@ public class EmployeeRestController {
 	private AccountDao accountDao;
 	@Autowired
 	private EmployeeService employeeService;
-	//회원 등록
+	//직원 등록
 	@ApiResponse(responseCode = "200", description = "등록 성공")
 	@PostMapping(value ="/", produces = "application/json")
-	public void register(@RequestBody EmployeeRegisterRequestVO request){
+	public ResponseEntity<Void> register(@RequestBody EmployeeRegisterRequestVO request){
 		//등록 처리는 서비스에서
 		employeeService.registerEmployee(request);
+		return ResponseEntity.ok().build();
 	}
 	
-	//회원 정보를 반환하는 매핑(주의 : 내 정보 아님)
+	//아이디(=이메일) 중복검사 - 사용가능하면 true, 불가능하면 false를 반환
+	@ApiResponse(responseCode = "200", description = "존재하는 아이디")
+	@GetMapping(value ="/check-id/{accountId}", produces = "application/json")
+	public boolean checkAccountId(@PathVariable String accountId) {
+		System.out.println("===== 아이디 중복검사 실행 =====");
+	    System.out.println("accountId = " + accountId);
+		return accountDao.checkAvailableId(accountId);
+	}
+	
+	//직원 정보를 반환하는 매핑(주의 : 내 정보 아님)
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping(value = "/{accountId}", produces = "application/json")
 	public AccountFindResponseVO find(@PathVariable String accountId) {

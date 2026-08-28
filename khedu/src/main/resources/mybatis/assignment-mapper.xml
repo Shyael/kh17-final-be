@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.assignment">
+	<!-- ==================== 과제 정보 ==================== -->
+	
+	<!-- 과제 번호 생성 -->
+	<select id="sequence" resultType="int">
+		select assignment_seq.nextval from dual
+	</select>
+	
+	<!-- 과제정보 등록 -->
+	<insert id="insert">
+		insert into assignment(
+			assignment_no,
+			course_no,
+			employee_no,
+			assignment_title,
+			assignment_content,
+			assignment_status,
+			assignment_due_date
+		)
+		values(
+			#{assignmentNo},
+			#{courseNo},
+			#{employeeNo},
+			#{assignmentTitle},
+			#{assignmentContent},
+			#{assignmentStatus},
+			#{assignmentDueDate}
+		)
+	</insert>
+	
+    <!-- 과제 단일 상세 조회 -->
+	<select id="selectOne" resultType="AssignmentDetailVO">
+	    select
+	        ass.assignment_no,
+	        ass.course_no,
+	        c.course_title,
+	        ass.employee_no,
+	        acc.account_name,
+	        ass.assignment_title,
+	        ass.assignment_content,
+	        ass.assignment_status,
+	        ass.assignment_due_date,
+	        ass.assignment_wtime
+	
+	    from assignment ass
+	
+	    join course c
+	        on ass.course_no = c.course_no
+	
+	    join employee e
+	        on ass.employee_no = e.employee_no
+	
+	    join account acc
+	        on e.account_no = acc.account_no
+	
+	    where ass.assignment_no = #{assignmentNo}
+	</select>
+
+
+    <!-- 전체 과제 목록 -->
+	<select id="selectList" resultType="AssignmentSubmitListVO">
+	    select
+	        s.submit_no,
+	        s.assignment_no,
+	        a.assignment_title,
+	        s.student_no,
+	        acc.account_name,
+	        s.submit_wtime,
+	        s.submit_etime
+	
+	    from assignment_submit s
+	
+	    join assignment a
+	        on s.assignment_no = a.assignment_no
+	
+	    join student st
+	        on s.student_no = st.student_no
+	
+	    join account acc
+	        on st.account_no = acc.account_no
+	
+	    order by s.submit_no desc
+	</select>
+	
+	<!-- 특정 강사가 등록한 과제 목록 -->
+	<select id="selectListByEmployee" resultType="AssignmentListVO">
+	    select
+	        ass.assignment_no,
+	        ass.course_no,
+	        c.course_title,
+	        ass.assignment_title,
+	        ass.assignment_status,
+	        ass.assignment_due_date,
+	        ass.assignment_wtime
+	
+	    from assignment ass
+	
+	    join course c
+	        on ass.course_no = c.course_no
+	
+	    where ass.employee_no = #{employeeNo}
+	
+	    order by ass.assignment_no desc
+	</select>
+	
+	<!-- 학생용 : 현재 수강중인 강의의 전체 과제 + 제출여부 -->
+	<select id="selectListByStudent" resultType="StudentAssignmentListVO">
+	    select
+	        ass.assignment_no,
+	        ass.course_no,
+	        c.course_title,
+	
+	        acc.account_name,
+	
+	        ass.assignment_title,
+	        ass.assignment_status,
+	        ass.assignment_due_date,
+	        ass.assignment_wtime,
+	
+	        s.submit_no,
+	        s.submit_comment,
+	        s.submit_wtime,
+	        s.submit_etime
+	
+	    from assignment ass
+	
+	    join course c
+	        on ass.course_no = c.course_no
+	
+	    join employee e
+	        on ass.employee_no = e.employee_no
+	
+	    join account acc
+	        on e.account_no = acc.account_no
+	
+	    join student_course sc
+	        on ass.course_no = sc.course_no
+	
+	    left join assignment_submit s
+	        on ass.assignment_no = s.assignment_no
+	        and s.student_no = #{studentNo}
+	
+	    where sc.student_no = #{studentNo}
+	      and sc.student_course_relation = '수강중'
+	
+	    order by ass.assignment_due_date asc,
+	             ass.assignment_no desc
+	</select>
+
+    <!-- 특정 강의의 과제 목록 -->
+	<select id="selectListByCourse" resultType="AssignmentListVO">
+	    select
+	        ass.assignment_no,
+	        ass.course_no,
+	        c.course_title,
+	
+	        ass.employee_no,
+	        acc.account_name,
+	
+	        ass.assignment_title,
+	        ass.assignment_status,
+	        ass.assignment_due_date,
+	        ass.assignment_wtime
+	
+	    from assignment ass
+	
+	    join course c
+	        on ass.course_no = c.course_no
+	
+	    join employee e
+	        on ass.employee_no = e.employee_no
+	
+	    join account acc
+	        on e.account_no = acc.account_no
+	
+	    where ass.course_no = #{courseNo}
+	
+	    order by ass.assignment_no desc
+	</select>
+
+    <!-- 과제 수정 -->
+    <update id="update">
+        update assignment
+        set
+            assignment_title = #{assignmentTitle},
+            assignment_content = #{assignmentContent},
+            assignment_status = #{assignmentStatus},
+            assignment_due_date = #{assignmentDueDate}
+        where assignment_no = #{assignmentNo}
+    </update>
+
+
+    <!-- 과제 삭제 -->
+    <delete id="delete">
+        delete from assignment
+        where assignment_no = #{assignmentNo}
+    </delete>
+</mapper>

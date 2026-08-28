@@ -26,6 +26,7 @@ import com.kh.khedu.dto.AccountRefreshDto;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.service.AuthService;
 import com.kh.khedu.service.JwtService;
+import com.kh.khedu.vo.account.AccountTypeNoVO;
 import com.kh.khedu.vo.auth.AuthLoginRequestVO;
 import com.kh.khedu.vo.auth.AuthLoginResponseVO;
 import com.kh.khedu.vo.jwt.TokenCreateRequestVO;
@@ -237,15 +238,29 @@ public class AuthRestController {
 		//아이디의 실 정보를 조회
 		AccountDto accountDto = accountDao.selectOne(accountId);
 		//권한 조회
-		List<Integer> roleNos = accountRolesDao.selectRoleNos(accountDto.getAccountNo());
+		List<String> roleNames = accountRolesDao.selectRoleNames(accountDto.getAccountNo());
 		
 		//토큰 및 Cookie 생성
 		TokenCreateRequestVO createVO = new TokenCreateRequestVO();
 		
-		//아이디 정보 추가(필요한 항목만 취사)
+		//[1]아이디 정보 추가(필요한 항목만 취사)
 		BeanUtils.copyProperties(accountDto, createVO);//필요한 항목 복사(부족)
-		//권한 정보 추가
-		createVO.setRoleNos(roleNos);
+		//[2]권한 정보 추가
+		createVO.setRoleNames(roleNames);
+		//[3]typeNo 정보 추가
+		AccountTypeNoVO accountTypeNoVO = accountDao.selectTypeNo(accountDto.getAccountNo());
+		Integer typeNo = null;
+
+		if ("직원".equals(accountTypeNoVO.getAccountType())) {
+		    typeNo = accountTypeNoVO.getEmployeeNo();
+		}
+		else if ("학생".equals(accountTypeNoVO.getAccountType())) {
+		    typeNo = accountTypeNoVO.getStudentNo();
+		}
+		else if ("학부모".equals(accountTypeNoVO.getAccountType())) {
+		    typeNo = accountTypeNoVO.getParentNo();
+		}
+		createVO.setTypeNo(typeNo);
 		
 		String accessToken = jwtService.createAccessToken(createVO);
 		String newRefreshToken = jwtService.createRefreshToken(accountId);

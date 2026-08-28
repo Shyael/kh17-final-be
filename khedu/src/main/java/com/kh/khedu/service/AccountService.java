@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kh.khedu.dao.AccountDao;
-import com.kh.khedu.vo.account.AccountVO;
+import com.kh.khedu.vo.account.AccountRegisterVO;
 
 @Service
 public class AccountService {
@@ -12,7 +12,7 @@ public class AccountService {
 	@Autowired
 	private AccountDao accountDao;
 	
-	public int createAccount(AccountVO accountVO) {
+	public int createAccount(AccountRegisterVO accountVO) {
 		
 		int accountNo = accountDao.sequence();
 		accountVO.setAccountNo(accountNo);

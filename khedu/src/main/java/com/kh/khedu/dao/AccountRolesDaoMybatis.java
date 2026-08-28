@@ -23,4 +23,9 @@ public class AccountRolesDaoMybatis implements AccountRolesDao {
 		return sqlSession.selectList("mapper.accountRoles.selectRoleNos", accountNo);
 	}
 
+	@Override
+	public List<String> selectRoleNames(int accountNo) {
+		return sqlSession.selectList("mapper.accountRoles.selectRoleNames", accountNo);
+	}
+
 }

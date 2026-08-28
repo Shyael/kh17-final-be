@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.assignmentSubmit">
+
+    <!-- ==================== 과제 제출 ==================== -->
+
+
+    <!-- 과제 제출 번호 생성 -->
+    <select id="sequence" resultType="int">
+        select assignment_submit_seq.nextval
+        from dual
+    </select>
+
+
+    <!-- ==================== 등록 ==================== -->
+
+    <!-- 학생 과제 제출 -->
+    <insert id="insert">
+        insert into assignment_submit(
+            submit_no,
+            assignment_no,
+            student_no,
+            submit_content
+        )
+        values(
+            #{submitNo},
+            #{assignmentNo},
+            #{studentNo},
+            #{submitContent}
+        )
+    </insert>
+
+
+    <!-- ==================== 단일 조회 ==================== -->
+
+    <!-- 제출번호로 과제 제출 상세 조회 -->
+    <select id="selectOne" resultType="AssignmentSubmitDetailVO">
+
+        select
+            s.submit_no,
+            s.assignment_no,
+            a.assignment_title,
+
+            s.student_no,
+            acc.account_name,
+
+            s.submit_content,
+            s.submit_comment,
+            s.submit_wtime,
+            s.submit_etime
+
+        from assignment_submit s
+
+        join assignment a
+            on s.assignment_no = a.assignment_no
+
+        join student st
+            on s.student_no = st.student_no
+
+        join account acc
+            on st.account_no = acc.account_no
+
+        where s.submit_no = #{submitNo}
+    </select>
+
+
+    <!-- 특정 학생이 특정 과제에 제출했는지 조회 -->
+    <select id="selectOneByAssignmentStudent" resultType="AssignmentSubmitDetailVO">
+        select
+            s.submit_no,
+            s.assignment_no,
+            a.assignment_title,
+
+            s.student_no,
+            acc.account_name,
+
+            s.submit_content,
+            s.submit_comment,
+            s.submit_wtime,
+            s.submit_etime
+
+        from assignment_submit s
+
+        join assignment a
+            on s.assignment_no = a.assignment_no
+
+        join student st
+            on s.student_no = st.student_no
+
+        join account acc
+            on st.account_no = acc.account_no
+
+        where s.assignment_no = #{assignmentNo}
+          and s.student_no = #{studentNo}
+
+    </select>
+
+
+    <!-- ==================== 목록 조회 ==================== -->
+
+    <!-- 전체 과제 제출 목록 -->
+    <select id="selectList" resultType="AssignmentSubmitListVO">
+        select
+            s.submit_no,
+            s.assignment_no,
+            a.assignment_title,
+
+            s.student_no,
+            acc.account_name,
+
+            s.submit_content,
+            s.submit_comment,
+            s.submit_wtime,
+            s.submit_etime
+
+        from assignment_submit s
+
+        join assignment a
+            on s.assignment_no = a.assignment_no
+
+        join student st
+            on s.student_no = st.student_no
+
+        join account acc
+            on st.account_no = acc.account_no
+
+        order by s.submit_no desc
+    </select>
+    
+    <!-- 강사용 : 특정 과제의 학생 제출 목록 -->
+	<select id="selectListByAssignment" resultType="AssignmentSubmitListVO">
+	    select
+	        s.submit_no,
+	        s.assignment_no,
+	        a.assignment_title,
+	        s.student_no,
+	        acc.account_name,
+	        s.submit_wtime,
+	        s.submit_etime
+	
+	    from assignment_submit s
+	
+	    join assignment a
+	        on s.assignment_no = a.assignment_no
+	
+	    join student st
+	        on s.student_no = st.student_no
+	
+	    join account acc
+	        on st.account_no = acc.account_no
+	
+	    where s.assignment_no = #{assignmentNo}
+	
+	    order by s.submit_no desc
+	</select>
+    
+    <!-- 강사용 : 특정 과제의 수강생 전체 + 제출정보 조회 -->
+	<select id="selectStudentListByAssignment" resultType="AssignmentSubmitStudentListVO">
+	    select
+	        st.student_no,
+	        acc.account_name,
+	
+	        s.submit_no,
+	        s.submit_wtime,
+	        s.submit_etime
+	
+	    from assignment a
+	
+	    join student_course sc
+	        on a.course_no = sc.course_no
+	
+	    join student st
+	        on sc.student_no = st.student_no
+	
+	    join account acc
+	        on st.account_no = acc.account_no
+	
+	    left join assignment_submit s
+	        on a.assignment_no = s.assignment_no
+	        and st.student_no = s.student_no
+	
+	    where a.assignment_no = #{assignmentNo}
+	      and sc.student_course_relation = '수강중'
+	
+	    order by acc.account_name asc
+	</select>
+
+    <!-- ==================== 수정 ==================== -->
+
+    <!-- 학생용 : 과제 재제출 / 제출내용 수정 -->
+    <update id="update">
+        update assignment_submit
+
+        set
+            submit_content = #{submitContent},
+            submit_etime = systimestamp
+
+        where submit_no = #{submitNo}
+
+    </update>
+
+
+    <!-- 강사용 : 제출 과제 피드백 등록 / 수정 -->
+    <update id="updateComment">
+
+        update assignment_submit
+
+        set
+            submit_comment = #{submitComment}
+
+        where submit_no = #{submitNo}
+
+    </update>
+
+
+    <!-- ==================== 삭제 ==================== -->
+
+    <!-- 학생 과제 제출 삭제 -->
+    <delete id="delete"
+            parameterType="int">
+
+        delete from assignment_submit
+
+        where submit_no = #{submitNo}
+
+    </delete>
+
+</mapper>

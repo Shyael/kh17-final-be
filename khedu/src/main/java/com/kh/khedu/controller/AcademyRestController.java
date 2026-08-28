@@ -16,6 +16,7 @@ import com.kh.khedu.dto.AcademySubjectDto;
 import com.kh.khedu.service.AcademyService;
 import com.kh.khedu.vo.academy.AcademyDetailResponseVO;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -29,7 +30,7 @@ public class AcademyRestController {
 
 
 	// ==================== 학원 전체정보 ====================
-
+	@Operation(summary = "학원 전체 정보 조회")
 	@ApiResponse(responseCode = "200", description = "학원 전체정보 조회 성공")
 	@GetMapping(value = "/", produces = "application/json")
 	public AcademyDetailResponseVO selectDetail() {
@@ -38,19 +39,21 @@ public class AcademyRestController {
 
 
 	// ==================== 학원 기본정보 ====================
-
+	@Operation(summary = "학원 정보 등록")
 	@ApiResponse(responseCode = "200", description = "학원 기본정보 등록 성공")
 	@PostMapping(value = "/", produces = "application/json")
 	public void insert(@RequestBody AcademyDto academyDto) {
 		academyService.insert(academyDto);
 	}
-
+	
+	@Operation(summary = "학원 정보 수정")
 	@ApiResponse(responseCode = "200", description = "학원 기본정보 수정 성공")
 	@PutMapping(value = "/", produces = "application/json")
 	public boolean update(@RequestBody AcademyDto academyDto) {
 		return academyService.update(academyDto);
 	}
-
+	
+	@Operation(summary = "학원 정보 삭제")
 	@ApiResponse(responseCode = "200", description = "학원 기본정보 삭제 성공")
 	@DeleteMapping(value = "/", produces = "application/json")
 	public boolean delete() {
@@ -60,6 +63,7 @@ public class AcademyRestController {
 
 	// ==================== 학원 연혁 ====================
 
+	@Operation(summary = "학원 연혁 등록")
 	@ApiResponse(responseCode = "200", description = "학원 연혁 등록 성공")
 	@PostMapping(value = "/history", produces = "application/json")
 	public void insertHistory(
@@ -67,7 +71,8 @@ public class AcademyRestController {
 
 		academyService.insertHistory(academyHistoryDto);
 	}
-
+	
+	@Operation(summary = "학원 연혁 수정")
 	@ApiResponse(responseCode = "200", description = "학원 연혁 수정 성공")
 	@PutMapping(value = "/history/{academyHistoryNo}", produces = "application/json")
 	public AcademyHistoryDto updateHistory(
@@ -79,7 +84,8 @@ public class AcademyRestController {
 				academyHistoryDto
 		);
 	}
-
+	
+	@Operation(summary = "학원 연혁 삭제")
 	@ApiResponse(responseCode = "200", description = "학원 연혁 삭제 성공")
 	@DeleteMapping(value = "/history/{academyHistoryNo}", produces = "application/json")
 	public boolean deleteHistory(
@@ -90,7 +96,8 @@ public class AcademyRestController {
 
 
 	// ==================== 학원 과목 ====================
-
+	
+	@Operation(summary = "학원 과목 등록")
 	@ApiResponse(responseCode = "200", description = "학원 과목 등록 성공")
 	@PostMapping(value = "/subject", produces = "application/json")
 	public void insertSubject(
@@ -98,7 +105,8 @@ public class AcademyRestController {
 
 		academyService.insertSubject(academySubjectDto);
 	}
-
+	
+	@Operation(summary = "학원 과목 수정")
 	@ApiResponse(responseCode = "200", description = "학원 과목 수정 성공")
 	@PutMapping(value = "/subject/{academySubjectNo}", produces = "application/json")
 	public AcademySubjectDto updateSubject(
@@ -110,7 +118,8 @@ public class AcademyRestController {
 				academySubjectDto
 		);
 	}
-
+	
+	@Operation(summary = "학원 과목 삭제")
 	@ApiResponse(responseCode = "200", description = "학원 과목 삭제 성공")
 	@DeleteMapping(value = "/subject/{academySubjectNo}", produces = "application/json")
 	public boolean deleteSubject(

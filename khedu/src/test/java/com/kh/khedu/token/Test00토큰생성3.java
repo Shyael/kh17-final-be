@@ -25,7 +25,7 @@ public class Test00토큰생성3 {
 					.accountId("testuser6@naver.com")
 					.accountNo(32)
 					.accountType("직원")
-					.roleNos(List.of(3, 5))
+					.roleNames(List.of("직원", "사랑"))
 				.build()
 		);
 		log.debug("jwt token = {}", jwtToken);

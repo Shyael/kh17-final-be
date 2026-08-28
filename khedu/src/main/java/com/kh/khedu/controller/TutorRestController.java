@@ -20,6 +20,7 @@ import com.kh.khedu.vo.tutor.TutorDetailVO;
 import com.kh.khedu.vo.tutor.TutorEmployeeVO;
 import com.kh.khedu.vo.tutor.TutorListVO;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -33,19 +34,21 @@ public class TutorRestController {
 
 
 	// ==================== 강사 기본정보 ====================
-
+	@Operation(summary = "강사 정보 등록")
 	@ApiResponse(responseCode = "200", description = "강사 등록 성공")
 	@PostMapping(value = "/", produces = "application/json")
 	public TutorDto insert(@RequestBody TutorDto tutorDto) {
 	    return tutorService.insert(tutorDto);
 	}
-
+	
+	@Operation(summary = "강사 정보 목록 조회")
 	@ApiResponse(responseCode = "200", description = "강사 전체 목록 조회 성공")
 	@GetMapping(value = "/", produces = "application/json")
 	public List<TutorListVO> selectList() {
 		return tutorService.selectList();
-	}
-
+	}	
+	
+	@Operation(summary = "과목별 강사 목록 조회")
 	@ApiResponse(responseCode = "200", description = "과목별 강사 목록 조회 성공")
 	@GetMapping(value = "/subject/{academySubjectNo}", produces = "application/json")
 	public List<TutorListVO> selectListBySubject(
@@ -53,7 +56,8 @@ public class TutorRestController {
 
 		return tutorService.selectListBySubject(academySubjectNo);
 	}
-
+	
+	@Operation(summary = "강사 상세정보 조회")
 	@ApiResponse(responseCode = "200", description = "강사 상세정보 조회 성공")
 	@GetMapping(value = "/{tutorNo}", produces = "application/json")
 	public TutorDetailVO selectDetail(
@@ -61,7 +65,8 @@ public class TutorRestController {
 
 		return tutorService.selectDetail(tutorNo);
 	}
-
+	
+	@Operation(summary = "강사 정보 수정")
 	@ApiResponse(responseCode = "200", description = "강사 정보 수정 성공")
 	@PutMapping(value = "/{tutorNo}", produces = "application/json")
 	public TutorDto update(
@@ -70,8 +75,9 @@ public class TutorRestController {
 
 		return tutorService.update(tutorNo, tutorDto);
 	}
-
-	@ApiResponse(responseCode = "200", description = "강사 삭제 성공")
+	
+	@Operation(summary = "강사 정보 삭제 ")
+	@ApiResponse(responseCode = "200", description = "강사 정보 삭제 성공")
 	@DeleteMapping(value = "/{tutorNo}", produces = "application/json")
 	public boolean delete(
 			@PathVariable int tutorNo) {
@@ -81,7 +87,8 @@ public class TutorRestController {
 
 
 	// ==================== 강사 등록 가능 직원 ====================
-
+	
+	@Operation(summary = "강사 등록 가능 직원 목록 조회")
 	@ApiResponse(responseCode = "200", description = "강사 등록 가능 직원 목록 조회 성공")
 	@GetMapping(value = "/available-employee", produces = "application/json")
 	public List<TutorEmployeeVO> selectAvailableEmployeeList() {
@@ -90,7 +97,8 @@ public class TutorRestController {
 
 
 	// ==================== 강사 담당과목 ====================
-
+	
+	@Operation(summary = "강사 담당과목 등록")
 	@ApiResponse(responseCode = "200", description = "강사 담당과목 등록 성공")
 	@PostMapping(value = "/subject", produces = "application/json")
 	public void insertSubject(
@@ -98,7 +106,8 @@ public class TutorRestController {
 
 		tutorService.insertSubject(tutorSubjectDto);
 	}
-
+	
+	@Operation(summary = "강사 담당과목 수정")
 	@ApiResponse(responseCode = "200", description = "강사 담당과목 수정 성공")
 	@PutMapping(value = "/subject/{tutorSubjectNo}", produces = "application/json")
 	public TutorSubjectDto updateSubject(
@@ -110,7 +119,8 @@ public class TutorRestController {
 				tutorSubjectDto
 		);
 	}
-
+	
+	@Operation(summary = "강사 담당과목 삭제")
 	@ApiResponse(responseCode = "200", description = "강사 담당과목 삭제 성공")
 	@DeleteMapping(value = "/subject/{tutorSubjectNo}", produces = "application/json")
 	public boolean deleteSubject(
@@ -121,7 +131,8 @@ public class TutorRestController {
 
 
 	// ==================== 강사 학력/경력 ====================
-
+	
+	@Operation(summary = "강사 학력/경력 등록")
 	@ApiResponse(responseCode = "200", description = "강사 학력/경력 등록 성공")
 	@PostMapping(value = "/career", produces = "application/json")
 	public void insertCareer(
@@ -129,7 +140,8 @@ public class TutorRestController {
 
 		tutorService.insertCareer(tutorCareerDto);
 	}
-
+	
+	@Operation(summary = "강사 학력/경력 수정")
 	@ApiResponse(responseCode = "200", description = "강사 학력/경력 수정 성공")
 	@PutMapping(value = "/career/{tutorCareerNo}", produces = "application/json")
 	public TutorCareerDto updateCareer(
@@ -141,7 +153,8 @@ public class TutorRestController {
 				tutorCareerDto
 		);
 	}
-
+	
+	@Operation(summary = "강사 학력/경력 삭제")
 	@ApiResponse(responseCode = "200", description = "강사 학력/경력 삭제 성공")
 	@DeleteMapping(value = "/career/{tutorCareerNo}", produces = "application/json")
 	public boolean deleteCareer(
