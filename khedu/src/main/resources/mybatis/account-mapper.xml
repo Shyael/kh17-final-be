@@ -45,7 +45,7 @@
 		select count(*) from account where account_id = #{accountId}
 	</select>
 	
-	<!-- accountNo를 통해 직원, 학생, 학부모 넘버 찾기 -->
+	<!-- accountNo를 통해 직원, 학생, 학부모 정보 찾기 -->
 	<select id="findCorrectly" resultType="AccountTypeNoVO">
 		SELECT
 		    a.account_no,
@@ -62,4 +62,13 @@
 		    ON a.account_no = p.account_no
 		WHERE a.account_no = #{accountNo}
 	</select>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="updateAccountPassword">
+		update account
+		set
+			account_password = #{accountPassword},
+			account_utime = systimestamp
+		where account_no = #{accountNo}
+	</update>
 </mapper>

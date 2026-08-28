@@ -36,7 +36,8 @@
 			a.account_type,
 			e.employee_no,
 			e.employee_type,
-			e.employee_htime
+			e.employee_htime,
+			e.employee_utime
 		from account A join employee e
 		on a.account_no = e.account_no
 		where 
@@ -44,4 +45,13 @@
 		and 
 			a.account_type = '직원'
 	</select>
+	<!-- 직원정보 수정 -->
+	<update id="updateEmployeeLogin">
+		update account
+	    set
+	        account_name = #{accountName},
+	        account_phone = #{accountPhone},
+	        account_utime = systimestamp
+	    where account_no = #{accountNo} 
+	</update>
 </mapper>

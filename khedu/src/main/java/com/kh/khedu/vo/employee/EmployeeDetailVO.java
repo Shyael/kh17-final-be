@@ -15,7 +15,7 @@ public class EmployeeDetailVO {
     private int employeeNo;
     private String employeeType;
     private Timestamp employeeHtime;
-
+    private Timestamp employeeUtime;
     // account
     private int accountNo;
     private String accountId;
