@@ -92,6 +92,7 @@ public class SecurityConfiguration {
 						//임시 전부 공개화면 
 						.requestMatchers(
 								"/api/employee/**" // 원장, 데스크만 접근 가능하게
+								
 						).permitAll()
 						
 						//cert service
@@ -110,7 +111,9 @@ public class SecurityConfiguration {
 //						.requestMatchers("/api/employee/**")
 //							.hasAnyAuthority("3", "4", "5")
 						// 위 페이지 외에는 전부 거절
-						.anyRequest().denyAll()
+						
+						//나머지 모두 허용
+						.anyRequest().permitAll()
 			)
 			//JWT를 어떻게 검증할 것인지 설정 (JwtDecoder가 반드시 필요)
 			//→ BearerTokenResolver :AccessToken을 꺼내서 Jwt를 뽑아내는 도구

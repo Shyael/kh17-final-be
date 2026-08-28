@@ -42,6 +42,8 @@
 	
 	<!-- 존재 유무 판단(아이디(=이메일)) -->
 	<select id="checkAccountId" resultType="int">
-		select * count(*) from account where account_id = #{accountId}
+		select count(*) from account where account_id = #{accountId}
 	</select>
+	
+	<!-- accountNo를 통해 찾기 -->
 </mapper>

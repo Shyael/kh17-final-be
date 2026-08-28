@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.jwt.JwtValidationException;
 import org.springframework.stereotype.Service;
 
 import com.kh.khedu.configuration.JwtProperties;
+import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.vo.jwt.TokenCreateRequestVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
@@ -31,10 +32,20 @@ public class JwtService {
 	@Autowired
 	private JwtDecoder jwtDecoder;
 	
+	@Autowired
+	private AccountDao accountDao;
+	
 	//액세스 토큰 생성 메소드
 	public String createAccessToken(TokenCreateRequestVO request) {
 		//토큰 발생시각을 객체로 생성
+		
 		Instant current = Instant.now();
+		
+		//accountNo를 통해 
+		
+		//직원의 경우 employeeNo
+		//학생의 경우 studentNo
+		//학부모의 경우 parentNo
 		
 		//JWT에 추가할 데이터 본문을 생성
 		JwtClaimsSet claims = JwtClaimsSet.builder()
