@@ -76,7 +76,10 @@ public class SecurityConfiguration {
 							,"/v3/api-docs/**" //springdoc json
 						).permitAll()
 						
-						
+						//직원(학원 정보 수정)
+						.requestMatchers("/api/academy/**").permitAll() 
+						//직원(강사 정보 수정)
+						.requestMatchers("/api/tutor/**").permitAll() 
 						//메소드(crud) 중 일부 메소드만 허용하고 싶은경우 아래와 같이 추가
 						//예시
 						//.requestMatchers(HttpMethod.POST, "/api/lecture").authenticated()
@@ -98,10 +101,7 @@ public class SecurityConfiguration {
 						//cert service
 						.requestMatchers("/service/cert/**").permitAll()
 						
-						//직원(학원 정보 수정)
-						.requestMatchers("/api/academy/**").permitAll() 
-						//직원(강사 정보 수정)
-						.requestMatchers("/api/tutor/**").permitAll() 
+						
 						// 조건부 허용(내가 만든 요소들)
 						.requestMatchers(
 								"/api/employee/me" // 직원 내정보

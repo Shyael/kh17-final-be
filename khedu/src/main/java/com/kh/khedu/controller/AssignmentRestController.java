@@ -39,10 +39,14 @@ public class AssignmentRestController {
     public int insert(
             @RequestBody AssignmentDto assignmentDto,
             @CurrentUser TokenParseResponseVO parseVO) {
-
+    	
+    	
         // 로그인한 강사번호 설정
         assignmentDto.setEmployeeNo(parseVO.getNoType());
-
+        
+        System.out.println("employeeNo = " + assignmentDto.getEmployeeNo());
+        System.out.println("courseNo = " + assignmentDto.getCourseNo());
+    	
         return assignmentService.insert(assignmentDto);
     }
 
