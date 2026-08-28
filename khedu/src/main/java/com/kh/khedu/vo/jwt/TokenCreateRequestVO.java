@@ -13,4 +13,5 @@ public class TokenCreateRequestVO {
 	private String accountId;	
 	private String accountType; // 직원, 학생, 학부모
 	private List<String> roleNames;//권한 
+	private int typeNo;
 }
