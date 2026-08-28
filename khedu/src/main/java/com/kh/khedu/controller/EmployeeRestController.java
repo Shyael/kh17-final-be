@@ -136,5 +136,4 @@ public class EmployeeRestController {
 				.message("비밀번호 변경이 완료되었습니다")
 				.build();
 	}
-	
 }
