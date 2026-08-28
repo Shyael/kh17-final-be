@@ -20,7 +20,7 @@ import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 public interface ContractService {
 
-	//단순 조회
+	//단순 조회 
 	ContractDetailResponseVO find(long contractNo, TokenParseResponseVO parseVO);
 	
 	// 근로계약 등록
