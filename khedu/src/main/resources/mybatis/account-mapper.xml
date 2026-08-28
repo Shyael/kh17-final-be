@@ -42,6 +42,24 @@
 	
 	<!-- 존재 유무 판단(아이디(=이메일)) -->
 	<select id="checkAccountId" resultType="int">
-		select * count(*) from account where account_id = #{accountId}
+		select count(*) from account where account_id = #{accountId}
+	</select>
+	
+	<!-- accountNo를 통해 직원, 학생, 학부모 넘버 찾기 -->
+	<select id="findCorrectly" resultType="AccountTypeNoVO">
+		SELECT
+		    a.account_no,
+		    a.account_type,
+		    e.employee_no,
+		    s.student_no,
+		    p.parent_no
+		FROM account a
+		LEFT JOIN employee e
+		    ON a.account_no = e.account_no
+		LEFT JOIN student s
+		    ON a.account_no = s.account_no
+		LEFT JOIN parent p
+		    ON a.account_no = p.account_no
+		WHERE a.account_no = #{accountNo}
 	</select>
 </mapper>

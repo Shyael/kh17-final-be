@@ -46,6 +46,8 @@ public class EmployeeRestController {
 	@ApiResponse(responseCode = "200", description = "존재하는 아이디")
 	@GetMapping(value ="/check-id/{accountId}", produces = "application/json")
 	public boolean checkAccountId(@PathVariable String accountId) {
+		System.out.println("===== 아이디 중복검사 실행 =====");
+	    System.out.println("accountId = " + accountId);
 		return accountDao.checkAvailableId(accountId);
 	}
 	

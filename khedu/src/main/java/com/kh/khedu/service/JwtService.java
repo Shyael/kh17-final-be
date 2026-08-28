@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.jwt.JwtValidationException;
 import org.springframework.stereotype.Service;
 
 import com.kh.khedu.configuration.JwtProperties;
+import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.vo.jwt.TokenCreateRequestVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
@@ -34,6 +35,7 @@ public class JwtService {
 	//액세스 토큰 생성 메소드
 	public String createAccessToken(TokenCreateRequestVO request) {
 		//토큰 발생시각을 객체로 생성
+		
 		Instant current = Instant.now();
 		
 		//JWT에 추가할 데이터 본문을 생성
@@ -48,6 +50,7 @@ public class JwtService {
 				.claim("accountId", request.getAccountId())
 				.claim("accountType", request.getAccountType())
 				.claim("roleNames", request.getRoleNames())
+				.claim("noType", request.getTypeNo())
 				//spring Security 검사를 위한 항목을 추가
 				//- 이름은 authorities 고정 → hasAuthority()로 검사
 				//- 이름을 roles로 설정하면 → hasRoles()로 검사 (ROLE_접두사 필요)

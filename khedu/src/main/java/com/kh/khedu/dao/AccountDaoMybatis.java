@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.vo.account.AccountRegisterVO;
+import com.kh.khedu.vo.account.AccountTypeNoVO;
 
 @Repository
 public class AccountDaoMybatis implements AccountDao {
@@ -38,6 +39,11 @@ public class AccountDaoMybatis implements AccountDao {
 	public boolean checkAvailableId(String accountId) {
 		int count = sqlSession.selectOne("mapper.account.checkAccountId", accountId);
 		return count == 0;
+	}
+
+	@Override
+	public AccountTypeNoVO selectTypeNo(int accountNo) {
+		return sqlSession.selectOne("mapper.account.findCorrectly", accountNo);
 	}
 
 }
