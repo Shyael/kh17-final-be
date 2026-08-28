@@ -23,10 +23,12 @@ public class AuthRestController {
 	@Autowired
 	private AuthService authService;
 	
+	
 	@ApiResponse(responseCode = "200", description = "로그인 성공")
 	@ApiResponse(responseCode = "400", description = "정보 불일치")
 	@PostMapping(value ="/login", produces = "application/json")
 	public AuthLoginResponseVO login(@RequestBody AuthLoginRequestVO request) {
+		System.out.println("프론트에서 넘어온 데이터: " + request);
 		return authService.login(request);
 	}
 }

@@ -70,8 +70,10 @@ public class SecurityConfiguration {
 							"/active"  //체크용 페이지 허용
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
+							,"/swagger-ui.html"
 							//등록확인차 임시 작성
 							,"/service/**"
+							,"/error/**"
 						).permitAll()
 						// 조건부 허용(내가 만든 요소들)
 					
@@ -125,7 +127,7 @@ public class SecurityConfiguration {
 	
 	//CorsConfigurationSource 생성 (Security의 기본값으로 자동 설정)
 	@Bean
-	public CorsConfigurationSource configurationSource() {
+	public CorsConfigurationSource corsConfigurationSource() {
 		//설정 객체를 생성 //data가 클 경우에만 스트리밍방식을 사용(스트리밍 방식일 때, .reactive를 import)
 		CorsConfiguration config = new CorsConfiguration();
 		
@@ -133,7 +135,7 @@ public class SecurityConfiguration {
 		//[1] 허용되는 접근 대상을 지정 (allow origins or pattern)
 		config.setAllowedOrigins(List.of(
 			// 여기에 운영주소 넣어주면됨
-			"http://localhost:5173" 
+			"http://localhost:5173"
 		));
 		//[2] 허용할 HTTP 메소드 설정
 		config.setAllowedMethods(List.of(
