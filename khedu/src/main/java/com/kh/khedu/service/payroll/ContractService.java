@@ -7,12 +7,18 @@ import com.kh.khedu.requestvo.payroll.ContractAddRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployeeSignRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployerSignRequestVO;
+import com.kh.khedu.requestvo.payroll.ContractExtendRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
+import com.kh.khedu.responsevo.payroll.ContractExtendResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractSignDetailResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 public interface ContractService {
 
+	//단순 조회
+	ContractDto find(long contractNo, TokenParseResponseVO parseVO);
+	
 	// 근로계약 등록
 	ContractDto add(
 			ContractAddRequestVO request,TokenParseResponseVO parseVO
@@ -25,6 +31,10 @@ public interface ContractService {
 			TokenParseResponseVO parseVO
 	);
 
+	//서명 전 작성 중 정보 불러오기
+	
+	ContractSignDetailResponseVO recallBefore(long contractNo, TokenParseResponseVO parseVO);
+	
 	// 을(직원) 서명
 	void employeeSign(
 			long contractNo,
@@ -61,9 +71,10 @@ public interface ContractService {
 			,TokenParseResponseVO parseVO
 	);
 
-	// 근로계약 종료
-	void endContract(
-			long contractNo
+	// 근로계약 연장(기간만)
+	ContractExtendResponseVO extendContract(
+			ContractExtendRequestVO request,
+			TokenParseResponseVO parseVO
 	);
 
 	// 서명정보 조회

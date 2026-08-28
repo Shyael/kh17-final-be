@@ -18,7 +18,10 @@ import com.kh.khedu.requestvo.payroll.ContractAddRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployeeSignRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployerSignRequestVO;
+import com.kh.khedu.requestvo.payroll.ContractExtendRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
+import com.kh.khedu.responsevo.payroll.ContractExtendResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractSignDetailResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
 import com.kh.khedu.util.SignatureEncryptor;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
@@ -32,21 +35,35 @@ public class ContractServiceImpl implements ContractService {
 
 	@Autowired
 	private SignatureEncryptor signatureEncryptor;
-	
+
 	@Autowired
 	private EmployeeDao employeeDao;
+
+	@Autowired
+	private ContractAuthorizationService contractAuthorizationService;
+
+	// 단순 조회
+
+	@Override
+	public ContractDto find(long contractNo, TokenParseResponseVO parseVO) {
+		ContractDto find = contractDao.find(contractNo);
+		boolean valid = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, contractNo);
+		if (!valid)
+			throw new GetOutException();
+		else
+			return find;
+
+	}
 
 	// 근로계약 등록 //권한 설정 완
 	@Transactional
 	@Override
 	public ContractDto add(ContractAddRequestVO request, TokenParseResponseVO parseVO) {
 
-		//권한은 원장만
-		List<String> permission = parseVO.getRoleNames();
-		
-		if(!permission.contains("admin")) throw new GetOutException();
-		
-		
+		// 권한은 원장만
+		if (!contractAuthorizationService.checkAdmin(parseVO))
+			throw new GetOutException();
+
 		// [1] 계약 대상 직원의 현재 계약 확인
 		ContractDto currentContract = contractDao.findCurrent(request.getEmployeeNo());
 
@@ -93,11 +110,9 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public void updateDraft(long contractNo, ContractUpdateDraftRequestVO request, TokenParseResponseVO parseVO) {
 
-		
-	List<String> permission = parseVO.getRoleNames();
-		
-		if(!permission.contains("admin")) throw new GetOutException();
-		
+		boolean valid = contractAuthorizationService.checkAdminOrPartyB(parseVO, contractNo);
+		if (!valid)
+			throw new GetOutException();
 		// [1] 계약 조회
 		ContractDto currentContract = contractDao.find(contractNo);
 
@@ -137,29 +152,43 @@ public class ContractServiceImpl implements ContractService {
 			throw new GetOutException();
 	}
 
+	// 서명 전 작성중인 정보 조회
+
+	@Override
+	public ContractSignDetailResponseVO recallBefore(long contractNo, TokenParseResponseVO parseVO) {
+
+		ContractDto contract = contractDao.find(contractNo);
+
+		if (contract == null)
+			throw new TargetNotfoundException();
+
+		boolean valid = contractAuthorizationService.checkAdminOrPartyB(parseVO, contractNo);
+		if (!valid)
+			throw new GetOutException();
+
+		return ContractSignDetailResponseVO.builder().contractNo(contract.getContractNo())
+				.wageType(contract.getWageType()).baseWage(contract.getBaseWage())
+				.dailyWorkHours(contract.getDailyWorkHours()).weeklyWorkHours(contract.getWeeklyWorkHours())
+				.contractStart(contract.getContractStart()).contractEnd(contract.getContractEnd())
+				.payday(contract.getPayday()).contractContent(contract.getContractContent())
+				.contractStatus(contract.getContractStatus()).signedTime(contract.getSignedTime()).build();
+	}
+
 	// 을(직원) 서명 //권한 설정 완
 	@Transactional
 	@Override
 	public void employeeSign(long contractNo, ContractEmployeeSignRequestVO request, TokenParseResponseVO parseVO) {
-		
-		// 원장 내보내기
-		List<String> permission = parseVO.getRoleNames();
-		
-		if(permission.contains("admin")) throw new GetOutException();
 
-		
+		// 원장 내보내기
+		boolean isAdmin = contractAuthorizationService.checkAdmin(parseVO);
+		if (isAdmin)
+			throw new GetOutException();
 
 		// "을"을 검증
-		ContractDto find = contractDao.find(contractNo);
-		
-		String id = parseVO.getAccountId();
-		int compare = find.getEmployeeNo();
-		
-		EmployeeDetailVO employee = employeeDao.findMyInfo(id);
-		
-		int no = employee.getAccountNo();
-		
-		if(no!=compare) throw new GetOutException();
+		boolean isPartyB = contractAuthorizationService.checkPartyB(parseVO, contractNo);
+
+		if (!isPartyB)
+			throw new GetOutException();
 
 		// [1] 서명정보 조회
 		ContractDto currentContract = contractDao.findSignature(contractNo);
@@ -170,8 +199,6 @@ public class ContractServiceImpl implements ContractService {
 		// [2] 이미 양측 서명이 완료된 계약이면 수정 불가
 		if (currentContract.getSignedTime() != null)
 			throw new GetOutException();
-
-		// 원장인지 해당 직원인지 확인(추후 작성)
 
 		// [3] 직원 서명 설정
 		currentContract.setEmployeeSignature(request.getEmployeeSignature());
@@ -202,9 +229,12 @@ public class ContractServiceImpl implements ContractService {
 	@Transactional
 	@Override
 	public void employerSign(long contractNo, ContractEmployerSignRequestVO request, TokenParseResponseVO parseVO) {
-		
-		
-		
+
+		boolean isAdmin = contractAuthorizationService.checkAdmin(parseVO);
+
+		if (!isAdmin)
+			throw new GetOutException();
+
 		// [1] 서명정보 조회
 		ContractDto currentContract = contractDao.findSignature(contractNo);
 
@@ -216,11 +246,12 @@ public class ContractServiceImpl implements ContractService {
 			throw new GetOutException();
 
 		// 원장인지 확인
-		
+
 		List<String> permission = parseVO.getRoleNames();
-		
-		if(!permission.contains("admin")) throw new GetOutException();
-		
+
+		if (!permission.contains("admin"))
+			throw new GetOutException();
+
 		// [3] 원장 서명 설정
 		currentContract.setEmployerSignature(request.getEmployerSignature());
 
@@ -248,34 +279,17 @@ public class ContractServiceImpl implements ContractService {
 
 	// 현재 근로계약 조회
 	@Override
-	public ContractDto findCurrent(int employeeNo,TokenParseResponseVO parseVO) {
-		
+	public ContractDto findCurrent(int employeeNo, TokenParseResponseVO parseVO) {
+
+		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, employeeNo);
+
+		if (!hasPermission)
+			throw new GetOutException();
+
 		ContractDto contractDto = contractDao.findCurrent(employeeNo);
 
 		if (contractDto == null)
 			throw new TargetNotfoundException();
-		
-		//권한은 당사자, 데스크, 원장만
-		
-		List<String> roleNames = parseVO.getRoleNames();
-		
-		String id = parseVO.getAccountId();
-		int compare = contractDto.getEmployeeNo();
-		
-		EmployeeDetailVO employee = employeeDao.findMyInfo(id);
-		
-		int no = employee.getAccountNo();
-		
-		boolean informer = roleNames.contains("admin")||roleNames.contains("desk");
-		
-		boolean partyB = no==compare;
-		
-		boolean valid = !informer||!partyB;
-		
-		if(!valid) throw new GetOutException();
-		
-		
-		
 
 		return contractDto;
 	}
@@ -283,34 +297,41 @@ public class ContractServiceImpl implements ContractService {
 	// 과거 근로계약 조회
 	@Override
 	public List<ContractDto> findPast(int employeeNo, TokenParseResponseVO parseVO) {
+		// 권한은 당사자, 데스크, 원장만
+		
+		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, employeeNo);
 
+		if (!hasPermission)
+			throw new GetOutException();
+		
+		
 		List<ContractDto> history = contractDao.findPast(employeeNo);
 
 		if (history.size() == 0)
 			throw new TargetNotfoundException();
 
+		
 
-		//권한은 당사자, 데스크, 원장만
-		
 		ContractDto contractDto = contractDao.findCurrent(employeeNo);
-		
+
 		List<String> roleNames = parseVO.getRoleNames();
-		
+
 		String id = parseVO.getAccountId();
 		int compare = contractDto.getEmployeeNo();
-		
+
 		EmployeeDetailVO employee = employeeDao.findMyInfo(id);
-		
+
 		int no = employee.getAccountNo();
-		
-		boolean informer = roleNames.contains("admin")||roleNames.contains("desk");
-		
-		boolean partyB = no==compare;
-		
-		boolean valid = !informer||!partyB;
-		
-		if(!valid) throw new GetOutException();
-		
+
+		boolean informer = roleNames.contains("admin") || roleNames.contains("desk");
+
+		boolean partyB = no == compare;
+
+		boolean valid = !informer || !partyB;
+
+		if (!valid)
+			throw new GetOutException();
+
 		return history;
 	}
 
@@ -318,71 +339,123 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public List<ContractDto> findAllByEmployee(int employeeNo, TokenParseResponseVO parseVO) {
 
+		// 권한은 당사자, 데스크, 원장만
+		
+		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, employeeNo);
+
+		if (!hasPermission)
+			throw new GetOutException();
+		
 		List<ContractDto> contracts = contractDao.findAllByEmployee(employeeNo);
+
 		
-		//권한은 당사자, 데스크, 원장만
-		
-				ContractDto contractDto = contractDao.findCurrent(employeeNo);
-				
-				List<String> roleNames = parseVO.getRoleNames();
-				
-				String id = parseVO.getAccountId();
-				int compare = contractDto.getEmployeeNo();
-				
-				EmployeeDetailVO employee = employeeDao.findMyInfo(id);
-				
-				int no = employee.getAccountNo();
-				
-				boolean informer = roleNames.contains("admin")||roleNames.contains("desk");
-				
-				boolean partyB = no==compare;
-				
-				boolean valid = !informer||!partyB;
-				
-				if(!valid) throw new GetOutException();
-				
-		
+
+		ContractDto contractDto = contractDao.findCurrent(employeeNo);
+
+		List<String> roleNames = parseVO.getRoleNames();
+
+		String id = parseVO.getAccountId();
+		int compare = contractDto.getEmployeeNo();
+
+		EmployeeDetailVO employee = employeeDao.findMyInfo(id);
+
+		int no = employee.getAccountNo();
+
+		boolean informer = roleNames.contains("admin") || roleNames.contains("desk");
+
+		boolean partyB = no == compare;
+
+		boolean valid = !informer || !partyB;
+
+		if (!valid)
+			throw new GetOutException();
+
 		return contracts;
 	}
 
-	// 근로계약 종료
+	// 근로계약 연장(기간만) //검수 필
 	@Transactional
 	@Override
-	public void endContract(long contractNo) {
+	public ContractExtendResponseVO extendContract(ContractExtendRequestVO request, TokenParseResponseVO parseVO) {
 
-		// [1] 종료할 근로계약 조회
-		ContractDto contractDto = contractDao.findPeriodAndStatus(contractNo);
+		//권한은 원장만
+		boolean isAdmin = contractAuthorizationService.checkAdmin(parseVO);
+		
+		if(!isAdmin) throw new GetOutException();
+		
+		 // [2] 기존 계약 조회
+	    ContractDto contractDto =
+	            contractDao.findPeriodAndStatus(
+	                    request.getContractNo()
+	            );
 
-		if (contractDto == null)
-			throw new TargetNotfoundException();
+	    if(contractDto == null)
+	        throw new TargetNotfoundException();
 
-		// [2] 이미 종료된 계약이면 종료 불가
-		if ("ended".equals(contractDto.getContractStatus()))
-			throw new GetOutException();
 
-		// [3] 계약 종료일 및 상태 설정
-		contractDto.setContractEnd(Timestamp.valueOf(LocalDateTime.now()));
+	    // [3] 종료된 계약은 연장 불가
+	    if("ended".equals(
+	            contractDto.getContractStatus()
+	    ))
+	        throw new GetOutException();
 
-		contractDto.setContractStatus("ended");
 
-		// [4] 근로계약 종료 처리
-		boolean result = contractDao.changeStatus(contractDto);
+	    // [4] 기간의 정함이 없는 계약은 연장 불가
+	    if(contractDto.getContractEnd() == null)
+	        throw new GetOutException();
 
-		if (result == false)
-			throw new GetOutException();
+
+	    // [5] 새 종료일은 기존 종료일보다 뒤여야 함
+	    if(
+	        !request.getContractEnd()
+	                .after(contractDto.getContractEnd())
+	    )
+	        throw new GetOutException();
+
+
+	    // [6] DTO에 새 종료일 반영
+	    contractDto.setContractEnd(
+	            request.getContractEnd()
+	    );
+
+
+	    // [7] DB 수정
+	    boolean result =
+	            contractDao.extendContract(
+	                    contractDto
+	            );
+
+	    if(result == false)
+	        throw new GetOutException();
+
+
+	    // [8] 응답 조립
+	    return ContractExtendResponseVO.builder()
+	            .contractNo(
+	                    contractDto.getContractNo()
+	            )
+	            .contractStart(
+	                    contractDto.getContractStart()
+	            )
+	            .contractEnd(
+	                    contractDto.getContractEnd()
+	            )
+	            .contractStatus(
+	                    contractDto.getContractStatus()
+	            )
+	            .build();
 	}
 
 	// 체결 후 근로조건 변경
 	@Transactional
 	@Override
-	public ContractDto changeWorkCondition(long contractNo, ContractChangeConditionRequestVO request
-			,TokenParseResponseVO parseVO) {
-		
-		//원장 확인
-		List<String> permission = parseVO.getRoleNames();
-		
-		if(!permission.contains("admin")) throw new GetOutException();
+	public ContractDto changeWorkCondition(long contractNo, ContractChangeConditionRequestVO request,
+			TokenParseResponseVO parseVO) {
 
+		// 원장 확인
+		boolean isAdmin = contractAuthorizationService.checkAdmin(parseVO);
+
+		if(!isAdmin) throw new GetOutException();
 		// [1] 기존 계약 전체 조회
 		ContractDto originDto = contractDao.find(contractNo);
 
@@ -397,13 +470,14 @@ public class ContractServiceImpl implements ContractService {
 		if ("ended".equals(originDto.getContractStatus()))
 			throw new GetOutException();
 
+		
+		
 		// [4] 새로운 근로조건 DTO 생성
 		ContractDto newContractDto = new ContractDto();
 
 		BeanUtils.copyProperties(request, newContractDto);
 
-		// [5] 기존 계약의 직원을 새 계약에 연결
-		newContractDto.setEmployeeNo(originDto.getEmployeeNo());
+		
 
 		// [6] 새 계약기간 확인
 		if (newContractDto.getContractEnd() != null
@@ -416,6 +490,8 @@ public class ContractServiceImpl implements ContractService {
 			throw new GetOutException();
 		}
 
+		
+		
 		// [7] 변경 계약은 미래 시점부터 적용
 		Timestamp current = Timestamp.valueOf(LocalDateTime.now());
 
@@ -424,11 +500,7 @@ public class ContractServiceImpl implements ContractService {
 
 		// [8] 기존 계약은 새 계약 시작일까지 유지
 		originDto.setContractEnd(newContractDto.getContractStart());
-
-		boolean changeResult = contractDao.changeStatus(originDto);
-
-		if (changeResult == false)
-			throw new GetOutException();
+		
 
 		// [9] 새 계약은 다시 서명대기 상태로 생성
 		newContractDto.setContractStatus("pending");
@@ -437,12 +509,16 @@ public class ContractServiceImpl implements ContractService {
 		long newContractNo = contractDao.contractSequence();
 
 		newContractDto.setContractNo(newContractNo);
+		
+		//+근무조건 업데이트
+		contractDao.changeContractCondition(request);
 
 		// [11] 새 계약 서명 초기화
 		newContractDto.setEmployeeSignature(null);
 		newContractDto.setEmployerSignature(null);
 		newContractDto.setSignedTime(null);
 
+		
 		// [12] 변경된 근로조건으로 새 계약 등록
 		contractDao.contractAdd(newContractDto);
 
@@ -458,27 +534,12 @@ public class ContractServiceImpl implements ContractService {
 		if (target == null)
 			throw new TargetNotfoundException();
 
-		//권한은 당사자, 데스크, 원장만
+		// 권한은 당사자, 데스크, 원장만
 		
-				ContractDto contractDto = contractDao.find(contractNo);
-				
-				List<String> roleNames = parseVO.getRoleNames();
-				
-				String id = parseVO.getAccountId();
-				int compare = contractDto.getEmployeeNo();
-				
-				EmployeeDetailVO employee = employeeDao.findMyInfo(id);
-				
-				int no = employee.getAccountNo();
-				
-				boolean informer = roleNames.contains("admin")||roleNames.contains("desk");
-				
-				boolean partyB = no==compare;
-				
-				boolean valid = !informer||!partyB;
-				
-				if(!valid) throw new GetOutException();
+		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, contractNo);
 
+		if(!hasPermission) throw new GetOutException();
+		
 		// 서명하지 않은 쪽은 null 유지
 		String employeeSignature = null;
 		String employerSignature = null;
@@ -493,9 +554,8 @@ public class ContractServiceImpl implements ContractService {
 			employerSignature = signatureEncryptor.decrypt(target.getEmployerSignature());
 		}
 
-		return ContractSignResponseVO.builder().contractNo(target.getContractNo())
-				.employeeSignature(employeeSignature).employerSignature(employerSignature)
-				.signedTime(target.getSignedTime()).build();
+		return ContractSignResponseVO.builder().contractNo(target.getContractNo()).employeeSignature(employeeSignature)
+				.employerSignature(employerSignature).signedTime(target.getSignedTime()).build();
 	}
 
 	// 계약기간에 따른 상태 갱신
@@ -503,26 +563,22 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public void refreshContractStatus() {
 
-		
 		// [1] 종료일이 도래한 기존 계약 종료
 		contractDao.endContracts();
 
 		// [2] 시작일이 도래한 체결완료 계약 활성화
 		contractDao.activateContracts();
-		
-		
+
 	}
 
 	@Transactional
 	@Override
 	public void exitContract(long contractNo, TokenParseResponseVO parseVO) {
 
-		//권한은 원장만
-				List<String> permission = parseVO.getRoleNames();
-				
-				if(!permission.contains("admin")) throw new GetOutException();
-		
-		
+		// 권한은 원장만
+		 boolean isAdmin = contractAuthorizationService.checkAdmin(parseVO);
+
+		 if(!isAdmin) throw new GetOutException();
 		contractDao.exitContracts(contractNo);
 	}
 

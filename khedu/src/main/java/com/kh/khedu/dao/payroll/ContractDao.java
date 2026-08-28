@@ -56,9 +56,9 @@ public interface ContractDao {
 	// 양측 서명 완료 처리
 	boolean completeSign(ContractDto contractDto);
 
-	// 계약상태 및 종료일 변경
-	boolean changeStatus(ContractDto contractDto);
-
+	//계약 연장(기간만)
+	boolean extendContract(ContractDto contractDto);
+	
 	// 시작일이 도래한 체결완료 계약 활성화
 	boolean activateContracts();
 

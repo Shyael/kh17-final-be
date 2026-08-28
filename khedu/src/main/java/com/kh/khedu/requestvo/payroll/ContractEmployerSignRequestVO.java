@@ -6,4 +6,5 @@ import lombok.Data;
 public class ContractEmployerSignRequestVO {
 	 @NotBlank
 	 private String employerSignature;
+	 private long contractNo;
 }

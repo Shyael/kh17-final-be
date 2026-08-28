@@ -13,7 +13,7 @@ public class ContractScheduler {
 	@Autowired
 	private ContractService contractService;
 	
-	@Transactional
+	
 	@Scheduled(cron = "0 * * * * *"
 	,zone ="Asia/Seoul")
 	public void refreshContractStatus() {

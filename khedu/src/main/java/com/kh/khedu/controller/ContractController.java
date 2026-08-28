@@ -25,6 +25,7 @@ import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployeeSignRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployerSignRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
+import com.kh.khedu.responsevo.payroll.ContractSignDetailResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractUpdateDraftResponseVO;
 import com.kh.khedu.service.payroll.ContractService;
@@ -50,25 +51,12 @@ public class ContractController {
 	@Autowired
 	private ContractDao contractDao;
 	
-	@Autowired
-	private EmployeeDao employeeDao;
+	
 	
 	//계약 조회
 	@GetMapping("/detail/{contractNo}")
 	public ContractDto find (@PathVariable long contractNo, @CurrentUser TokenParseResponseVO parseVO) {
-		ContractDto find = contractDao.find(contractNo);
-		List<String> permission = parseVO.getRoleNames();
-		
-		String id = parseVO.getAccountId();
-		int compare = find.getEmployeeNo();
-		
-		EmployeeDetailVO employee = employeeDao.findMyInfo(id);
-		
-		int no = employee.getAccountNo();
-		
-		if(!permission.contains("admin")||no!=compare) throw new GetOutException();
-		
-		return find;
+		return contractService.find(contractNo, parseVO);
 	}
 	
 
@@ -83,7 +71,7 @@ public class ContractController {
 
 
 	// 양측 서명 완료 전 계약 수정 //권한 설정 완
-	@PatchMapping("/before/{contractNo}")
+	@PatchMapping("/editBefore/{contractNo}")
 	public ContractUpdateDraftResponseVO updateDraft(
 			@PathVariable long contractNo,
 			@RequestBody ContractUpdateDraftRequestVO request,
@@ -105,6 +93,16 @@ public class ContractController {
 		return draft;
 	}
 
+	//서명 전 작성 된 정보 불러오기
+	@PatchMapping("recallBefore/{contractNo}")
+	public ContractSignDetailResponseVO recallBefore(
+			@PathVariable long contractNo,
+			@CurrentUser TokenParseResponseVO parseVO) {
+		 return contractService.recallBefore(
+		            contractNo,
+		            parseVO
+		    );
+	}
 
 	// 을(직원) 서명 //권한 설정 완
 	@PatchMapping("/{contractNo}/employeeSign")

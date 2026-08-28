@@ -11,17 +11,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContractSignResponseVO {
+public class ContractExtendResponseVO {
+	 private long contractNo;
 
-	private long contractNo;
+	    private Timestamp contractStart;
 
-	private boolean employeeSigned;
+	    private Timestamp contractEnd;
 
-	private boolean employerSigned;
-
-	private Timestamp signedTime;
-	
-	private String employeeSignature;
-	
-	private String employerSignature;
+	    private String contractStatus;
 }

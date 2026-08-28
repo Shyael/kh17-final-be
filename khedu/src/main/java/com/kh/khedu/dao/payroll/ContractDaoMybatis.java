@@ -196,14 +196,16 @@ public class ContractDaoMybatis implements ContractDao {
 		) > 0;
 	}
 
-
-	// 계약상태 및 종료일 변경
+	
+	//계약 연장(기간만)
 	@Override
-	public boolean changeStatus(ContractDto contractDto) {
-		return sqlSession.update(
-			"mapper.payroll.changeStatus",
-			contractDto
-		) > 0;
+	public boolean extendContract(
+	        ContractDto contractDto) {
+
+	    return sqlSession.update(
+	            "mapper.payroll.extendContract",
+	            contractDto
+	    ) > 0;
 	}
 
 
@@ -229,4 +231,5 @@ public class ContractDaoMybatis implements ContractDao {
 	public boolean exitContracts(long contractNo) {
 		return sqlSession.update("mapper.payroll.exitContracts")>0;
 	}
+
 }
