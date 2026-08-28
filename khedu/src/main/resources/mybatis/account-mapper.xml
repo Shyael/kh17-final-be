@@ -17,14 +17,20 @@
 			account_id,
 			account_password,
 			account_name,
-			account_phone
+			account_phone,
+			account_birth,
+			account_status,
+			account_type
 		)
 		values (
 			#{accountNo},
 			#{accountId},
 			#{accountPassword},
 			#{accountName},
-			#{accountPhone}
+			#{accountPhone},
+			#{accountBirth},
+			#{accountStatus},
+			#{accountType}
 		)
 		
 	</insert>
@@ -34,11 +40,10 @@
 		select * from account where account_id = #{accountId}
 	</select>
 	
-	<!-- 존재 유무 판단(아이디(=이메일), 핸드폰) -->
+	<!-- 존재 유무 판단(아이디(=이메일)) -->
 	<select id="checkAccountId" resultType="int">
-		select * count(*) from account where account_id = #{accountId}
+		select count(*) from account where account_id = #{accountId}
 	</select>
-	<select id="checkAccountPhone" resultType="int">
-		select * count(*) from account where account_phone = #{accountPhone}
-	</select>
+	
+	<!-- accountNo를 통해 찾기 -->
 </mapper>

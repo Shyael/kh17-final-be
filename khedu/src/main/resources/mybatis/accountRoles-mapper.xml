@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.accountRoles">
+	
+	<!-- 권한 등록 -->
+	<insert id="add">
+		insert into account_roles(
+			account_no,
+			role_no
+		)
+		values (
+			#{accountNo},
+			#{roleNo}
+		)
+	</insert>
+	<!-- 권한 번호 조회 -->
+	<select id="selectRoleNos" resultType="int">
+		select role_no from account_roles where account_no = #{accountNo}
+	</select>
+	
+	<!-- 권한 이름 조회  -->
+	<select id="selectRoleNames" resultType="String">
+		select role_name from 
+			account_roles A 
+				join 
+			roles R on A.role_no = R.role_no where A.account_no = #{accountNo}
+	</select>
+</mapper>

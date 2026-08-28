@@ -1,4 +1,4 @@
-package com.kh.khedu.vo.register;
+package com.kh.khedu.vo.employee;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,7 +16,8 @@ public class EmployeeRegisterRequestVO {
 	private String accountPassword;
 	private String accountName;
 	private String accountPhone;
-	
+	private String accountBirth;
+	private String accountStatus; //차단여부 Y N
 	private String employeeType; //데스크/강사/원장
 	private LocalDate employeeHtime;
 	
