@@ -15,7 +15,7 @@ import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.dto.AccountRolesDto;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
-import com.kh.khedu.vo.account.AccountVO;
+import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeRegisterRequestVO;
 import com.kh.khedu.vo.employee.EmployeeVO;
@@ -36,7 +36,7 @@ public class EmployeeService {
 	public void registerEmployee(EmployeeRegisterRequestVO request) {
 		
 		// [1] accountService를 호출
-		AccountVO accountVO = new AccountVO();
+		AccountRegisterVO accountVO = new AccountRegisterVO();
 		
 		BeanUtils.copyProperties(request, accountVO);
 		
@@ -49,7 +49,7 @@ public class EmployeeService {
 		
 		EmployeeVO employeeVO = EmployeeVO.builder()
 				.employeeNo(employeeNo)
-				.accountNo(accountVO.getAccountNo())
+				.accountNo(accountNo)
 				.employeeType(request.getEmployeeType())
 				.employeeHtime(
 					 Timestamp.valueOf(

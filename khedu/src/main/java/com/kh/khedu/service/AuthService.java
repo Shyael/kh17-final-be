@@ -11,6 +11,7 @@ import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.vo.account.AccountTypeNoVO;
 import com.kh.khedu.vo.auth.AuthLoginRequestVO;
 import com.kh.khedu.vo.auth.AuthLoginResponseVO;
 
@@ -45,7 +46,22 @@ public class AuthService {
 		//비밀번호 변경한 지 30일 지난 경우
 		
 		//accountNo를 통해 roleNo도 가져오기 (계정번호를 통해 계정에 할당된 권한(role_no)가져오기)
-		List<Integer> roleNos = accountRolesDao.selectRoleNos(accountDto.getAccountNo());
+		//List<Integer> roleNos = accountRolesDao.selectRoleNos(accountDto.getAccountNo());
+		//accountNo를 통해 roleName가져오기
+		List<String> roleNames =accountRolesDao.selectRoleNames(accountDto.getAccountNo());
+		//accountNo를 토대로 typeNo가져오기
+		AccountTypeNoVO accountTypeNoVO = accountDao.selectTypeNo(accountDto.getAccountNo());
+		Integer typeNo = null;
+
+		if ("직원".equals(accountTypeNoVO.getAccountType())) {
+		    typeNo = accountTypeNoVO.getEmployeeNo();
+		}
+		else if ("학생".equals(accountTypeNoVO.getAccountType())) {
+		    typeNo = accountTypeNoVO.getStudentNo();
+		}
+		else if ("학부모".equals(accountTypeNoVO.getAccountType())) {
+		    typeNo = accountTypeNoVO.getParentNo();
+		}
 		
 		//로그인 성공
 		return AuthLoginResponseVO.builder()
@@ -53,7 +69,8 @@ public class AuthService {
 				.accountId(accountDto.getAccountId())
 				.accountName(accountDto.getAccountName())
 				.accountType(accountDto.getAccountType())
-				.roleNos(roleNos)
+				.typeNo(typeNo)
+				.roleNames(roleNames)
 			.build();
 	}
 }

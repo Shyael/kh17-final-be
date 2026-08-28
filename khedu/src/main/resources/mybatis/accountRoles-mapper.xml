@@ -21,4 +21,12 @@
 	<select id="selectRoleNos" resultType="int">
 		select role_no from account_roles where account_no = #{accountNo}
 	</select>
+	
+	<!-- 권한 이름 조회  -->
+	<select id="selectRoleNames" resultType="String">
+		select role_name from 
+			account_roles A 
+				join 
+			roles R on A.role_no = R.role_no where A.account_no = #{accountNo}
+	</select>
 </mapper>

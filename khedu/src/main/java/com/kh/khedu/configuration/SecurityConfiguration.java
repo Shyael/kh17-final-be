@@ -92,6 +92,7 @@ public class SecurityConfiguration {
 						//임시 전부 공개화면 
 						.requestMatchers(
 								"/api/employee/**" // 원장, 데스크만 접근 가능하게
+								
 						).permitAll()
 						
 						//cert service
@@ -103,14 +104,18 @@ public class SecurityConfiguration {
 						// 조건부 허용(내가 만든 요소들)
 						.requestMatchers(
 								"/api/employee/me" // 직원 내정보
-						).authenticated()//인증필요
-						//.hasAnyAuthority(3, 4, 5) //데스크 직원 원장
+								,"/api/account/password"
+						)
+						//.authenticated()//인증필요
+						.hasAnyAuthority("studnet", "parent", "desk", "teacher") //관리자 추가해야하나?
 						
 						//직원 기능 - Jwt에 authorities 클레임에 "마스터"가 포함되어 있어야 한다
 //						.requestMatchers("/api/employee/**")
 //							.hasAnyAuthority("3", "4", "5")
 						// 위 페이지 외에는 전부 거절
-						.anyRequest().denyAll()
+						
+						//나머지 모두 허용
+						.anyRequest().permitAll()
 			)
 			//JWT를 어떻게 검증할 것인지 설정 (JwtDecoder가 반드시 필요)
 			//→ BearerTokenResolver :AccessToken을 꺼내서 Jwt를 뽑아내는 도구

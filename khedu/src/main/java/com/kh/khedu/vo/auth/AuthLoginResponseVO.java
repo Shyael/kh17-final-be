@@ -15,5 +15,6 @@ public class AuthLoginResponseVO {
 	private String accountId;
 	private String accountName;
 	private String accountType;
-	private List<Integer> roleNos;
+	private List<String> roleNames;
+	private Integer typeNo; //단순 계정등록만 된 회원일 수 있기 때문에 integer
 }
