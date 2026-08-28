@@ -3,13 +3,14 @@ package com.kh.khedu.service.payroll;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
-
+@Service
 public class ContractAuthorizationServiceImpl implements ContractAuthorizationService{
 	
 	@Autowired
