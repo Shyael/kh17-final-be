@@ -2,30 +2,34 @@ package com.kh.khedu.service.payroll;
 
 import java.util.List;
 
-import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.requestvo.payroll.ContractAddRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployeeSignRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployerSignRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractExtendRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
+import com.kh.khedu.responsevo.payroll.ContractAddResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractChangeConditionResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractDetailResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractExtendResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractHistoryResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignDetailResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractUpdateDraftResponseVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 public interface ContractService {
 
 	//단순 조회
-	ContractDto find(long contractNo, TokenParseResponseVO parseVO);
+	ContractDetailResponseVO find(long contractNo, TokenParseResponseVO parseVO);
 	
 	// 근로계약 등록
-	ContractDto add(
+	ContractAddResponseVO add(
 			ContractAddRequestVO request,TokenParseResponseVO parseVO
 	);
 
 	// 양측 서명 완료 전 근로계약 내용 수정
-	void updateDraft(
+	ContractUpdateDraftResponseVO updateDraft(
 			long contractNo,
 			ContractUpdateDraftRequestVO request,
 			TokenParseResponseVO parseVO
@@ -50,22 +54,22 @@ public interface ContractService {
 	);
 
 	// 현재 근로계약 조회
-	ContractDto findCurrent(
+	ContractDetailResponseVO findCurrent(
 			int employeeNo , TokenParseResponseVO parseVO
 	);
 
 	// 과거(종료) 근로계약 조회
-	List<ContractDto> findPast(
+	List<ContractHistoryResponseVO> findPast(
 			int employeeNo, TokenParseResponseVO parseVO
 	);
 
 	// 직원의 전체 근로계약 조회
-	List<ContractDto> findAllByEmployee(
+	List<ContractHistoryResponseVO> findAllByEmployee(
 			int employeeNo, TokenParseResponseVO parseVO
 	);
 
 	// 체결 후 근로조건 변경
-	ContractDto changeWorkCondition(
+	ContractChangeConditionResponseVO changeWorkCondition(
 			long contractNo,
 			ContractChangeConditionRequestVO request
 			,TokenParseResponseVO parseVO

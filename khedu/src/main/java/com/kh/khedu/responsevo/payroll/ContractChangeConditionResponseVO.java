@@ -2,8 +2,11 @@ package com.kh.khedu.responsevo.payroll;
 
 import java.sql.Timestamp;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-@Data
+import lombok.NoArgsConstructor;
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class ContractChangeConditionResponseVO {
 private String wageType;
 	
@@ -30,4 +33,5 @@ private String wageType;
 	private String contractStatus;
 	
 	private long contractNo;
+	private int employeeNo;
 }

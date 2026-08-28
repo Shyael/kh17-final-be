@@ -4,7 +4,7 @@ package com.kh.khedu.controller;
 
 import java.util.List;
 
-import org.springframework.beans.BeanUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,15 +16,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CommonsApiResponse;
 import com.kh.khedu.annotation.CurrentUser;
-import com.kh.khedu.dao.payroll.ContractDao;
-import com.kh.khedu.dto.payroll.ContractDto;
+
 import com.kh.khedu.requestvo.payroll.ContractAddRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployeeSignRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployerSignRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractExtendRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
+import com.kh.khedu.responsevo.payroll.ContractAddResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractChangeConditionResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractDetailResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractExtendResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractHistoryResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignDetailResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractUpdateDraftResponseVO;
@@ -48,21 +51,19 @@ public class ContractController {
 	@Autowired
 	private ContractService contractService;
 
-	@Autowired
-	private ContractDao contractDao;
-	
 	
 	
 	//계약 조회
+	
 	@GetMapping("/detail/{contractNo}")
-	public ContractDto find (@PathVariable long contractNo, @CurrentUser TokenParseResponseVO parseVO) {
+	public ContractDetailResponseVO find (@PathVariable long contractNo, @CurrentUser TokenParseResponseVO parseVO) {
 		return contractService.find(contractNo, parseVO);
 	}
 	
 
 	// 신규 근로계약 작성 //권한 설정 완
 	@PostMapping("/add")
-	public ContractDto add(
+	public ContractAddResponseVO add(
 			@Valid @RequestBody ContractAddRequestVO request
 			,@CurrentUser TokenParseResponseVO parseVO) {
 	
@@ -77,20 +78,7 @@ public class ContractController {
 			@Valid @RequestBody ContractUpdateDraftRequestVO request,
 			@CurrentUser TokenParseResponseVO parseVO) {
 
-		contractService.updateDraft(
-		        contractNo,
-		        request,
-		        parseVO
-		);
-
-		ContractDto edited = contractDao.find(contractNo);
-
-		ContractUpdateDraftResponseVO draft =
-		        new ContractUpdateDraftResponseVO();
-
-		BeanUtils.copyProperties(edited, draft);
-
-		return draft;
+	return contractService.updateDraft(contractNo, request, parseVO);
 	}
 
 	//서명 전 작성 된 정보 불러오기
@@ -136,7 +124,7 @@ public class ContractController {
 
 	// 직원의 현재 근로계약 조회
 	@GetMapping("/{employeeNo}/current")
-	public ContractDto findCurrent(
+	public ContractDetailResponseVO findCurrent(
 			@PathVariable int employeeNo
 			,@CurrentUser TokenParseResponseVO parseVO) {
 		
@@ -149,7 +137,7 @@ public class ContractController {
 
 	// 직원의 과거(종료) 근로계약 조회
 	@GetMapping("/{employeeNo}/past")
-	public List<ContractDto> findPast(
+	public List<ContractHistoryResponseVO> findPast(
 			@PathVariable int employeeNo
 			,@CurrentUser TokenParseResponseVO parseVO) {
 
@@ -161,7 +149,7 @@ public class ContractController {
 
 	// 직원의 전체 근로계약 조회
 	@GetMapping("/{employeeNo}")
-	public List<ContractDto> findAllByEmployee(
+	public List<ContractHistoryResponseVO> findAllByEmployee(
 			@PathVariable int employeeNo
 			,@CurrentUser TokenParseResponseVO parseVO) {
 
@@ -173,7 +161,7 @@ public class ContractController {
 
 	// 체결 후 근로조건 변경
 	@PostMapping("/{contractNo}/changeWorkCondition")
-	public ContractDto changeWorkCondition(
+	public ContractChangeConditionResponseVO changeWorkCondition(
 			@PathVariable long contractNo,
 			@Valid @RequestBody ContractChangeConditionRequestVO request
 			,@CurrentUser TokenParseResponseVO parseVO) {
