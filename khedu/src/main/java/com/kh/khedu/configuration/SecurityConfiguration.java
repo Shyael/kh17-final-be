@@ -103,10 +103,12 @@ public class SecurityConfiguration {
 						//직원(강사 정보 수정)
 						.requestMatchers("/api/tutor/**").permitAll() 
 						// 조건부 허용(내가 만든 요소들)
-//						.requestMatchers(
-//								"/api/employee/me" // 직원 내정보
-//						).authenticated()//인증필요
-						//.hasAnyAuthority(데스크, 직원, 원장) //데스크 직원 원장
+						.requestMatchers(
+								"/api/employee/me" // 직원 내정보
+								,"/api/account/password"
+						)
+						//.authenticated()//인증필요
+						.hasAnyAuthority("studnet", "parent", "desk", "teacher") //관리자 추가해야하나?
 						
 						//직원 기능 - Jwt에 authorities 클레임에 "마스터"가 포함되어 있어야 한다
 //						.requestMatchers("/api/employee/**")
