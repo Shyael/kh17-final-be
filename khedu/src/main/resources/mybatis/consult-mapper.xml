@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.consult">
+
+	<select id="reservationInfo" resultType="reservationDto">
+		select	*
+		from	reservation
+		where	reservation_no = #{reservationNo}
+	</select>
+
+	<select id="reservationList" resultType="reservationDto">
+		select	*
+		from	reservation
+		<where>
+			<if test="searchName != null and searchName.length() > 0">
+			and instr(reservation_name, #{searchName}) > 0
+			</if>
+			<if test="searchPhone != null and searchPhone.length() > 0">
+			and instr(reservation_phone, #{searchPhone}) > 0
+			</if>
+			<if test="searchType != null and searchType.length() > 0">
+			and reservation_type = #{searchType}
+			</if>
+			<if test="searchStatus != null and searchStatus.length() > 0">
+			and reservation_status = #{searchStatus}
+			</if>
+		</where>
+	</select>
+	
+	<update id="reservationUpdate">
+		update	reservation
+		<set>
+	        	reservation_status = #{reservationStatus},
+	        <if test="reservationComment != null and reservationComment != ''">
+	            reservation_comment = #{reservationComment}
+	        </if>
+	    </set>
+		where	reservation_no = #{reservationNo}
+	</update>
+</mapper>
