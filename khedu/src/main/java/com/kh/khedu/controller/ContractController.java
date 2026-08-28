@@ -16,23 +16,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CommonsApiResponse;
 import com.kh.khedu.annotation.CurrentUser;
-import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
-import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.requestvo.payroll.ContractAddRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployeeSignRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractEmployerSignRequestVO;
+import com.kh.khedu.requestvo.payroll.ContractExtendRequestVO;
 import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
+import com.kh.khedu.responsevo.payroll.ContractExtendResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignDetailResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractUpdateDraftResponseVO;
 import com.kh.khedu.service.payroll.ContractService;
-import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 
 @Tag(
@@ -63,7 +63,7 @@ public class ContractController {
 	// 신규 근로계약 작성 //권한 설정 완
 	@PostMapping("/add")
 	public ContractDto add(
-			@RequestBody ContractAddRequestVO request
+			@Valid @RequestBody ContractAddRequestVO request
 			,@CurrentUser TokenParseResponseVO parseVO) {
 	
 		return contractService.add(request,parseVO);
@@ -74,7 +74,7 @@ public class ContractController {
 	@PatchMapping("/editBefore/{contractNo}")
 	public ContractUpdateDraftResponseVO updateDraft(
 			@PathVariable long contractNo,
-			@RequestBody ContractUpdateDraftRequestVO request,
+			@Valid @RequestBody ContractUpdateDraftRequestVO request,
 			@CurrentUser TokenParseResponseVO parseVO) {
 
 		contractService.updateDraft(
@@ -108,7 +108,7 @@ public class ContractController {
 	@PatchMapping("/{contractNo}/employeeSign")
 	public void employeeSign(
 			@PathVariable long contractNo,
-			@RequestBody ContractEmployeeSignRequestVO request,
+			@Valid @RequestBody ContractEmployeeSignRequestVO request,
 			@CurrentUser TokenParseResponseVO parseVO) {
 
 		contractService.employeeSign(
@@ -123,7 +123,7 @@ public class ContractController {
 	@PatchMapping("/{contractNo}/employerSign")
 	public void employerSign(
 			@PathVariable long contractNo,
-			@RequestBody ContractEmployerSignRequestVO request,
+			@Valid @RequestBody ContractEmployerSignRequestVO request,
 			@CurrentUser TokenParseResponseVO parseVO) {
 
 		contractService.employerSign(
@@ -175,7 +175,7 @@ public class ContractController {
 	@PostMapping("/{contractNo}/changeWorkCondition")
 	public ContractDto changeWorkCondition(
 			@PathVariable long contractNo,
-			@RequestBody ContractChangeConditionRequestVO request
+			@Valid @RequestBody ContractChangeConditionRequestVO request
 			,@CurrentUser TokenParseResponseVO parseVO) {
 
 		return contractService.changeWorkCondition(
@@ -205,6 +205,21 @@ public class ContractController {
 				contractNo,
 				parseVO
 		);
+	}
+	
+	//단순 기간 연장
+	@PatchMapping("/{contractNo}/extend")
+	public ContractExtendResponseVO extendContract(
+	        @PathVariable long contractNo,
+	        @Valid @RequestBody ContractExtendRequestVO request,
+	        @CurrentUser TokenParseResponseVO parseVO) {
+
+	    request.setContractNo(contractNo);
+
+	    return contractService.extendContract(
+	            request,
+	            parseVO
+	    );
 	}
 
 }
