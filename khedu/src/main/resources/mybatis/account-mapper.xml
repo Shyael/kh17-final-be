@@ -45,5 +45,30 @@
 		select count(*) from account where account_id = #{accountId}
 	</select>
 	
-	<!-- accountNo를 통해 찾기 -->
+	<!-- accountNo를 통해 직원, 학생, 학부모 정보 찾기 -->
+	<select id="findCorrectly" resultType="AccountTypeNoVO">
+		SELECT
+		    a.account_no,
+		    a.account_type,
+		    e.employee_no,
+		    s.student_no,
+		    p.parent_no
+		FROM account a
+		LEFT JOIN employee e
+		    ON a.account_no = e.account_no
+		LEFT JOIN student s
+		    ON a.account_no = s.account_no
+		LEFT JOIN parent p
+		    ON a.account_no = p.account_no
+		WHERE a.account_no = #{accountNo}
+	</select>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="updateAccountPassword">
+		update account
+		set
+			account_password = #{accountPassword},
+			account_utime = systimestamp
+		where account_no = #{accountNo}
+	</update>
 </mapper>
