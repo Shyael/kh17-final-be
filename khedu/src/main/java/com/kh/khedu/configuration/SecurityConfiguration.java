@@ -107,7 +107,7 @@ public class SecurityConfiguration {
 								,"/api/account/password"
 						)
 						//.authenticated()//인증필요
-						.hasAnyAuthority("studnet", "parent", "desk", "teacher") //관리자 추가해야하나?
+						.hasAnyAuthority("student", "parent", "desk", "teacher") //관리자 추가해야하나?
 						
 						//직원 기능 - Jwt에 authorities 클레임에 "마스터"가 포함되어 있어야 한다
 //						.requestMatchers("/api/employee/**")

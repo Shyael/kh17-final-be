@@ -13,19 +13,19 @@
 		insert into student(
 			student_no,
 			account_no,
+			consult_customer_no,
 			student_school,
 			student_grade,
 			student_gender,
-			student_status,
 			student_etc
 		)
 		values(
 			#{studnetNo},
 			#{accountNo},
+			#{consultCustomerNo},
 			#{studentSchool},
 			#{studentGrade},
 			#{studentGender},
-			#{studentStatus},
 			#{studentEtc}
 		)
 	</insert>

@@ -13,6 +13,7 @@ import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.dto.AccountRolesDto;
+import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.vo.account.AccountRegisterVO;
@@ -35,16 +36,16 @@ public class EmployeeService {
 	@Transactional
 	public void registerEmployee(EmployeeRegisterRequestVO request) {
 		
-		// [1] accountService를 호출
+		// [1] account정보 담기
 		AccountRegisterVO accountVO = new AccountRegisterVO();
 		
 		BeanUtils.copyProperties(request, accountVO);
 		
-		accountVO.setAccountType("직원");
+		accountVO.setAccountType(AccountType.EMPLOYEE.getDescription());
 		//accoutService에서 등록정보 저장 및 비밀번호 암호화 한 후 accountNo 반환
 		int accountNo = accountService.createAccount(accountVO);
 		
-		// [2] employee 생성
+		// [2] employee 등록
 		int employeeNo = employeeDao.sequence();
 		
 		EmployeeVO employeeVO = EmployeeVO.builder()
