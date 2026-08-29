@@ -1,4 +1,4 @@
-package com.kh.khedu.student;
+package com.kh.khedu.vo.student;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

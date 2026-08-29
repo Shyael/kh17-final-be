@@ -1,4 +1,4 @@
-package com.kh.khedu.student;
+package com.kh.khedu.vo.student;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

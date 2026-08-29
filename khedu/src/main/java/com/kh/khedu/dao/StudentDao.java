@@ -1,6 +1,6 @@
 package com.kh.khedu.dao;
 
-import com.kh.khedu.student.StudentVO;
+import com.kh.khedu.vo.student.StudentVO;
 
 public interface StudentDao {
 

@@ -9,7 +9,7 @@ public enum RoleType {
 	
 	STUDENT(1, "STUDENT", "학생"),
 	PARENT(2, "PARENT", "학부모"),
-	TEACHER(3, "TEACHER", "강사"),
+	TUTOR(3, "TUTOR", "강사"),
 	DESK(4, "DESK", "데스크"),
 	ADMIN(5,"ADMIN", "원장");
 	
