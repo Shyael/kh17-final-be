@@ -20,7 +20,7 @@
 			student_etc
 		)
 		values(
-			#{studnetNo},
+			#{studentNo},
 			#{accountNo},
 			#{consultCustomerNo},
 			#{studentSchool},

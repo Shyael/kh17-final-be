@@ -44,7 +44,7 @@ public class EmployeeRestController {
 	@ApiResponse(responseCode = "200", description = "등록 성공")
 	@PostMapping(value ="/", produces = "application/json")
 	public ResponseEntity<Void> register(@RequestBody EmployeeRegisterRequestVO request){
-		//등록 처리는 서비스에서
+		//등록 처리
 		employeeService.registerEmployee(request);
 		return ResponseEntity.ok().build();
 	}

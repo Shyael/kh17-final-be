@@ -14,7 +14,6 @@ public class StudentJoinRequestVO {
 	private String accountPhone;
 	private String accountBirth;
 	
-	private Integer consultCustomerNo; 
 	private String studentSchool;
 	private String studentGrade;
 	private String studentGender;

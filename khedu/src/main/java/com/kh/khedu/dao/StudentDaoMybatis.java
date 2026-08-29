@@ -1,5 +1,7 @@
 package com.kh.khedu.dao;
 
+import org.apache.ibatis.session.SqlSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.student.StudentVO;
@@ -8,16 +10,17 @@ import com.kh.khedu.student.StudentVO;
 @Repository
 public class StudentDaoMybatis implements StudentDao {
 
+	@Autowired
+	private SqlSession sqlSession;
+	
 	@Override
 	public int sequence() {
-		// TODO Auto-generated method stub
-		return 0;
+		return sqlSession.selectOne("mapper.student.sequence");
 	}
 
 	@Override
 	public void insert(StudentVO studentVO) {
-		// TODO Auto-generated method stub
-		
+		sqlSession.insert("mapper.student.join", studentVO);
 	}
 
 }
