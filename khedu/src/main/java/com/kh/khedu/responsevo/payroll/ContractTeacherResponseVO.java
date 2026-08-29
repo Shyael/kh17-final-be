@@ -1,5 +1,13 @@
 package com.kh.khedu.responsevo.payroll;
 
-public class ContractTeacherResponseVO {
 
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data @Builder @NoArgsConstructor    @AllArgsConstructor
+public class ContractTeacherResponseVO {
+private int tutorSubjectNo;
 }
