@@ -29,7 +29,7 @@
 			#{accountName},
 			#{accountPhone},
 			#{accountBirth},
-			#{accountStatus},
+			COALESCE(#{accountStatus}, 'N'),
 			#{accountType}
 		)
 		

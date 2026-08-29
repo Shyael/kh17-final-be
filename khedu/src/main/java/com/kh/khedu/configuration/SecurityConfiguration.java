@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -22,6 +21,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.kh.khedu.enums.RoleType;
 
 import jakarta.servlet.http.Cookie;
 
@@ -82,6 +83,11 @@ public class SecurityConfiguration {
 						//.requestMatchers(HttpMethod.POST, "/api/lecture").authenticated()
 						//.requestMatchers(HttpMethod.PUT, "/api/lecture/**").authenticated()
 						
+						//임시 전부 공개화면 
+//						.requestMatchers(
+//								
+//						).permitAll()
+					
 						//auth service
 						.requestMatchers(
 							"/service/auth/login" //로그인 페이지
@@ -89,30 +95,54 @@ public class SecurityConfiguration {
 							,"/service/auth/refresh" //로그인 갱신페이지
 						).permitAll()
 						
+
 						//임시 전부 공개화면 
 						.requestMatchers(
 								"/api/employee/**" // 원장, 데스크만 접근 가능하게
 						).permitAll()
-						
+
 						//cert service
 						.requestMatchers("/service/cert/**").permitAll()
 						
-						//외부화면은 전체 공개
-						.requestMatchers("/academy/**").permitAll() 
+						//공개 화면
+						.requestMatchers(
+							"/academy/**",
+							"/api/student/**",
+							"/api/parent/**"
+						).permitAll() 
 						
 						// 조건부 허용(내가 만든 요소들)
+						
+						// [1] 회원
 						.requestMatchers(
-								"/api/employee/me" // 직원 내정보
-								,"/api/account/password"
+							"/api/account/password"
 						)
 						//.authenticated()//인증필요
-						.hasAnyAuthority("studnet", "parent", "desk", "teacher") //관리자 추가해야하나?
-						
-						//직원 기능 - Jwt에 authorities 클레임에 "마스터"가 포함되어 있어야 한다
-//						.requestMatchers("/api/employee/**")
-//							.hasAnyAuthority("3", "4", "5")
-						// 위 페이지 외에는 전부 거절
-						
+						.hasAnyAuthority(
+								RoleType.STUDENT.getDescription(),
+								RoleType.PARENT.getDescription(),
+								RoleType.TUTOR.getDescription(), 
+								RoleType.DESK.getDescription(),
+								RoleType.ADMIN.getDescription()
+						)
+						// [2] 강사
+						.requestMatchers(
+								"/api/employee/me" // 직원 내정보
+								)
+						.hasAnyAuthority(
+								RoleType.TUTOR.getDescription() 
+								)
+						// [3] 데스크
+						// [4] 원장
+						// [5] 직원
+						.requestMatchers(
+								"/api/employee/**"
+						)
+						.hasAnyAuthority(
+								RoleType.TUTOR.getDescription(), 
+								RoleType.DESK.getDescription(),
+								RoleType.ADMIN.getDescription()
+						)
 						//나머지 모두 허용
 						.anyRequest().permitAll()
 			)
