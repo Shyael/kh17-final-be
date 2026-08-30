@@ -8,7 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor    @AllArgsConstructor
-public class ContractEmployeeInfoVO {
+public class ContractEmployeeInfoResponseVO {
 private String accountName;
 private String accountPhone;
 }

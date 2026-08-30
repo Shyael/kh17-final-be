@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.error.GetOutException;
@@ -23,6 +22,8 @@ import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
 import com.kh.khedu.responsevo.payroll.ContractAddResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractChangeConditionResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractDetailResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractEmployeeDeskResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractEmployeeTeacherResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractExtendResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractHistoryResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignDetailResponseVO;
@@ -34,25 +35,67 @@ import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 @Service
 public class ContractServiceImpl implements ContractService {
 
-	@Autowired
-	private ContractDao contractDao;
+	 @Autowired
+	    private ContractDao contractDao;
 
-	@Autowired
-	private SignatureEncryptor signatureEncryptor;
+	    @Autowired
+	    private SignatureEncryptor signatureEncryptor;
 
-	@Autowired
-	private ContractAuthorizationService contractAuthorizationService;
+	    @Autowired
+	    private ContractAuthorizationService contractAuthorizationService;
 
+	    @Autowired
+	    private ContractPersonInfoService contractPersonInfoService;
+
+
+	    // 계약 대상 데스크 직원 인적사항 조회
+	    @Override
+	    public ContractEmployeeDeskResponseVO findDeskPersonInfo(
+	            int employeeNo,
+	            TokenParseResponseVO parseVO) {
+
+	        boolean isAdmin =
+	                contractAuthorizationService.checkAdmin(parseVO);
+
+	        if(!isAdmin)
+	            throw new GetOutException();
+
+	        return contractPersonInfoService.findDesk(employeeNo);
+	    }
+
+
+	    // 계약 대상 강사 직원 인적사항 조회
+	    @Override
+	    public ContractEmployeeTeacherResponseVO findTeacherPersonInfo(
+	            int employeeNo,
+	            TokenParseResponseVO parseVO) {
+
+	        boolean isAdmin =
+	                contractAuthorizationService.checkAdmin(parseVO);
+
+	        if(!isAdmin)
+	            throw new GetOutException();
+
+	        return contractPersonInfoService.findTeacher(employeeNo);
+	    }
+
+	
 	// 단순 조회 
 
 	@Override
 	public ContractDetailResponseVO find(long contractNo, TokenParseResponseVO parseVO) {
 		ContractDto find = contractDao.find(contractNo);
+		
+		 if(find == null)
+	            throw new TargetNotfoundException();
+		
 		boolean valid = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, contractNo);
 		if (!valid)
 			throw new GetOutException();
 		else
-			{ContractDetailResponseVO response = ContractDetailResponseVO.builder()
+			{
+			
+			ContractDetailResponseVO response = ContractDetailResponseVO.builder()
 					.contractNo(find.getContractNo())
 		            .employeeNo(find.getEmployeeNo())
 		            .wageType(find.getWageType())

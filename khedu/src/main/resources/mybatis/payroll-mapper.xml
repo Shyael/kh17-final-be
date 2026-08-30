@@ -313,4 +313,40 @@
 	where contract_status = 'active'
 	and contract_no=#{contractNo}
 </update>
+
+<!-- 계약 대상 직원 정보 조회 -->
+<select id="findContractEmployeeInfo"
+        resultType="ContractEmployeeInfoVO">
+    select employee_status,
+           employee_type,
+           account_no
+    from employee
+    where employee_no = #{employeeNo}
+</select>
+
+<!-- 계약 대상 직원 인적사항 조회 -->
+<select id="findContractPersonInformation"
+        resultType="ContractPersonInformationResponseVO">
+    select account_name,
+           account_phone
+    from account
+    where account_no = #{accountNo}
+</select>
+
+<!-- 계약 대상 강사 정보 조회 -->
+<select id="findContractTeacher"
+        resultType="ContractTeacherVO">
+    select tutor_no
+    from tutor
+    where employee_no = #{employeeNo}
+</select>
+
+<!-- 계약 대상 강사 과목 조회 -->
+<select id="findContractTeacherSubject"
+        resultType="int">
+    select tutor_subject_no
+    from tutor_subject
+    where tutor_no = #{tutorNo}
+    order by tutor_subject_no
+</select>
 </mapper>

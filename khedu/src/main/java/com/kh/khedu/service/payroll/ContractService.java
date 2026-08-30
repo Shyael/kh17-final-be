@@ -17,9 +17,23 @@ import com.kh.khedu.responsevo.payroll.ContractSignDetailResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractUpdateDraftResponseVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
-
+import com.kh.khedu.responsevo.payroll.ContractEmployeeDeskResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractEmployeeTeacherResponseVO;
 public interface ContractService {
 
+	
+	// 계약 대상 데스크 직원 인적사항 조회
+	ContractEmployeeDeskResponseVO findDeskPersonInfo(
+	        int employeeNo,
+	        TokenParseResponseVO parseVO
+	);
+
+	// 계약 대상 강사 직원 인적사항 조회
+	ContractEmployeeTeacherResponseVO findTeacherPersonInfo(
+	        int employeeNo,
+	        TokenParseResponseVO parseVO
+	);
+	
 	//단순 조회 
 	ContractDetailResponseVO find(long contractNo, TokenParseResponseVO parseVO);
 	

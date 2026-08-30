@@ -33,6 +33,8 @@ import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
 import com.kh.khedu.responsevo.payroll.ContractUpdateDraftResponseVO;
 import com.kh.khedu.service.payroll.ContractService;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractEmployeeDeskResponseVO;
+import com.kh.khedu.responsevo.payroll.ContractEmployeeTeacherResponseVO;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -51,7 +53,24 @@ public class ContractController {
 	@Autowired
 	private ContractService contractService;
 
-	
+	// 계약 대상 데스크 직원 인적사항 조회
+	@GetMapping("/desk/{employeeNo}")
+	public ContractEmployeeDeskResponseVO findDeskPersonInfo(
+	        @PathVariable int employeeNo,
+	        @CurrentUser TokenParseResponseVO parseVO) {
+
+	    return contractService.findDeskPersonInfo(employeeNo, parseVO);
+	}
+
+
+	// 계약 대상 강사 직원 인적사항 조회
+	@GetMapping("/teacher/{employeeNo}")
+	public ContractEmployeeTeacherResponseVO findTeacherPersonInfo(
+	        @PathVariable int employeeNo,
+	        @CurrentUser TokenParseResponseVO parseVO) {
+
+	    return contractService.findTeacherPersonInfo(employeeNo, parseVO);
+	}
 	
 	//계약 조회
 	
