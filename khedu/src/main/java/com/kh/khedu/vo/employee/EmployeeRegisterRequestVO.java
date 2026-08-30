@@ -18,7 +18,6 @@ public class EmployeeRegisterRequestVO {
 	private String accountPhone;
 	private String accountBirth;
 	private String accountStatus; //차단여부 Y N
-	private String accountType;
 	private String employeeType; //데스크/강사/원장
 	private LocalDate employeeHtime;
 	

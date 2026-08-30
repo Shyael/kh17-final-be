@@ -41,6 +41,7 @@ public class EmployeeService {
 		
 		BeanUtils.copyProperties(request, accountVO);
 		
+		//accountType : '직원' 등록
 		accountVO.setAccountType(AccountType.EMPLOYEE.getDescription());
 		//accoutService에서 등록정보 저장 및 비밀번호 암호화 한 후 accountNo 반환
 		int accountNo = accountService.createAccount(accountVO);
