@@ -112,8 +112,6 @@
             s.student_no,
             acc.account_name,
 
-            s.submit_content,
-            s.submit_comment,
             s.submit_wtime,
             s.submit_etime
 

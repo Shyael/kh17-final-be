@@ -62,30 +62,26 @@
 	    where ass.assignment_no = #{assignmentNo}
 	</select>
 
-
-    <!-- 전체 과제 목록 -->
-	<select id="selectList" resultType="AssignmentSubmitListVO">
+	<!-- 전체 과제 목록 -->
+	<select id="selectList" resultType="AssignmentListVO">
 	    select
-	        s.submit_no,
-	        s.assignment_no,
-	        a.assignment_title,
-	        s.student_no,
+	        ass.assignment_no,
+	        ass.course_no,
+	        c.course_title,
+	        ass.employee_no,
 	        acc.account_name,
-	        s.submit_wtime,
-	        s.submit_etime
-	
-	    from assignment_submit s
-	
-	    join assignment a
-	        on s.assignment_no = a.assignment_no
-	
-	    join student st
-	        on s.student_no = st.student_no
-	
+	        ass.assignment_title,
+	        ass.assignment_status,
+	        ass.assignment_due_date,
+	        ass.assignment_wtime
+	    from assignment ass
+	    join course c
+	        on ass.course_no = c.course_no
+	    join employee e
+	        on ass.employee_no = e.employee_no
 	    join account acc
-	        on st.account_no = acc.account_no
-	
-	    order by s.submit_no desc
+	        on e.account_no = acc.account_no
+	    order by ass.assignment_no desc
 	</select>
 	
 	<!-- 특정 강사가 등록한 과제 목록 -->
