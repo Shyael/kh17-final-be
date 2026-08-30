@@ -40,7 +40,7 @@ public class AuthService {
 		
 		//차단 회원이라면?
 		if(accountDto.getAccountStatus().equals("N")) {
-			throw new GetOutException("차단된 회원입니다");
+			throw new GetOutException("승인되지 않은 회원입니다");
 		}
 		
 		//비밀번호 변경한 지 30일 지난 경우
