@@ -50,7 +50,22 @@ public class AssignmentRestController {
         return assignmentService.insert(assignmentDto);
     }
 
+    //직원용 과제 목록 조회
+    @Operation(summary = "직원용 과제 목록 조회")
+    @GetMapping("/manage")
+    public List<AssignmentListVO> selectManageList(
+    		@CurrentUser TokenParseResponseVO parseVO){
+    	
+    	// 강사라면 본인이 작성한 과제만
+        if (parseVO.getRoleNames().contains("강사")) {
+            return assignmentService.selectListByEmployee(
+                    parseVO.getNoType());
+        }
 
+        // 원장, 데스크 등은 전체 과제
+        return assignmentService.selectList();
+    }
+    
     // 전체 과제 목록 조회
     @Operation(summary = "전체 과제 목록 조회")
     @GetMapping("/")

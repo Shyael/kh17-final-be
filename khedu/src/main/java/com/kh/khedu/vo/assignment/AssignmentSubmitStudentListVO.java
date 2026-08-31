@@ -17,4 +17,5 @@ public class AssignmentSubmitStudentListVO {
     private Integer submitNo;
     private Timestamp submitWtime;
     private Timestamp submitEtime;
+    private String submitComment;
 }

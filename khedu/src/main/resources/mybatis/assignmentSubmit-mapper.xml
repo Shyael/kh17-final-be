@@ -163,6 +163,7 @@
 	        acc.account_name,
 	
 	        s.submit_no,
+	        s.submit_comment,
 	        s.submit_wtime,
 	        s.submit_etime
 	
@@ -182,7 +183,7 @@
 	        and st.student_no = s.student_no
 	
 	    where a.assignment_no = #{assignmentNo}
-	      and sc.student_course_relation = '수강중'
+	      and sc.student_course_status = '수강중'
 	
 	    order by acc.account_name asc
 	</select>
