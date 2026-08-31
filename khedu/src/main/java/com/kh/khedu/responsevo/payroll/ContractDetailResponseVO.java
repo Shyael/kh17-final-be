@@ -21,7 +21,7 @@ public class ContractDetailResponseVO {
 
     private double dailyWorkHours;
     private double weeklyWorkHours;
-    private Double breakMinutes;
+    private Double writtenBreakMinutes;
     
     private Timestamp contractStart;
     private Timestamp contractEnd;

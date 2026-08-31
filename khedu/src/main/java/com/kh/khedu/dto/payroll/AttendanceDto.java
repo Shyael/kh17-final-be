@@ -34,10 +34,10 @@ public class AttendanceDto {
     private int breakMinutes;
 
     // 연장 근무시간
-    private Integer overtimeHours;
+    private Double overtimeHours;
 
     // 야간 근무시간
-    private Integer nightHours;
+    private Double nightHours;
 
     // 근태 구분
     // normal / absent / paid_leave / unpaid_leave

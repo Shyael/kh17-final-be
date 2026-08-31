@@ -43,5 +43,5 @@ public class ContractUpdateDraftRequestVO {
 	
 	private long contractNo;
 
-	private Double breakMinutes;
+	private Double writtenBreakMinutes;
 }

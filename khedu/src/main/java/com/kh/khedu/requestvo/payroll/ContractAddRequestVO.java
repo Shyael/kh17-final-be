@@ -53,5 +53,5 @@ public class ContractAddRequestVO {
 	// 계약서 본문
 	private String contractContent;
 	
-	private Double breakMinutes;
+	private Double writtenBreakMinutes;
 }

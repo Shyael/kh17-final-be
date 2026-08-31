@@ -20,7 +20,7 @@ public class ContractUpdateDraftResponseVO {
 
 	private double weeklyWorkHours;
 	
-	private Double breakMinutes;
+	private Double writtenBreakMinutes;
 	
 	private Timestamp contractStart;
 	

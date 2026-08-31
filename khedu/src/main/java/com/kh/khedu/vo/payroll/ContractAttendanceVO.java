@@ -43,7 +43,7 @@ public class ContractAttendanceVO {
 	private Timestamp clockOut;
 
 	// 휴게 시간(분)
-	private int breakMinutes;
+	private int writtenBreakMinutes;
 
 	// 연장 근무시간
 	private Integer overtimeHours;

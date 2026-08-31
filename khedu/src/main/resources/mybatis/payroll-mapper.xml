@@ -36,7 +36,7 @@ values(
     #{baseWage},
     #{dailyWorkHours},
     #{weeklyWorkHours},
-    #{breakMinutes},
+    #{writtenBreakMinutes},
     #{contractStart},
     #{contractEnd},
     #{payday},
@@ -184,8 +184,8 @@ values(
             contract_content = #{contractContent},
         </if>
         
-        <if test="breakMinutes != null">
-        	break_minutes = #{breakMinutes}
+        <if test="writtenBreakMinutes != null">
+        	break_minutes = #{writtenBreakMinutes}
         </if>
     </set>
 
@@ -239,8 +239,8 @@ values(
             contract_content = #{contractContent},
         </if>
         
-        <if test="breakMinutes !=null">
-        	break_minutes =#{breakMinutes}
+        <if test="writtenBreakMinutes !=null">
+        	break_minutes =#{writtenBreakMinutes}
         </if>
     </set>
 

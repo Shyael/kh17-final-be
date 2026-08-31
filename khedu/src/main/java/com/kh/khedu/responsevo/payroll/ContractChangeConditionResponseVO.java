@@ -19,7 +19,7 @@ private String wageType;
 
 	private double weeklyWorkHours;
 	
-	private Double breakMinutes;
+	private Double writtenBreakMinutes;
 
 	private Timestamp contractStart;
 	
