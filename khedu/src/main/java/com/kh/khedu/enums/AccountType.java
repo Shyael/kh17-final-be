@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor // final + notNull
 public enum AccountType {
 	
+	MEMBER("MEMBER", "회원"),
 	STUDENT("STUDENT", "학생"),
 	PARENT("PARENT", "학부모"),
 	EMPLOYEE("EMPLOYEE", "직원");

@@ -18,7 +18,7 @@ public class AccountService {
 		accountVO.setAccountNo(accountNo);
 		
 		//비밀번호 암호화하여 등록
-		accountDao.insert(accountVO);
+		accountDao.insert(accountVO);	
 		
 		return accountNo;
 	}

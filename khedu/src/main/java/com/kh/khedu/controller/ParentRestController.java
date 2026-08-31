@@ -2,11 +2,14 @@ package com.kh.khedu.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.service.ParentService;
 import com.kh.khedu.vo.account.AccountJoinResponseVO;
 import com.kh.khedu.vo.parent.ParentJoinRequestVO;
@@ -32,4 +35,5 @@ public class ParentRestController {
 			 = parentService.joinParent(request);
 		return accountJoinResponseVO;
 	}
+	
 }
