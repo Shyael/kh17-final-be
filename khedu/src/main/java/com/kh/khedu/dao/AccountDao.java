@@ -3,6 +3,9 @@ package com.kh.khedu.dao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.account.AccountTypeNoVO;
+import com.kh.khedu.vo.account.FindAccountIdRequestVO;
+
+import jakarta.validation.Valid;
 
 public interface AccountDao {
 	int sequence(); //등록
@@ -17,6 +20,9 @@ public interface AccountDao {
 	
 	//비밀번호 변경
 	boolean updateAccountPassword(AccountDto accountDto);
+	
+	//이름과 전화번호를 통해 아이디 찾기
+	AccountDto findAccountId(FindAccountIdRequestVO request);
 	
 	
 }

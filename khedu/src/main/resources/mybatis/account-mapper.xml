@@ -29,7 +29,7 @@
 			#{accountName},
 			#{accountPhone},
 			#{accountBirth},
-			#{accountStatus},
+			COALESCE(#{accountStatus}, 'N'),
 			#{accountType}
 		)
 		
@@ -71,4 +71,11 @@
 			account_utime = systimestamp
 		where account_no = #{accountNo}
 	</update>
+	
+	<!-- 아이디 찾기 -->
+	<select id="findAccountId" resultType="AccountDto">
+		select * from account
+		where account_name = #{accountName} 
+		and account_phone = #{accountPhone}
+	</select>
 </mapper>

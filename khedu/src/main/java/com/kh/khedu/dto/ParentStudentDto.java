@@ -6,9 +6,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Schema(name="학부모 Dto")
+@Schema(name= "학부모-학생 Dto")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class ParentDto {
+public class ParentStudentDto {
+	//복합키 (parentNo, studentNo)
 	private int parentNo;
-	private int accountNo;
+	private int studentNo;  
+	private String relationship; // 부 / 모 / 기타 / 보호자
 }

@@ -143,7 +143,7 @@
 	        and s.student_no = #{studentNo}
 	
 	    where sc.student_no = #{studentNo}
-	      and sc.student_course_relation = '수강중'
+	      and sc.student_course_status = '수강중'
 	
 	    order by ass.assignment_due_date asc,
 	             ass.assignment_no desc
