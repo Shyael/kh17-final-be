@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.account.AccountTypeNoVO;
+import com.kh.khedu.vo.account.FindAccountIdRequestVO;
+import com.kh.khedu.vo.account.FindAccountPasswordRequestVO;
 
 @Repository
 public class AccountDaoMybatis implements AccountDao {
@@ -52,5 +54,15 @@ public class AccountDaoMybatis implements AccountDao {
 		String encrypt = passwordEncdoer.encode(orgin);
 		accountDto.setAccountPassword(encrypt);
 		return sqlSession.update("mapper.account.updateAccountPassword", accountDto) > 0;
+	}
+
+	@Override
+	public AccountDto findAccountId(FindAccountIdRequestVO request) {
+		return sqlSession.selectOne("mapper.account.findAccountId", request);
+	}
+
+	@Override
+	public AccountDto findAccountPassword(FindAccountPasswordRequestVO request) {
+		return sqlSession.selectOne("mapper.account.findPasswordAccount", request);
 	}
 }
