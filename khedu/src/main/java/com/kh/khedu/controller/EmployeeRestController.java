@@ -49,15 +49,6 @@ public class EmployeeRestController {
 		return ResponseEntity.ok().build();
 	}
 	
-	//아이디(=이메일) 중복검사 - 사용가능하면 true, 불가능하면 false를 반환
-	@ApiResponse(responseCode = "200", description = "존재하는 아이디")
-	@GetMapping(value ="/check-id/{accountId}", produces = "application/json")
-	public boolean checkAccountId(@PathVariable String accountId) {
-		System.out.println("===== 아이디 중복검사 실행 =====");
-	    System.out.println("accountId = " + accountId);
-		return accountDao.checkAvailableId(accountId);
-	}
-	
 	//직원 정보를 반환하는 매핑(주의 : 내 정보 아님)
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping(value = "/{accountId}", produces = "application/json")
@@ -84,56 +75,4 @@ public class EmployeeRestController {
 		return employeeService.findMyInfo(parseVO.getAccountId());
 	}
 	
-	// 직원 비밀번호 변경 요청에 대한 처리
-	@PatchMapping("/password")
-	public ChangePasswordResponseVO  password
-	(
-		@CurrentUser TokenParseResponseVO parseVO,
-		@Valid @RequestBody ChangePasswordRequestVO request
-	) {
-		//[1] DB에서 기존 유저의 정보를 불러온다
-		AccountDto accountDto = accountDao.selectOne(parseVO.getAccountId());
-		if(accountDto == null) throw new TargetNotfoundException();
-		
-		//[2] 비밀번호를 비교한다
-		String db = accountDto.getAccountPassword(); //DB
-		String input = request.getPrevAccountPassword(); //사용자 입력
-		boolean valid = passwordEncoder.matches(input, db); //BCrypt비교
-		if(!valid) {//비밀번호 가 틀리면
-			return ChangePasswordResponseVO.builder()
-					.result(false)
-					.message("비밀번호가 일치하지 않습니다")
-					.build();
-		}
-		
-		//[3] 동일한 비밀번호로 변경을 차단
-		boolean same = request.getPrevAccountPassword().equals(request.getNewAccountPassword());
-		if(same) {
-			return ChangePasswordResponseVO.builder()
-					.result(false)
-					.message("동일한 비밀번호로는 변경이 불가능합니다")
-					.build();
-		}
-		
-		//[4] 형식 검사
-		String regex = "^(?=.*?[A-Z]+)(?=.*?[a-z]+)(?=.*?[0-9]+)(?=.*?[\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)\\-\\_\\=\\+\\[\\]\\{\\}\\'\\\"\\`\\~\\<\\>\\.\\,\\/\\?\\\\\\|]+)[A-Za-z0-9\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)\\-\\_\\=\\+\\[\\]\\{\\}\\'\\\"\\`\\~\\<\\>\\.\\,\\/\\?\\\\\\|]{8,16}$";
-		if(request.getNewAccountPassword().matches(regex) == false) {
-			return ChangePasswordResponseVO.builder()
-					.result(false)
-					.message("비밀번호는 대문자, 소문자, 숫자, 특수문자를 반드시 포함하여 변경해야합니다")
-				.build();
-		}
-		
-		//[5] 변경 시도
-		accountDao.updateAccountPassword(AccountDto.builder()
-					.accountNo(parseVO.getAccountNo())
-					.accountPassword(request.getNewAccountPassword())
-				.build());
-		
-		//[6] 성공 알림
-		return ChangePasswordResponseVO.builder()
-				.result(true)
-				.message("비밀번호 변경이 완료되었습니다")
-				.build();
-	}
 }

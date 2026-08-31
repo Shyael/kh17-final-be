@@ -9,4 +9,5 @@ import lombok.Data;
 public class AuthLoginRequestVO {
 	private String accountId;
 	private String accountPassword;
+	private String loginType;
 }

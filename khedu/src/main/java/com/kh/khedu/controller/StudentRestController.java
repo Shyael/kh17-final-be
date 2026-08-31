@@ -23,8 +23,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class StudentRestController {
 	@Autowired 
 	private StudentService studentService;
-	@Autowired
-	private AccountDao accountDao;
 	
 	//학생 회원가입
 	@ApiResponse(responseCode = "200", description = "등록 성공")
@@ -38,12 +36,4 @@ public class StudentRestController {
 		
 	}
 	
-	//아이디(=이메일) 중복검사 - 사용가능하면 true, 불가능하면 false를 반환
-	@ApiResponse(responseCode = "200", description = "존재하는 아이디")
-	@GetMapping(value ="/check-id/{accountId}", produces = "application/json")
-	public boolean checkAccountId(@PathVariable String accountId) {
-		System.out.println("===== 아이디 중복검사 실행 =====");
-	    System.out.println("accountId = " + accountId);
-		return accountDao.checkAvailableId(accountId);
-	}
 }
