@@ -1,5 +1,7 @@
 package com.kh.khedu.service;
 
+import java.util.List;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,7 +14,10 @@ import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.vo.account.AccountJoinResponseVO;
 import com.kh.khedu.vo.account.AccountRegisterVO;
+import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentJoinRequestVO;
+import com.kh.khedu.vo.student.StudentListResponseVO;
+import com.kh.khedu.vo.student.StudentUpdateRequestVO;
 import com.kh.khedu.vo.student.StudentVO;
 
 @Service
@@ -75,4 +80,26 @@ public class StudentService {
 				.message("학생 등록 신청이 완료되었습니다. 데스크 승인 후 서비스 이용이 가능합니다.")
 			.build();
 	}
+
+	//학생 목록
+	public List<StudentListResponseVO> getStudentList() {
+        // Dao의 메서드 호출
+        return studentDao.selectList();
+    }
+	
+	
+	//학생 상세정보
+	public StudentDetailResponseVO getStudentDetail(int studentNo) {
+	    return studentDao.selectDetail(studentNo);
+	}
+	
+	// 학생 정보 수정 로직
+    @Transactional // 🌟 둘 다 성공하거나, 하나라도 실패하면 롤백!
+    public void updateStudentInfo(StudentUpdateRequestVO requestVO) {
+        // 1. Account 정보 변경
+        studentDao.updateAccount(requestVO);
+        
+        // 2. Student 정보 변경
+        studentDao.updateStudent(requestVO);
+    }
 }

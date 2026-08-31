@@ -30,4 +30,74 @@
 		)
 	</insert>
 	
+	<!-- 학생 목록 전체 조회 (Account 테이블과 JOIN) -->
+	<select id="list" resultType="com.kh.khedu.vo.student.StudentListResponseVO">
+	    select 
+	        S.student_no as studentNo,
+	        A.account_name as studentName,       <!-- 계정 테이블의 이름을 가져와서 VO의 studentName에 매핑 -->
+	        S.student_school as studentSchool,
+	        S.student_grade as studentGrade,
+	        
+	        <!-- 통계 및 집계 데이터는 테이블이 완성되기 전까지 임시(더미) 데이터로 채워둡니다 -->
+	        100 as attendanceRate, 
+	        0 as unpaidAmount,
+	        '안전' as riskLevel
+	    from 
+	        student S
+	    inner join 
+	        account A ON S.account_no = A.account_no
+	    order by 
+	        S.student_no desc <!-- 최신 등록된 학생이 먼저 보이도록 내림차순 정렬 -->
+	</select>
+	
+	<!-- 학생 상세 정보 조회 -->
+    <select id="detail" resultType="com.kh.khedu.vo.student.StudentDetailResponseVO">
+        SELECT 
+            S.student_no AS studentNo,
+            S.account_no AS accountNo, 
+            A.account_name AS studentName,
+            A.account_phone AS studentPhone,
+            A.account_id AS studentEmail,
+            S.student_school AS studentSchool,
+            S.student_grade AS studentGrade,
+            S.student_gender AS studentGender,
+            S.student_etc AS studentEtc,
+            
+            -- DB에 아직 없는 테이블의 정보는 임시 가짜 데이터로 채웁니다.
+            '김보호' AS guardianName,
+            '010-9999-8888' AS guardianPhone,
+            'parent@test.com' AS guardianEmail,
+            '서울시 마포구 백범로 23' AS address,
+            350000 AS tuition,
+            1 AS isPaid
+        FROM 
+            student S
+        INNER JOIN 
+            account A ON S.account_no = A.account_no
+        WHERE 
+            S.student_no = #{studentNo} <!-- 전달받은 학생 번호로 1명만 검색 -->
+    </select>
+    
+    <!-- account 테이블 정보 수정 -->
+    <update id="updateAccountInfo">
+        UPDATE account 
+        SET 
+            account_phone = #{studentPhone},
+            account_id = #{studentEmail}
+        WHERE 
+            account_no = #{accountNo}
+    </update>
+
+    <!-- student 테이블 정보 수정 -->
+    <update id="updateStudentInfo">
+        UPDATE student
+        SET 
+            student_school = #{studentSchool},
+            student_grade = #{studentGrade},
+            student_gender = #{studentGender},
+            student_etc = #{studentEtc} -- 🚨 이전에 발견한 DB 컬럼명 오타(ect) 주의!
+        WHERE 
+            student_no = #{studentNo}
+    </update>
+	
 </mapper>
