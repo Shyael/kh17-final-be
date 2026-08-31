@@ -232,4 +232,11 @@ public class ContractDaoMybatis implements ContractDao {
 		return sqlSession.update("mapper.payroll.exitContracts")>0;
 	}
 
+	@Override
+	public Integer findEmployeeNoByAccountNo(long accountNo) {
+	    return sqlSession.selectOne(
+	            "mapper.payroll.findEmployeeNoByAccountNo",
+	            accountNo
+	    );
+	}
 }

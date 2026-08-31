@@ -59,7 +59,7 @@ public class ContractAuthorizationServiceImpl implements ContractAuthorizationSe
 		return isAdminOrPartyB;
 	}
 	
-	public boolean checkAdminOrPartyBOrDesk(TokenParseResponseVO parseVO, long contractNo) {
+	public boolean checkAdminOrPartyBOrDeskByContract(TokenParseResponseVO parseVO, long contractNo) {
 	
 		List<String> permission = parseVO.getRoleNames();
 		boolean isAdmin =permission.contains("admin");
@@ -80,5 +80,34 @@ public class ContractAuthorizationServiceImpl implements ContractAuthorizationSe
 		
 		return isAdminOrPartyBOrDesk;
 		
+	}
+
+	@Override
+	public boolean checkAdminOrPartyBOrDeskByEmployee(
+	        TokenParseResponseVO parseVO,
+	        int employeeNo) {
+
+	    // 원장은 허용
+	    if (checkAdmin(parseVO))
+	        return true;
+
+	    // 데스크는 허용
+	    List<String> roleNames = parseVO.getRoleNames();
+
+	    if (roleNames != null && roleNames.contains("desk"))
+	        return true;
+
+	    // 로그인한 계정에 연결된 직원번호 조회
+	    Integer loginEmployeeNo =
+	            contractDao.findEmployeeNoByAccountNo(
+	                    parseVO.getAccountNo()
+	            );
+
+	    // 직원이 아니거나 연결정보가 없으면 거부
+	    if (loginEmployeeNo == null)
+	        return false;
+
+	    // 조회 대상 직원 본인인지 확인
+	    return loginEmployeeNo == employeeNo;
 	}
 }

@@ -89,9 +89,15 @@ public class ContractServiceImpl implements ContractService {
 		 if(find == null)
 	            throw new TargetNotfoundException();
 		
-		boolean valid = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, contractNo);
-		if (!valid)
-			throw new GetOutException();
+		 boolean valid =
+			        contractAuthorizationService
+			                .checkAdminOrPartyBOrDeskByContract(
+			                        parseVO,
+			                        contractNo
+			                );
+
+			if (!valid)
+			    throw new GetOutException();
 		else
 			{
 			
@@ -375,7 +381,7 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public ContractDetailResponseVO findCurrent(int employeeNo, TokenParseResponseVO parseVO) {
 
-		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, employeeNo);
+		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDeskByEmployee(parseVO, employeeNo);
 
 		if (!hasPermission)
 			throw new GetOutException();
@@ -411,7 +417,7 @@ public class ContractServiceImpl implements ContractService {
 		// 권한은 당사자, 데스크, 원장만
 		
 		
-		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, employeeNo);
+		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDeskByEmployee(parseVO, employeeNo);
 		if(!hasPermission) throw new GetOutException();
 		
 		List<ContractDto> history = contractDao.findPast(employeeNo);
@@ -443,7 +449,7 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public List<ContractHistoryResponseVO> findAllByEmployee(int employeeNo, TokenParseResponseVO parseVO) {
 
-		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, employeeNo);
+		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDeskByContract(parseVO, employeeNo);
 		if(!hasPermission) throw new GetOutException();
 		
 		List<ContractDto> history = contractDao.findPast(employeeNo);
@@ -654,7 +660,7 @@ public class ContractServiceImpl implements ContractService {
 
 		// 권한은 당사자, 데스크, 원장만
 		
-		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDesk(parseVO, contractNo);
+		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDeskByContract(parseVO, contractNo);
 
 		if(!hasPermission) throw new GetOutException();
 		

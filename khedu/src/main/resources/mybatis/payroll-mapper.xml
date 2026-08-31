@@ -353,4 +353,11 @@ values(
     where tutor_no = #{tutorNo}
     order by tutor_subject_no
 </select>
+
+<!-- 로그인 계정번호로 직원번호 조회 -->
+<select id="findEmployeeNoByAccountNo" resultType="Integer">
+    select employee_no
+    from employee
+    where account_no = #{accountNo}
+</select>
 </mapper>

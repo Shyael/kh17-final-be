@@ -68,5 +68,6 @@ public interface ContractDao {
 	//도중 퇴사
 	boolean exitContracts(long contactNo);
 	
+	Integer findEmployeeNoByAccountNo(long accountNo);
 	
 }
