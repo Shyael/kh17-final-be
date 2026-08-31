@@ -1,11 +1,10 @@
 package com.kh.khedu.dao;
 
-import java.util.List;
-import org.apache.ibatis.annotations.Mapper;
-import com.kh.khedu.vo.student.StudentListResponseVO;
+import com.kh.khedu.vo.student.StudentVO;
 
-@Mapper
 public interface StudentDao {
-    List<StudentListResponseVO> selectList();
-    int sequence();
+
+	int sequence(); //등록
+	void insert(StudentVO studentVO);
+
 }

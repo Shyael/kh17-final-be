@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dto.AccountDto;
+import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.account.AccountTypeNoVO;
@@ -33,6 +34,27 @@ public class AuthService {
 			throw new TargetNotfoundException();
 		}
 		
+//		//로그인 유형 검사(회원로그인 창 or 직원 로그인 창)
+//		if(AccountType.EMPLOYEE.getDescription().equals(request.getLoginType())) {
+//			//로그인페이지가 직원인데
+//			
+//			if(!AccountType.EMPLOYEE.getDescription().equals(accountDto.getAccountType())) {
+//				//계정의 유형이 직원이 아니면
+//				throw new TargetNotfoundException();
+//			}
+//			
+//		}
+//		if(AccountType.MEMBER.getDescription().equals(request.getLoginType())) {
+//			//로그인페이지가 회원인데
+//			
+//			if(!AccountType.STUDENT.getDescription().equals(accountDto.getAccountType())
+//				&& !AccountType.PARENT.getDescription().equals(accountDto.getAccountType())) {
+//				//계정 유형이 학생, 학부모가 아니면
+//				throw new TargetNotfoundException();
+//			}
+//			
+//		}
+		
 		//비밀번호 비교
 		boolean valid = passwordEncoder.matches(
 				request.getAccountPassword(), accountDto.getAccountPassword());
@@ -40,7 +62,7 @@ public class AuthService {
 		
 		//차단 회원이라면?
 		if(accountDto.getAccountStatus().equals("N")) {
-			throw new GetOutException("차단된 회원입니다");
+			throw new GetOutException("승인되지 않은 회원입니다");
 		}
 		
 		//비밀번호 변경한 지 30일 지난 경우

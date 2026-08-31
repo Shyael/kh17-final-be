@@ -69,4 +69,34 @@ public class RandomService {
 		
 		return buffer.toString();
 	}
+	
+	// 임시 비밀번호 생성
+	public String generatePassword(int size) {
+	    StringBuffer buffer = new StringBuffer();
+
+	    // 최소 조건 보장
+	    // 1. 대문자
+	    buffer.append(
+	        upperCases.charAt(r.nextInt(upperCases.length()))
+	    );
+
+	    // 2. 소문자
+	    buffer.append(
+	        lowerCases.charAt(r.nextInt(lowerCases.length()))
+	    );
+
+	    // 3. 특수문자
+	    buffer.append(
+	    		special.charAt(r.nextInt(special.length()))
+	    );
+
+	    // 4. 나머지는 숫자
+	    for(int i = 0; i < size - 3; i++) {
+	        buffer.append(
+	            numbers.charAt(r.nextInt(numbers.length()))
+	        );
+	    }
+
+	    return buffer.toString();
+	}
 }

@@ -10,30 +10,30 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.dao.AccountDao;
-import com.kh.khedu.service.StudentService;
+import com.kh.khedu.service.ParentService;
 import com.kh.khedu.vo.account.AccountJoinResponseVO;
-import com.kh.khedu.vo.student.StudentJoinRequestVO;
+import com.kh.khedu.vo.parent.ParentJoinRequestVO;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "학생 정보 관리 서비스")
+@Tag(name = "학부모 정보 관리 서비스")
 @RestController
-@RequestMapping("/api/student")
-public class StudentRestController {
-	@Autowired 
-	private StudentService studentService;
+@RequestMapping("/api/parent")
+public class ParentRestController {
 	
-	//학생 회원가입
-	@ApiResponse(responseCode = "200", description = "등록 성공")
+	@Autowired
+	private ParentService parentService;
+	
+	//학부모 등록
+	@ApiResponse(responseCode = "200", description="등록 성공")
 	@PostMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
 	public AccountJoinResponseVO join(
-			@RequestBody StudentJoinRequestVO request) {
-		//회원가입 처리
-		AccountJoinResponseVO accountJoinResponseVO = studentService.joinStudent(request);
-		
+			@RequestBody ParentJoinRequestVO request) {
+			//회원가입 처리
+			AccountJoinResponseVO accountJoinResponseVO 
+			 = parentService.joinParent(request);
 		return accountJoinResponseVO;
-		
 	}
 	
 }
