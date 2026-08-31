@@ -37,14 +37,15 @@ public class AssignmentSubmitRestController {
     @Operation(summary = "과제 제출")
     @ApiResponse(responseCode = "200", description = "과제 제출 성공")
     @PostMapping("/")
-    public int insert(
+    public AssignmentSubmitDto insert(
             @RequestBody AssignmentSubmitDto assignmentSubmitDto,
             @CurrentUser TokenParseResponseVO parseVO) {
 
-        // 로그인한 학생번호 설정
         assignmentSubmitDto.setStudentNo(parseVO.getNoType());
 
-        return assignmentSubmitService.insert(assignmentSubmitDto);
+        assignmentSubmitService.insert(assignmentSubmitDto);
+
+        return assignmentSubmitDto;
     }
 
 
