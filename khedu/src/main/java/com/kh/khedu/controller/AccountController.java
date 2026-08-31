@@ -1,5 +1,7 @@
 package com.kh.khedu.controller;
 
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +16,7 @@ import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.service.AccountService;
 import com.kh.khedu.vo.account.ChangePasswordRequestVO;
 import com.kh.khedu.vo.account.ChangePasswordResponseVO;
 import com.kh.khedu.vo.account.FindAccountIdRequestVO;
@@ -23,6 +26,7 @@ import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 
 @Tag(name = "계정 정보 관리 서비스")
@@ -33,6 +37,8 @@ public class AccountController {
 	private AccountDao accountDao;
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+	@Autowired
+	private AccountService accountService;
 	
 	//아이디(=이메일) 중복검사 - 사용가능하면 true, 불가능하면 false를 반환
 	@ApiResponse(responseCode = "200", description = "존재하는 아이디")
@@ -120,10 +126,11 @@ public class AccountController {
 	}
 	
 	//비밀번호 찾기(리셋)
-	@ApiResponse(responseCode = "200", description = "비밀번호 찾기 성공")
+	@ApiResponse(responseCode = "200", description = "비밀번호 초기화 성공 및 이메일 발송")
 	@PostMapping("/find-password")
 	public void findPassword(
-			@Valid @RequestBody FindAccountPasswordRequestVO request) {
+			@Valid @RequestBody FindAccountPasswordRequestVO request) throws MessagingException, IOException {
 		
+		accountService.resetPassword(request);
 	}
 }
