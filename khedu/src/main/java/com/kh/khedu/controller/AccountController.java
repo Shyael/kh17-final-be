@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,9 @@ import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.account.ChangePasswordRequestVO;
 import com.kh.khedu.vo.account.ChangePasswordResponseVO;
+import com.kh.khedu.vo.account.FindAccountIdRequestVO;
+import com.kh.khedu.vo.account.FindAccountIdResponseVO;
+import com.kh.khedu.vo.account.FindAccountPasswordRequestVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -88,5 +92,38 @@ public class AccountController {
 				.result(true)
 				.message("비밀번호 변경이 완료되었습니다")
 				.build();
+	}
+	
+	//아이디 찾기
+	@ApiResponse(responseCode = "200", description = "아이디 찾기 성공")
+	@PostMapping("/find-id")
+	public FindAccountIdResponseVO findId(
+			@Valid @RequestBody FindAccountIdRequestVO request) {
+		
+		//입력받은 이름과 전화번호를 통해 계정정보 조회
+		AccountDto accountDto = accountDao.findAccountId(request);
+		
+		//아이디가 없으면
+		if(accountDto.getAccountId() == null) {
+			return FindAccountIdResponseVO.builder()
+						.result(false)
+						.message("입력하신 정보와 일치하는 계정이 없습니다")
+					.build();
+		}
+		
+		//찾기 성공
+		return FindAccountIdResponseVO.builder()
+				.result(true)
+				.message("아이디를 찾았습니다")
+				.accountId(accountDto.getAccountId())
+			.build();
+	}
+	
+	//비밀번호 찾기(리셋)
+	@ApiResponse(responseCode = "200", description = "비밀번호 찾기 성공")
+	@PostMapping("/find-password")
+	public void findPassword(
+			@Valid @RequestBody FindAccountPasswordRequestVO request) {
+		
 	}
 }

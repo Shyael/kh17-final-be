@@ -22,4 +22,7 @@ public class AccountService {
 		
 		return accountNo;
 	}
+	
+	//임시 비밀번호 생성
+	
 }
