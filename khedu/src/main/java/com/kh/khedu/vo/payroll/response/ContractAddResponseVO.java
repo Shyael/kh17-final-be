@@ -1,4 +1,4 @@
-package com.kh.khedu.responsevo.payroll;
+package com.kh.khedu.vo.payroll.response;
 
 import java.sql.Timestamp;
 
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContractDetailResponseVO {
+public class ContractAddResponseVO {
 
     private long contractNo;
     private int employeeNo;
@@ -22,7 +22,6 @@ public class ContractDetailResponseVO {
     private double dailyWorkHours;
     private double weeklyWorkHours;
     private Double writtenBreakMinutes;
-    
     private Timestamp contractStart;
     private Timestamp contractEnd;
 
@@ -31,9 +30,4 @@ public class ContractDetailResponseVO {
     private String contractContent;
 
     private String contractStatus;
-
-    private boolean employeeSigned;
-    private boolean employerSigned;
-
-    private Timestamp signedTime;
 }

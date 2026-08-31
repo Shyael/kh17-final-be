@@ -6,9 +6,9 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import com.kh.khedu.connectvo.payroll.ContractEmployeeInfoVO;
-import com.kh.khedu.connectvo.payroll.ContractTeacherVO;
-import com.kh.khedu.responsevo.payroll.ContractEmployeeInfoResponseVO;
+import com.kh.khedu.vo.payroll.connect.ContractEmployeeInfoVO;
+import com.kh.khedu.vo.payroll.connect.ContractTeacherVO;
+import com.kh.khedu.vo.payroll.response.ContractEmployeeInfoResponseVO;
 @Repository
 public class ContractPersonInfoDaoMybatis implements ContractPersonInfoDao {
 

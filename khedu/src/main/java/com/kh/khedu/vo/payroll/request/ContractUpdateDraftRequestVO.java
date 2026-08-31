@@ -1,4 +1,4 @@
-package com.kh.khedu.requestvo.payroll;
+package com.kh.khedu.vo.payroll.request;
 
 
 import java.sql.Timestamp;
@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 @Data
 public class ContractUpdateDraftRequestVO {
@@ -42,6 +43,7 @@ public class ContractUpdateDraftRequestVO {
 	private String contractContent;
 	
 	private long contractNo;
-
+	
+	@PositiveOrZero
 	private Double writtenBreakMinutes;
 }

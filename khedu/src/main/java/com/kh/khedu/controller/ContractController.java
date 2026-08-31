@@ -16,25 +16,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CommonsApiResponse;
 import com.kh.khedu.annotation.CurrentUser;
-
-import com.kh.khedu.requestvo.payroll.ContractAddRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractEmployeeSignRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractEmployerSignRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractExtendRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
-import com.kh.khedu.responsevo.payroll.ContractAddResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractChangeConditionResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractDetailResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractExtendResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractHistoryResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractSignDetailResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractUpdateDraftResponseVO;
 import com.kh.khedu.service.payroll.ContractService;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractEmployeeDeskResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractEmployeeTeacherResponseVO;
+import com.kh.khedu.vo.payroll.request.ContractAddRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractEmployeeSignRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractEmployerSignRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractExtendRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
+import com.kh.khedu.vo.payroll.response.ContractAddResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractChangeConditionResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractDetailResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractEmployeeDeskResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractEmployeeTeacherResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractExtendResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractHistoryResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractSignDetailResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractSignResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractUpdateDraftResponseVO;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -228,5 +227,6 @@ public class ContractController {
 	            parseVO
 	    );
 	}
-
+	
+	
 }

@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.payroll.ContractDto;
-import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
 import com.kh.khedu.util.SignatureEncryptor;
+import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 
 @Repository
 public class ContractDaoMybatis implements ContractDao {

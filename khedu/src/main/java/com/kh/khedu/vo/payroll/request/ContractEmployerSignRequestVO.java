@@ -1,4 +1,4 @@
-package com.kh.khedu.requestvo.payroll;
+package com.kh.khedu.vo.payroll.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

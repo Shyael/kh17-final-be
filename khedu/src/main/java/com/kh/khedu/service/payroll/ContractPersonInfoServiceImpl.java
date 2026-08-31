@@ -2,15 +2,14 @@ package com.kh.khedu.service.payroll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.kh.khedu.connectvo.payroll.ContractEmployeeInfoVO;
-import com.kh.khedu.connectvo.payroll.ContractTeacherVO;
 import com.kh.khedu.dao.payroll.ContractPersonInfoDao;
 import com.kh.khedu.error.TargetNotfoundException;
-import com.kh.khedu.responsevo.payroll.ContractEmployeeDeskResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractEmployeeInfoResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractEmployeeTeacherResponseVO;
-
-import com.kh.khedu.responsevo.payroll.ContractTeacherResponseVO;
+import com.kh.khedu.vo.payroll.connect.ContractEmployeeInfoVO;
+import com.kh.khedu.vo.payroll.connect.ContractTeacherVO;
+import com.kh.khedu.vo.payroll.response.ContractEmployeeDeskResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractEmployeeInfoResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractEmployeeTeacherResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractTeacherResponseVO;
 
 @Service
 public class ContractPersonInfoServiceImpl implements ContractPersonInfoService {

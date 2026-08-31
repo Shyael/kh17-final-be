@@ -3,8 +3,8 @@ package com.kh.khedu.dao.payroll;
 import java.util.List;
 
 import com.kh.khedu.dto.payroll.ContractDto;
-import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 
 public interface ContractDao {
 

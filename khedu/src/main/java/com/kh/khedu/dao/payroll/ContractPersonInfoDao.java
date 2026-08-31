@@ -2,9 +2,9 @@ package com.kh.khedu.dao.payroll;
 
 import java.util.List;
 
-import com.kh.khedu.connectvo.payroll.ContractEmployeeInfoVO;
-import com.kh.khedu.connectvo.payroll.ContractTeacherVO;
-import com.kh.khedu.responsevo.payroll.ContractEmployeeInfoResponseVO;
+import com.kh.khedu.vo.payroll.connect.ContractEmployeeInfoVO;
+import com.kh.khedu.vo.payroll.connect.ContractTeacherVO;
+import com.kh.khedu.vo.payroll.response.ContractEmployeeInfoResponseVO;
 
 public interface ContractPersonInfoDao {
 

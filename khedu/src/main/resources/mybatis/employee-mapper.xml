@@ -54,4 +54,28 @@
 	        account_utime = systimestamp
 	    where account_no = #{accountNo} 
 	</update>
+	
+	<!-- 직원 현재 상태 조회 -->
+	<select id="findEmployeeStatus"
+        resultType="String">
+
+    select employee_status
+    from employee
+    where employee_no = #{employeeNo}
+
+	</select>
+	
+	
+	<!-- 최초 근로계약 체결 시 미배정 → 재직 -->
+	<update id="changeUnassignedToWorking">
+
+    update employee
+    set employee_status = '재직'
+    where employee_no = #{employeeNo}
+      and employee_status = '미배정'
+
+	</update>
+	
+	
+	
 </mapper>

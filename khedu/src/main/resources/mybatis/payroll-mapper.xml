@@ -330,7 +330,7 @@ values(
 
 <!-- 계약 대상 직원 인적사항 조회 -->
 <select id="findContractPersonInformation"
-        resultType="ContractPersonInformationResponseVO">
+        resultType="ContractEmployeeInfoResponseVO">
     select account_name,
            account_phone
     from account

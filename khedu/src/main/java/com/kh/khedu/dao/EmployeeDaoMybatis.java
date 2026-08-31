@@ -24,5 +24,13 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 	public EmployeeDetailVO findMyInfo(String accountId) {
 		return sqlSession.selectOne("mapper.employee.findMyInfo",accountId);
 	}
+	@Override
+	public String findEmployeeStatus(int employeeNo) {
+		return sqlSession.selectOne("mapper.employee.findEmployeeStatus",employeeNo);
+	}
+	@Override
+	public boolean changeUnassignedToWorking(int employeeNo) {
+		return sqlSession.update("mapper.employee.changeUnassignedToWorking",employeeNo)>0;
+	}
 	
 }

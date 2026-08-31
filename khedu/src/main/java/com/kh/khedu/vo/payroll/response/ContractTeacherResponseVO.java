@@ -1,4 +1,8 @@
-package com.kh.khedu.connectvo.payroll;
+package com.kh.khedu.vo.payroll.response;
+
+
+
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor    @AllArgsConstructor
-public class ContractTeacherVO {
-private String employeeType;
-private int tutorNo;
+public class ContractTeacherResponseVO {
+private List<Integer> tutorSubjectNoList; 
 }

@@ -9,35 +9,36 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
-import com.kh.khedu.requestvo.payroll.ContractAddRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractChangeConditionRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractEmployeeSignRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractEmployerSignRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractExtendRequestVO;
-import com.kh.khedu.requestvo.payroll.ContractUpdateDraftRequestVO;
-import com.kh.khedu.responsevo.payroll.ContractAddResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractChangeConditionResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractDetailResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractEmployeeDeskResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractEmployeeTeacherResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractExtendResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractHistoryResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractSignDetailResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractSignResponseVO;
-import com.kh.khedu.responsevo.payroll.ContractUpdateDraftResponseVO;
 import com.kh.khedu.util.SignatureEncryptor;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.vo.payroll.request.ContractAddRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractEmployeeSignRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractEmployerSignRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractExtendRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
+import com.kh.khedu.vo.payroll.response.ContractAddResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractChangeConditionResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractDetailResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractEmployeeDeskResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractEmployeeTeacherResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractExtendResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractHistoryResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractSignDetailResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractSignResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractUpdateDraftResponseVO;
 
 @Service
 public class ContractServiceImpl implements ContractService {
 
 	 @Autowired
 	    private ContractDao contractDao;
-
+	 
 	    @Autowired
 	    private SignatureEncryptor signatureEncryptor;
 
@@ -47,7 +48,33 @@ public class ContractServiceImpl implements ContractService {
 	    @Autowired
 	    private ContractPersonInfoService contractPersonInfoService;
 
+	   @Autowired
+	   private EmployeeDao employeeDao;
 
+	    private void validateWrittenBreakTimes(
+	            Double dailyWorkHours,
+	            Double writtenBreakTimes) {
+
+	        if (dailyWorkHours == null || writtenBreakTimes == null) {
+	            throw new GetOutException();
+	        }
+
+	        if (writtenBreakTimes < 0) {
+	            throw new GetOutException();
+	        }
+
+	        if (dailyWorkHours >= 8 && writtenBreakTimes < 60) {
+	            throw new GetOutException();
+	        }
+
+	        if (dailyWorkHours >= 4
+	                && dailyWorkHours < 8
+	                && writtenBreakTimes < 30) {
+	            throw new GetOutException();
+	        }
+	    }
+	    
+	    
 	    // 계약 대상 데스크 직원 인적사항 조회
 	    @Override
 	    public ContractEmployeeDeskResponseVO findDeskPersonInfo(
@@ -59,6 +86,8 @@ public class ContractServiceImpl implements ContractService {
 
 	        if(!isAdmin)
 	            throw new GetOutException();
+	        
+	        
 
 	        return contractPersonInfoService.findDesk(employeeNo);
 	    }
@@ -138,6 +167,8 @@ public class ContractServiceImpl implements ContractService {
 		// 기존 계약 조건 변경은 changeWorkCondition에서 처리
 		if (currentContract != null)
 			throw new GetOutException();
+		
+		
 
 		// [3] 요청정보를 근로계약 DTO로 변환
 		ContractDto contractDto = new ContractDto();
@@ -153,6 +184,8 @@ public class ContractServiceImpl implements ContractService {
 		if (contractDto.getDailyWorkHours() > contractDto.getWeeklyWorkHours()) {
 			throw new GetOutException();
 		}
+		
+		validateWrittenBreakTimes(contractDto.getDailyWorkHours(), contractDto.getWrittenBreakMinutes());
 
 		// [6] 최초 등록 상태는 서명대기
 		contractDto.setContractStatus("pending");
@@ -229,6 +262,8 @@ public class ContractServiceImpl implements ContractService {
 		if (currentContract.getDailyWorkHours() > currentContract.getWeeklyWorkHours()) {
 			throw new GetOutException();
 		}
+		
+		validateWrittenBreakTimes(currentContract.getDailyWorkHours(), currentContract.getWrittenBreakMinutes());
 
 		// [6] 계약내용 수정
 		contractDao.updateDraft(request);
@@ -322,6 +357,10 @@ public class ContractServiceImpl implements ContractService {
 
 			if (completeResult == false)
 				throw new GetOutException();
+			
+			employeeDao.changeUnassignedToWorking(
+		            currentContract.getEmployeeNo()
+		    );
 		}
 	}
 
@@ -374,6 +413,10 @@ public class ContractServiceImpl implements ContractService {
 
 			if (completeResult == false)
 				throw new GetOutException();
+			
+			employeeDao.changeUnassignedToWorking(
+		            currentContract.getEmployeeNo()
+		    );
 		}
 	}
 
@@ -596,6 +639,7 @@ public class ContractServiceImpl implements ContractService {
 			throw new GetOutException();
 		}
 
+		validateWrittenBreakTimes(newContractDto.getDailyWorkHours(), newContractDto.getWrittenBreakMinutes());
 		
 		
 		// [7] 변경 계약은 미래 시점부터 적용
@@ -705,4 +749,6 @@ public class ContractServiceImpl implements ContractService {
 		contractDao.exitContracts(contractNo);
 	}
 
+
+	
 }

@@ -1,4 +1,4 @@
-package com.kh.khedu.responsevo.payroll;
+package com.kh.khedu.vo.payroll.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

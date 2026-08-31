@@ -1,16 +1,15 @@
-package com.kh.khedu.responsevo.payroll;
+package com.kh.khedu.vo.payroll.response;
 
 import java.sql.Timestamp;
 
 import lombok.Data;
 
 @Data
-public class ContractEmployeeSignResponseVO {
+public class ContractEmployerSignResponseVO {
 	private long contractNo;
 
-    private String employeeSignature;
-
-  
+   
+    private String employerSignature;
 
     private Timestamp signedTime;
 
