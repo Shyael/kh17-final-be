@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor    @AllArgsConstructor
 public class ContractTeacherResponseVO {
-private List<Integer> tutorSubjectNoList;
+private List<Integer> tutorSubjectNoList; 
 }
