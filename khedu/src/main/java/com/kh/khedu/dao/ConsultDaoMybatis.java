@@ -9,7 +9,10 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.kh.khedu.dto.ConsultCustomerDto;
 import com.kh.khedu.dto.ReservationDto;
+import com.kh.khedu.vo.consult.ConsultCustomerListItemVO;
+import com.kh.khedu.vo.consult.ConsultCustomerListRequestVO;
 import com.kh.khedu.vo.consult.ConsultReservationListItemVO;
 import com.kh.khedu.vo.consult.ConsultReservationListRequestVO;
 import com.kh.khedu.vo.consult.ConsultReservationUpdateRequestVO;
@@ -52,5 +55,30 @@ public class ConsultDaoMybatis implements ConsultDao {
 		params.put("reservationStatus", request.getReservationStatus());
 		params.put("reservationComment", request.getReservationComment());
 		return sqlSession.update("mapper.consult.reservationUpdate", params) > 0;
+	}
+	
+	@Override
+	public int customerSequence() {
+		return sqlSession.selectOne("mapper.consult.customerSequence");
+	}
+	
+	@Override
+	public ConsultCustomerDto selectConsultCustomerOne(int customerNo) {
+		return sqlSession.selectOne("mapper.consult.customerInfo", customerNo);
+	}
+	
+	@Override
+	public List<ConsultCustomerListItemVO> selectConsultCustomerList(ConsultCustomerListRequestVO request) {
+		return sqlSession.selectList("mapper.consult.customerList", request);
+	}
+	
+	@Override
+	public boolean customerAdd(ConsultCustomerListItemVO request) {
+		return sqlSession.update("mapper.consult.customerAdd", request) > 0;
+	}
+	
+	@Override
+	public boolean customerUpdate(ConsultCustomerListItemVO request) {
+		return sqlSession.update("mapper.consult.customerUpdate", request) > 0;
 	}
 }

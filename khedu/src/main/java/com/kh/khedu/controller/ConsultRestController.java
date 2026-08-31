@@ -10,11 +10,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.dao.ConsultDao;
+import com.kh.khedu.dto.ConsultCustomerDto;
 import com.kh.khedu.dto.ReservationDto;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.vo.consult.ConsultCustomerListItemVO;
+import com.kh.khedu.vo.consult.ConsultCustomerListRequestVO;
+import com.kh.khedu.vo.consult.ConsultCustomerListResponseVO;
 import com.kh.khedu.vo.consult.ConsultReservationListRequestVO;
 import com.kh.khedu.vo.consult.ConsultReservationListResponseVO;
 import com.kh.khedu.vo.consult.ConsultReservationUpdateRequestVO;
+import com.kh.khedu.vo.consult.ConsultReservationUpdateResponseVO;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +42,7 @@ public class ConsultRestController {
 				.build();
 	}
 	
-	//상담 상태 변경
+	//상담 예약 상태 변경
 	@ApiResponse(responseCode = "200", description = "변경 성공")
 	@PutMapping(value = "/reservation/{reservationNo}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public boolean setReservationStatus(
@@ -46,5 +51,38 @@ public class ConsultRestController {
 		ReservationDto findDto = consultDao.selectReservationOne(reservationNo);
 		if(findDto == null) throw new TargetNotfoundException("존재하지 않는 예약정보");
 		return consultDao.reservationUpdate(reservationNo, request);
+	}
+	
+	//상담 고객 목록
+	@ApiResponse(responseCode = "200", description = "조회 성공")
+	@PostMapping(value ="/customer", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ConsultCustomerListResponseVO getConsultCustomerList(
+			@RequestBody ConsultCustomerListRequestVO request
+			) {
+		return ConsultCustomerListResponseVO.builder()
+					.items(consultDao.selectConsultCustomerList(request))
+				.build();
+	}
+	
+	//상담 정보 저장
+	@ApiResponse(responseCode = "200", description = "저장 성공")
+	@PutMapping(value ="/customer", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ConsultReservationUpdateResponseVO setConsultCustomerUpdate(
+			@RequestBody ConsultCustomerListItemVO request
+			) {
+		if(request.getCustomerNo() == null) {
+ 			request.setCustomerNo(consultDao.customerSequence());
+ 			return ConsultReservationUpdateResponseVO.builder()
+ 						.result(consultDao.customerAdd(request))
+ 						.item(request)
+ 					.build();
+		} else {
+			ConsultCustomerDto findDto = consultDao.selectConsultCustomerOne(request.getCustomerNo());
+			if(findDto == null) throw new TargetNotfoundException("고객 정보 없음");
+			return ConsultReservationUpdateResponseVO.builder()
+						.result(consultDao.customerUpdate(request))
+						.item(request)
+					.build(); 
+		}
 	}
 }

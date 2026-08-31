@@ -31,6 +31,77 @@
 		</where>
 	</select>
 	
+	<select id="customerSequence" resultType="int">
+		select consult_customer_seq.nextval from dual
+	</select>
+	
+	<select id="customerInfo" resultType="ConsultCustomerDto">
+		select	*
+		from	consult_customer
+		where	customer_no = #{customerNo}
+	</select>
+	
+	<select id="customerList" resultType="ConsultCustomerDto">
+		select	* 
+		from	consult_customer
+		<where>
+			or	instr(student_name, #{search}) > 0
+			or	instr(student_phone, #{search}) > 0
+			or	instr(parent_name, #{search}) > 0
+			or	instr(parent_phone, #{search}) > 0
+		</where>
+	</select>
+	
+	<insert id="customerAdd">
+		insert into consult_customer
+		(
+			customer_no,
+			student_name,
+			student_phone,
+			student_email,
+			student_address,
+			student_school,
+			student_grade,
+			student_gender,
+			parent_name,
+			parent_phone,
+			parent_email,
+			customer_memo
+		) values (
+			#{customerNo},
+			#{studentName},
+			#{studentPhone},
+			#{studentEmail},
+			#{studentAddress},
+			#{studentSchool},
+			#{studentGrade},
+			#{studentGender},
+			#{parentName},
+			#{parentPhone},
+			#{parentEmail},
+			#{customerMemo}
+		)
+	</insert>
+	
+	<update id="customerUpdate">
+		update	consult_customer
+		<set>
+				student_name = #{studentName},
+				student_phone = #{studentPhone},
+				student_email = #{studentEmail},
+				student_address = #{studentAddress},
+				student_school = #{studentSchool},
+				student_grade = #{studentGrade},
+				student_gender = #{studentGender},
+				parent_name = #{parentName},
+				parent_phone = #{parentPhone},
+				parent_email = #{parentEmail},
+				customer_memo = #{customerMemo},
+				customer_utime = systimestamp
+		</set>
+		where	customer_no = #{customerNo}
+	</update>
+	
 	<update id="reservationUpdate">
 		update	reservation
 		<set>
