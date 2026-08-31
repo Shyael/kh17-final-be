@@ -115,22 +115,22 @@ public class SecurityConfiguration {
 						
 						// [1] 회원
 						.requestMatchers(
-							"/api/account/password"
+							"/api/account/**"
 						)
 						//.authenticated()//인증필요
 						.hasAnyAuthority(
-								RoleType.STUDENT.getDescription(),
-								RoleType.PARENT.getDescription(),
-								RoleType.TUTOR.getDescription(), 
-								RoleType.DESK.getDescription(),
-								RoleType.ADMIN.getDescription()
+								RoleType.STUDENT.getCode(),
+								RoleType.PARENT.getCode(),
+								RoleType.TUTOR.getCode(), 
+								RoleType.DESK.getCode(),
+								RoleType.ADMIN.getCode()
 						)
 						// [2] 강사
 						.requestMatchers(
 								"/api/employee/me" // 직원 내정보
 								)
 						.hasAnyAuthority(
-								RoleType.TUTOR.getDescription() 
+								RoleType.TUTOR.getCode() 
 								)
 						// [3] 데스크
 						// [4] 원장
@@ -139,9 +139,9 @@ public class SecurityConfiguration {
 								"/api/employee/**"
 						)
 						.hasAnyAuthority(
-								RoleType.TUTOR.getDescription(), 
-								RoleType.DESK.getDescription(),
-								RoleType.ADMIN.getDescription()
+								RoleType.TUTOR.getCode(), 
+								RoleType.DESK.getCode(),
+								RoleType.ADMIN.getCode()
 						)
 						//나머지 모두 허용
 						.anyRequest().permitAll()
