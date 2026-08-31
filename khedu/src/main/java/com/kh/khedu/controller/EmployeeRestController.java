@@ -69,7 +69,6 @@ public class EmployeeRestController {
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping(value = "/me", produces= "application/json")
 	public EmployeeDetailVO me(
-		//@CookieValue(name = "accesstoken", required = false) String accessToken
 		@CurrentUser TokenParseResponseVO parseVO
 	) {
 		return employeeService.findMyInfo(parseVO.getAccountId());
