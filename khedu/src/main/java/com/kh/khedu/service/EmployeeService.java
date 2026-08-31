@@ -13,13 +13,17 @@ import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.dto.AccountRolesDto;
+import com.kh.khedu.dto.EmployeeDto;
 import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.vo.account.AccountRegisterVO;
+import com.kh.khedu.vo.employee.ChangeEmployeeRequestVO;
+import com.kh.khedu.vo.employee.ChangeEmployeeResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeRegisterRequestVO;
 import com.kh.khedu.vo.employee.EmployeeVO;
+import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 @Service
 public class EmployeeService {
@@ -82,6 +86,30 @@ public class EmployeeService {
 			//직원이 아니면
 		if(!accountDto.getAccountType().equals("직원")) throw new WhoAreYouException();
 		
-		return employeeDao.findMyInfo(accountId);
+//		return employeeDao.findMyInfo(accountId);
+		EmployeeDetailVO employeeDetailVO = new EmployeeDetailVO();
+		BeanUtils.copyProperties(accountDto, employeeDetailVO);
+		
+		return employeeDetailVO;
 	}
+	
+	//직원정보 수정(본인)
+//	public ChangeEmployeeResponseVO updateMyInfo(
+//			ChangeEmployeeRequestVO request,
+//			TokenParseResponseVO parseVO) {
+//		int accountNo = parseVO.getAccountNo();
+//		//[1] 정보조회 후 없으면 404처리
+//		AccountDto accountDto = accountDao.selectOneByAccountNo(accountNo);
+//		if(accountDto == null) {
+//			throw new TargetNotfoundException();
+//		}
+//		
+//		//[2] 직원인지 확인
+//		EmployeeDto employeeDto = employeeDao.selectOneByAccountNo(accountNo);
+//		
+//		if(employeeDto == null) {
+//			throw new TargetNotfoundException();
+//		}
+//		
+//	}
 }

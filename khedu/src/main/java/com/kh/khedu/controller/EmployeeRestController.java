@@ -5,9 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,8 +19,8 @@ import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.service.EmployeeService;
 import com.kh.khedu.vo.account.AccountFindResponseVO;
-import com.kh.khedu.vo.account.ChangePasswordRequestVO;
-import com.kh.khedu.vo.account.ChangePasswordResponseVO;
+import com.kh.khedu.vo.employee.ChangeEmployeeRequestVO;
+import com.kh.khedu.vo.employee.ChangeEmployeeResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeRegisterRequestVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
@@ -71,7 +71,18 @@ public class EmployeeRestController {
 	public EmployeeDetailVO me(
 		@CurrentUser TokenParseResponseVO parseVO
 	) {
-		return employeeService.findMyInfo(parseVO.getAccountId());
+		EmployeeDetailVO employeeDetailVO = employeeService.findMyInfo(parseVO.getAccountId());
+		employeeDetailVO.setRoleName(parseVO.getRoleNames());
+		return employeeDetailVO; 
 	}
+	
+	//개인정보 수정(본인)
+//	@PutMapping("/")
+//	public ChangeEmployeeResponseVO updateAll(
+//			@CurrentUser TokenParseResponseVO parseVO,
+//			@Valid @RequestBody ChangeEmployeeRequestVO request
+//	) {
+//		
+//	}
 	
 }
