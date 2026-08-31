@@ -9,6 +9,7 @@ import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.account.AccountTypeNoVO;
 import com.kh.khedu.vo.account.FindAccountIdRequestVO;
+import com.kh.khedu.vo.account.FindAccountPasswordRequestVO;
 
 @Repository
 public class AccountDaoMybatis implements AccountDao {
@@ -58,5 +59,10 @@ public class AccountDaoMybatis implements AccountDao {
 	@Override
 	public AccountDto findAccountId(FindAccountIdRequestVO request) {
 		return sqlSession.selectOne("mapper.account.findAccountId", request);
+	}
+
+	@Override
+	public AccountDto findAccountPassword(FindAccountPasswordRequestVO request) {
+		return sqlSession.selectOne("mapper.account.findPasswordAccount", request);
 	}
 }

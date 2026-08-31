@@ -72,10 +72,18 @@
 		where account_no = #{accountNo}
 	</update>
 	
-	<!-- 아이디 찾기 -->
+	<!-- 아이디 정보 찾기 -->
 	<select id="findAccountId" resultType="AccountDto">
 		select * from account
 		where account_name = #{accountName} 
 		and account_phone = #{accountPhone}
+	</select>
+	
+	<!-- 비밀번호 정보 찾기 -->
+	<select id="findPasswordAccount" resultType="AccountDto">
+		select * from account
+		where account_id = #{accountId} 
+		and account_phone = #{accountPhone}
+		and account_name = #{accountName}
 	</select>
 </mapper>
