@@ -93,6 +93,8 @@ public class SecurityConfiguration {
 							"/service/auth/login" //로그인 페이지
 							,"/service/auth/logout" //로그아웃 페이지
 							,"/service/auth/refresh" //로그인 갱신페이지
+							,"/api/account/find-id" //아이디
+							,"/api/account/find-password" //비밀번호 찾기
 						).permitAll()
 						
 						//cert service
