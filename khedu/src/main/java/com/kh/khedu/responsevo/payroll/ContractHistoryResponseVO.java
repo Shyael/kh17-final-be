@@ -25,4 +25,6 @@ public class ContractHistoryResponseVO {
     private String contractStatus;
 
     private Timestamp signedTime;
+    
+    private Double breakTimes;
 }

@@ -42,4 +42,6 @@ public class ContractUpdateDraftRequestVO {
 	private String contractContent;
 	
 	private long contractNo;
+
+	private Double breakMinutes;
 }

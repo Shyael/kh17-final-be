@@ -20,7 +20,7 @@ public class ContractSignDetailResponseVO {
     private double dailyWorkHours;
 
     private double weeklyWorkHours;
-
+    private Double breakMinutes;
     private Timestamp contractStart;
 
     private Timestamp contractEnd;

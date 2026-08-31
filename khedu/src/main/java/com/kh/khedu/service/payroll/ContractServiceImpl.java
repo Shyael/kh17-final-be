@@ -110,6 +110,7 @@ public class ContractServiceImpl implements ContractService {
 		            .employeeSigned(find.getEmployeeSignature() != null)
 		            .employerSigned(find.getEmployerSignature() != null)
 		            .signedTime(find.getSignedTime())
+		            .breakMinutes(find.getBreakMinutes())
 		            .build();
 			return response;}
 
@@ -170,6 +171,7 @@ public class ContractServiceImpl implements ContractService {
                 .employeeNo(contractDto.getEmployeeNo())
                 .wageType(contractDto.getWageType())
                 .baseWage(contractDto.getBaseWage())
+                .breakMinutes(contractDto.getBreakMinutes())
                 .dailyWorkHours(contractDto.getDailyWorkHours())
                 .weeklyWorkHours(contractDto.getWeeklyWorkHours())
                 .contractStart(contractDto.getContractStart())
@@ -231,6 +233,7 @@ public class ContractServiceImpl implements ContractService {
                 .baseWage(currentContract.getBaseWage())
                 .dailyWorkHours(currentContract.getDailyWorkHours())
                 .weeklyWorkHours(currentContract.getWeeklyWorkHours())
+                .breakMinutes(currentContract.getBreakMinutes())
                 .contractStart(currentContract.getContractStart())
                 .contractEnd(currentContract.getContractEnd())
                 .payday(currentContract.getPayday())
@@ -258,8 +261,10 @@ public class ContractServiceImpl implements ContractService {
 				.wageType(contract.getWageType()).baseWage(contract.getBaseWage())
 				.dailyWorkHours(contract.getDailyWorkHours()).weeklyWorkHours(contract.getWeeklyWorkHours())
 				.contractStart(contract.getContractStart()).contractEnd(contract.getContractEnd())
-				.payday(contract.getPayday()).contractContent(contract.getContractContent())
+				.payday(contract.getPayday()).breakMinutes(contract.getBreakMinutes())
+				.contractContent(contract.getContractContent())
 				.contractStatus(contract.getContractStatus()).signedTime(contract.getSignedTime()).build();
+		 		
 		return response;
 	}
 
@@ -395,6 +400,7 @@ public class ContractServiceImpl implements ContractService {
 	            .employeeSigned(contractDto.getEmployeeSignature() != null)
 	            .employerSigned(contractDto.getEmployerSignature() != null)
 	            .signedTime(contractDto.getSignedTime())
+	            .breakMinutes(contractDto.getBreakMinutes())
 	            .build();
 		return response;
 	}
@@ -629,6 +635,8 @@ public class ContractServiceImpl implements ContractService {
 	                .payday(newContractDto.getPayday())
 	                .contractContent(newContractDto.getContractContent())
 	                .contractStatus(newContractDto.getContractStatus())
+	                .breakMinutes(newContractDto.getBreakMinutes())
+	                
 	                .build();
 		
 		return response;

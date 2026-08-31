@@ -56,4 +56,6 @@ public class ContractDto {
     // 계약 상태
     // scheduled / active / ended
     private String contractStatus;
+    
+    private double breakMinutes;
 }

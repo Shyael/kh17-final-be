@@ -16,37 +16,33 @@
 	<!-- 신규 근로계약 등록 -->
 	<insert id="contractAdd">
 		insert into employment_contract(
-			contract_no,
-			employee_no,
-			wage_type,
-			base_wage,
-			daily_work_hours,
-			weekly_work_hours,
-			contract_start,
-			contract_end,
-			payday,
-			contract_status,
-			contract_content,
-			employee_signature,
-			employer_signature,
-			signed_time
-		)
-		values(
-			#{contractNo},
-			#{employeeNo},
-			#{wageType},
-			#{baseWage},
-			#{dailyWorkHours},
-			#{weeklyWorkHours},
-			#{contractStart},
-			#{contractEnd},
-			#{payday},
-			#{contractStatus},
-			#{contractContent},
-			#{employeeSignature},
-			#{employerSignature},
-			#{signedTime}
-		)
+    contract_no,
+    employee_no,
+    wage_type,
+    base_wage,
+    daily_work_hours,
+    weekly_work_hours,
+    break_minutes,
+    contract_start,
+    contract_end,
+    payday,
+    contract_status,
+    contract_content
+)
+values(
+    #{contractNo},
+    #{employeeNo},
+    #{wageType},
+    #{baseWage},
+    #{dailyWorkHours},
+    #{weeklyWorkHours},
+    #{breakMinutes},
+    #{contractStart},
+    #{contractEnd},
+    #{payday},
+    #{contractStatus},
+    #{contractContent}
+)
 	</insert>
 
 
@@ -187,6 +183,10 @@
         <if test="contractContent != null">
             contract_content = #{contractContent},
         </if>
+        
+        <if test="breakMinutes != null">
+        	break_minutes = #{breakMinutes}
+        </if>
     </set>
 
     where contract_no = #{contractNo}
@@ -237,6 +237,10 @@
 
         <if test="contractContent != null">
             contract_content = #{contractContent},
+        </if>
+        
+        <if test="breakMinutes !=null">
+        	break_minutes =#{breakMinutes}
         </if>
     </set>
 

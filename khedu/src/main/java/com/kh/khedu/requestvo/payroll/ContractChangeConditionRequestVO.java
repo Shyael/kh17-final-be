@@ -42,4 +42,6 @@ public class ContractChangeConditionRequestVO {
 	private String contractContent;
 	
 	private long contractNo;
+	
+	private Double breakMinutes;
 }
