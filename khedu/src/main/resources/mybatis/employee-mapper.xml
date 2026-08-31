@@ -33,11 +33,11 @@
 			a.account_name,
 			a.account_phone,
 			a.account_status,
+			a.account_utime,
 			a.account_type,
 			e.employee_no,
 			e.employee_type,
-			e.employee_htime,
-			e.employee_utime
+			e.employee_htime
 		from account A join employee e
 		on a.account_no = e.account_no
 		where 
