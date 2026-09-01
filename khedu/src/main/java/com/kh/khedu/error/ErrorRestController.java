@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 //@RestControllerAdvice(annotations = {RestController.class})
-@RestControllerAdvice(basePackages = {"com.kh.spring11.controller"})
+@RestControllerAdvice(basePackages = {"com.kh.khedu.controller"})
 public class ErrorRestController {
 	
 	@ExceptionHandler(TargetNotfoundException.class)

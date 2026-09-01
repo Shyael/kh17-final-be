@@ -35,9 +35,13 @@
 		
 	</insert>
 	
-	<!-- 회원 상세  -->
+	<!-- 회원 상세(accountId)  -->
 	<select id="find" resultType="AccountDto">
 		select * from account where account_id = #{accountId}
+	</select>
+	<!-- 회원 상세(accountNo) -->
+	<select id="findFromNo" resultType="AccountDto">
+		select * from account where account_no = #{accountNo}
 	</select>
 	
 	<!-- 존재 유무 판단(아이디(=이메일)) -->

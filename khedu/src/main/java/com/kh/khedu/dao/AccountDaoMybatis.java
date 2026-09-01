@@ -65,4 +65,9 @@ public class AccountDaoMybatis implements AccountDao {
 	public AccountDto findAccountPassword(FindAccountPasswordRequestVO request) {
 		return sqlSession.selectOne("mapper.account.findPasswordAccount", request);
 	}
+
+	@Override
+	public AccountDto selectOneByAccountNo(int accountNo) {
+		return sqlSession.selectOne("mapper.account.findFromNo", accountNo);
+	}
 }

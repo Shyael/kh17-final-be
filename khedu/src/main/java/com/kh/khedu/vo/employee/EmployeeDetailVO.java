@@ -1,6 +1,7 @@
 package com.kh.khedu.vo.employee;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -23,4 +24,7 @@ public class EmployeeDetailVO {
     private String accountPhone;
     private String accountStatus;
     private String accountType;
+    
+    // role
+    private List<String> roleName;
 }

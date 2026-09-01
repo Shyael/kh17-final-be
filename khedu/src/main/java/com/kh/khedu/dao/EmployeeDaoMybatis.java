@@ -4,6 +4,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.kh.khedu.dto.EmployeeDto;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeVO;
 
@@ -25,12 +26,18 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 		return sqlSession.selectOne("mapper.employee.findMyInfo",accountId);
 	}
 	@Override
+
 	public String findEmployeeStatus(int employeeNo) {
 		return sqlSession.selectOne("mapper.employee.findEmployeeStatus",employeeNo);
 	}
 	@Override
 	public boolean changeUnassignedToWorking(int employeeNo) {
 		return sqlSession.update("mapper.employee.changeUnassignedToWorking",employeeNo)>0;
+	}
+	@Override
+	public EmployeeDto selectOneByAccountNo(int accountNo) {
+		return sqlSession.selectOne("mapper.employee.findEmployeeByAccountNo", accountNo);
+
 	}
 	
 }

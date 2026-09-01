@@ -45,6 +45,10 @@
 		and 
 			a.account_type = '직원'
 	</select>
+	<!-- accountNo로 직원정보 조회 -->
+	<select id="findEmployeeByAccountNo" resultType="EmployeeDto">
+		select * from employee where account_no = #{accountNo}
+	</select>
 	<!-- 직원정보 수정 -->
 	<update id="updateEmployeeLogin">
 		update account
