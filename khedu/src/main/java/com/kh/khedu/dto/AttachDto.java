@@ -12,7 +12,6 @@ public class AttachDto {
 	private String attachName;
 	private String attachType;
 	private long attachSize;
-	private String attachRename;
 	
 	//파일 유형을 알려주기 위한 메소드
 	public String getAttachTypeString() {

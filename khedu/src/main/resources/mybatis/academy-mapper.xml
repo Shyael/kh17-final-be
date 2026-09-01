@@ -58,5 +58,19 @@
 		delete from academy
 		where academy_no = #{academyNo}
 	</delete>
+	
+	<!-- 이미지 연결 -->
+	<insert id="connect">
+		insert into academy_file (academy_no, attach_no)
+		values( #{academyNo}, #{attachNo})
+	</insert>
+	
+	<!-- 이미지찾기 -->
+	<select id="selectDetailImages" resultType="Integer">
+		select attach_no
+		from academy_file
+		where academy_no = #{academyNo}
+		order by attach_no asc
+	</select>
 
 </mapper>

@@ -1,5 +1,7 @@
 package com.kh.khedu.dao;
 
+import java.util.List;
+
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -30,6 +32,18 @@ public class AttachDaoMybatis implements AttachDao {
 	@Override
 	public boolean delete(int attachNo) {
 		return sqlSession.delete("mapper.attach.delete", attachNo) > 0;
+	}
+
+	@Override
+	public AttachDto selectOne(Integer attachNo) {
+		if(attachNo == null) return null;
+		return sqlSession.selectOne("mapper.attach.find", attachNo);
+	}
+
+	@Override
+	public List<AttachDto> selectList(List<Integer> attachNumbers) {
+		if(attachNumbers == null || attachNumbers.isEmpty()) return List.of();
+		return sqlSession.selectList("mapper.attach.findList", attachNumbers);
 	}
 
 }

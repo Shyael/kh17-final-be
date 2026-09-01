@@ -1,18 +1,23 @@
 package com.kh.khedu.service;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.khedu.dao.AcademyDao;
 import com.kh.khedu.dao.AcademyHistoryDao;
 import com.kh.khedu.dao.AcademySubjectDao;
+import com.kh.khedu.dao.AttachDao;
 import com.kh.khedu.dto.AcademyDto;
 import com.kh.khedu.dto.AcademyHistoryDto;
 import com.kh.khedu.dto.AcademySubjectDto;
+import com.kh.khedu.dto.AttachDto;
 import com.kh.khedu.error.AlreadyExistsException;
+import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.academy.AcademyDetailResponseVO;
 
@@ -28,11 +33,21 @@ public class AcademyServiceImpl implements AcademyService {
 
 	@Autowired
 	private AcademySubjectDao academySubjectDao;
+	
+	@Autowired
+	private AttachService attachService;
+	
+	@Autowired
+	private AttachDao attachDao;
 
 	// ==================== 학원정보 ====================
 
+	@Transactional
 	@Override
-	public void insert(AcademyDto academyDto) {
+	public int insert(
+			AcademyDto academyDto,
+			List<MultipartFile> images
+			) throws IllegalStateException, IOException {
 		// 학원정보가 이미 존재하면 추가 등록 금지
 		AcademyDto findAcademyDto = academyDao.selectOne();
 
@@ -45,6 +60,20 @@ public class AcademyServiceImpl implements AcademyService {
 		academyDto.setAcademyNo(academyNo);
 
 		academyDao.insert(academyDto);
+		
+		//학원 이미지 등록
+		if (images != null && images.size() > 0) {
+			for(MultipartFile image : images) {
+				if(!image.isEmpty()) {
+					//attach 테이블 + 실제 파일 저장
+					int attachNo = attachService.save(image);
+					
+					//academy_file연결
+					academyDao.connect(academyNo, attachNo);
+				}
+			}
+		}
+		return academyNo;
 	}
 
 	@Override
@@ -54,7 +83,7 @@ public class AcademyServiceImpl implements AcademyService {
 		AcademyDto academy = academyDao.selectOne();
 		
 		if (academy == null) {
-	        return null;
+			throw new TargetNotfoundException();
 	    }
 
 		int academyNo = academy.getAcademyNo();
@@ -66,30 +95,75 @@ public class AcademyServiceImpl implements AcademyService {
 		// 해당 학원의 과목 조회
 		List<AcademySubjectDto> subjectList =
 				academySubjectDao.selectList(academyNo);
+		
+		//학원 이미지 번호 조회
+		List<Integer> imagesNos =
+				academyDao.selectDetailImages(academyNo);
+		
+		//이미지 정보 조회
+		List<AttachDto> imageList =
+				attachDao.selectList(imagesNos);
 
 		return AcademyDetailResponseVO.builder()
 				.academy(academy)
 				.historyList(historyList)
 				.subjectList(subjectList)
-				.build();
+				.imageList(imageList)
+			.build();
 	}
 
 	@Override
-	public boolean update(AcademyDto academyDto) {
+	public void update(
+			AcademyDto academyDto,
+			List<MultipartFile> images
+			) throws IllegalStateException, IOException{
 
 		AcademyDto academy = academyDao.selectOne();
 
+		if (academy == null) {
+		    throw new TargetNotfoundException();
+		}
+
 		academyDto.setAcademyNo(academy.getAcademyNo());
 
-		return academyDao.update(academyDto);
+		academyDao.update(academyDto);
+		
+		//새로운 이미지 추가
+		if(images != null && images.size()>0) {
+			for(MultipartFile image : images) {
+				if(!image.isEmpty()) {
+					int attachNo = attachService.save(image);
+					
+					academyDao.connect(
+						academy.getAcademyNo(), attachNo
+					);
+				}
+			}
+		}
 	}
 
 	@Override
 	public boolean delete() {
-
 		AcademyDto academy = academyDao.selectOne();
 
-		return academyDao.delete(academy.getAcademyNo());
+		if (academy == null) {
+		    throw new TargetNotfoundException();
+		}
+		
+		int academyNo = academy.getAcademyNo();
+		
+		//1. 학원 이미지 번호 미리 조회
+		List<Integer> imageNos = academyDao.selectDetailImages(academyNo);
+		
+		//2. 학원삭제
+		boolean result = academyDao.delete(academyNo);
+		
+		//3. 이미지 DB정보 + 실제파일 삭제
+		for(Integer attachNo : imageNos) {
+			attachService.delete(attachNo);
+		}
+		
+		return result;
 	}
 
 	// ==================== 학원연혁 ====================
@@ -167,6 +241,20 @@ public class AcademyServiceImpl implements AcademyService {
 	@Override
 	public boolean deleteSubject(int academySubjectNo) {
 		return academySubjectDao.delete(academySubjectNo);
+	}
+
+	@Override
+	public void deleteImage(int academyNo, int attachNo) {
+		//이 학원에 연결된 이미지인지 확인
+		List<Integer> imageNos =
+				academyDao.selectDetailImages(academyNo);
+		if(!imageNos.contains(attachNo)) {
+			throw new GetOutException();
+		}
+		
+		//DB + 실제 파일 삭제
+		attachService.delete(attachNo);
+		
 	}
 
 }
