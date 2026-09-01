@@ -10,25 +10,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.payroll.EmployeeAttendanceDto;
+import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.payroll.response.AttendanceFindVO;
 import com.kh.khedu.vo.payroll.response.AttendanceSearchResponseVO;
 @Repository
 public class EmployeeAttendanceDaoMybatis implements EmployeeAttendanceDao{
 	@Autowired
     private SqlSession sqlSession;
-
+	
 
     @Override
     public long sequence() {
         return sqlSession.selectOne(
-                "mapper.payroll.attendanceSequence");
+                "mapper.attendance.attendanceSequence");
     }
 
 
     @Override
     public boolean add(EmployeeAttendanceDto dto) {
         return sqlSession.insert(
-                "mapper.payroll.attendanceAdd",
+                "mapper.attendance.attendanceAdd",
                 dto) > 0;
     }
 
@@ -36,7 +37,7 @@ public class EmployeeAttendanceDaoMybatis implements EmployeeAttendanceDao{
     @Override
     public boolean update(EmployeeAttendanceDto dto) {
         return sqlSession.update(
-                "mapper.payroll.attendanceUpdate",
+                "mapper.attendance.attendanceUpdate",
                 dto) > 0;
     }
 
@@ -46,7 +47,7 @@ public class EmployeeAttendanceDaoMybatis implements EmployeeAttendanceDao{
             AttendanceFindVO findVO) {
 
         return sqlSession.selectOne(
-                "mapper.payroll.attendanceFind",
+                "mapper.attendance.attendanceFind",
                 findVO);
     }
 
@@ -64,9 +65,15 @@ public class EmployeeAttendanceDaoMybatis implements EmployeeAttendanceDao{
         params.put("endDate", endDate);
 
         return sqlSession.selectList(
-                "mapper.payroll.attendanceSearch",
+                "mapper.attendance.attendanceSearch",
                 params);
     }
+
+
+	@Override
+	public EmployeeDetailVO findByAccountNo(int accountNo) {
+		return sqlSession.selectOne("mapper.attendance.findByAccountNo",accountNo);
+	}
 
 
 	

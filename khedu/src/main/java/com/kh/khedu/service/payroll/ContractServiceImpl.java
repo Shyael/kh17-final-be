@@ -52,12 +52,10 @@ public class ContractServiceImpl implements ContractService {
 	   private EmployeeDao employeeDao;
 
 	    private void validateWrittenBreakTimes(
-	            Double dailyWorkHours,
-	            Double writtenBreakTimes) {
+	            double dailyWorkHours,
+	            double writtenBreakTimes) {
 
-	        if (dailyWorkHours == null || writtenBreakTimes == null) {
-	            throw new GetOutException();
-	        }
+	        
 
 	        if (writtenBreakTimes < 0) {
 	            throw new GetOutException();
@@ -156,6 +154,19 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public ContractAddResponseVO add(ContractAddRequestVO request, TokenParseResponseVO parseVO) {
 
+		String employeeStatus =
+		        employeeDao.findEmployeeStatus(
+		                request.getEmployeeNo()
+		        );
+
+		if (employeeStatus == null) {
+		    throw new TargetNotfoundException();
+		}
+
+		if (!"대기".equals(employeeStatus)) {
+		    throw new GetOutException();
+		}
+		
 		// 권한은 원장만
 		if (!contractAuthorizationService.checkAdmin(parseVO))
 			throw new GetOutException();
@@ -321,7 +332,8 @@ public class ContractServiceImpl implements ContractService {
 
 		// "을"을 검증
 		boolean isPartyB = contractAuthorizationService.checkPartyB(parseVO, contractNo);
-
+		
+		
 		if (!isPartyB)
 			throw new GetOutException();
 
@@ -384,12 +396,6 @@ public class ContractServiceImpl implements ContractService {
 		if (currentContract.getSignedTime() != null)
 			throw new GetOutException();
 
-		// 원장인지 확인
-
-		List<String> permission = parseVO.getRoleNames();
-
-		if (!permission.contains("admin"))
-			throw new GetOutException();
 
 		// [3] 원장 서명 설정
 		currentContract.setEmployerSignature(request.getEmployerSignature());

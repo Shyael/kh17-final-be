@@ -26,5 +26,5 @@ public class ContractHistoryResponseVO {
 
     private Timestamp signedTime;
     
-    private Double breakTimes;
+    private double writtenBreakTimes;
 }

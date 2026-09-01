@@ -22,7 +22,7 @@
     base_wage,
     daily_work_hours,
     weekly_work_hours,
-    break_minutes,
+    written_break_minutes,
     contract_start,
     contract_end,
     payday,
@@ -276,7 +276,7 @@ values(
 	<!-- 양측 서명 완료 -->
 	<update id="completeSign">
 		update employment_contract
-		set signed_time = #{signedTime},
+		set signed_time = systimestamp,
 			contract_status = #{contractStatus}
 		where contract_no = #{contractNo}
 			and employee_signature is not null

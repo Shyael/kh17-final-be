@@ -16,6 +16,7 @@ import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.dto.payroll.EmployeeAttendanceDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentToAbsentRequestVO;
@@ -39,28 +40,83 @@ public class EmployeeAttendanceServiceImpl
 
     @Autowired
     private ContractDao contractDao;
+    
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean working(
+            TokenParseResponseVO parseVO) {
+
+        if (!"직원".equals(
+                parseVO.getAccountType())) {
+
+            throw new GetOutException();
+        }
 
 
-    // 출근
+        EmployeeDetailVO employeeVO =
+                employeeAttendanceDao.findByAccountNo(
+                        parseVO.getAccountNo());
+
+        if (employeeVO == null) {
+            throw new TargetNotfoundException();
+        }
+
+
+        AttendanceFindVO findVO =
+                AttendanceFindVO.builder()
+                        .employeeNo(
+                                employeeVO.getEmployeeNo())
+                        .working(true)
+                        .build();
+
+
+        EmployeeAttendanceDto attendanceDto =
+                employeeAttendanceDao.find(
+                        findVO);
+
+
+        return attendanceDto != null;
+    }
+    
+    
+    
+    
     @Override
     public AttendanceClockInResponseVO clockIn(
             AttendanceClockInRequestVO requestVO,
             TokenParseResponseVO parseVO) {
 
-        if (!"직원".equals(parseVO.getAccountType())) {
+        // 로그인 계정이 직원인지 확인
+        if (!"직원".equals(
+                parseVO.getAccountType())) {
+
             throw new GetOutException();
         }
 
-        long employeeNo = parseVO.getNoType();
 
-        LocalDateTime now = LocalDateTime.now();
+        // 로그인 계정 기준 직원정보 조회
+        EmployeeDetailVO employeeVO =
+                employeeAttendanceDao.findByAccountNo(
+                        parseVO.getAccountNo());
+
+        if (employeeVO == null) {
+            throw new TargetNotfoundException();
+        }
+
+        int employeeNo =
+                employeeVO.getEmployeeNo();
+
+
+        LocalDateTime now =
+                LocalDateTime.now();
 
         LocalDateTime workDate =
                 now.toLocalDate()
                         .atStartOfDay();
 
 
-        // 아직 퇴근하지 않은 정상 근태 확인
+        // 아직 퇴근하지 않은 근태가 있는지 확인
         AttendanceFindVO workingFindVO =
                 AttendanceFindVO.builder()
                         .employeeNo(employeeNo)
@@ -86,7 +142,7 @@ public class EmployeeAttendanceServiceImpl
         }
 
 
-        // 오늘 이미 생성된 근태 확인
+        // 오늘 이미 근태가 생성됐는지 확인
         AttendanceFindVO todayFindVO =
                 AttendanceFindVO.builder()
                         .employeeNo(employeeNo)
@@ -104,7 +160,7 @@ public class EmployeeAttendanceServiceImpl
         }
 
 
-        // 정상 근태 생성
+        // 출근 근태 생성
         EmployeeAttendanceDto attendanceDto =
                 EmployeeAttendanceDto.builder()
                         .empAttendanceNo(
@@ -112,13 +168,16 @@ public class EmployeeAttendanceServiceImpl
                         .contractNo(
                                 contractDto.getContractNo())
                         .workDate(
-                                Timestamp.valueOf(workDate))
+                                Timestamp.valueOf(
+                                        workDate))
                         .clockIn(
-                                Timestamp.valueOf(now))
+                                Timestamp.valueOf(
+                                        now))
                         .clockOut(null)
                         .breakMinutes(
                                 (double) contractDto.getWrittenBreakMinutes())
-                        .attendanceType("정상")
+                        .attendanceType(
+                                "정상")
                         .workDayType(
                                 requestVO.getWorkDayType())
                         .nightHours(0)
@@ -135,9 +194,14 @@ public class EmployeeAttendanceServiceImpl
         }
 
 
+        // 출근 결과 반환
         return AttendanceClockInResponseVO.builder()
                 .empAttendanceNo(
                         attendanceDto.getEmpAttendanceNo())
+                .employeeNo(
+                        employeeVO.getEmployeeNo())
+                .accountName(
+                        employeeVO.getAccountName())
                 .workDate(
                         attendanceDto.getWorkDate())
                 .clockIn(
@@ -149,21 +213,31 @@ public class EmployeeAttendanceServiceImpl
                 .build();
     }
 
-
     // 퇴근
     @Override
     public AttendanceClockOutResponseVO clockOut(
             TokenParseResponseVO parseVO) {
 
-        if (!"직원".equals(parseVO.getAccountType())) {
+        if (!"직원".equals(
+                parseVO.getAccountType())) {
+
             throw new GetOutException();
         }
 
-        long employeeNo =
-                parseVO.getNoType();
+
+        EmployeeDetailVO employeeVO =
+                employeeAttendanceDao.findByAccountNo(
+                        parseVO.getAccountNo());
+
+        if (employeeVO == null) {
+            throw new TargetNotfoundException();
+        }
 
 
-        // 현재 열린 정상 근태 조회
+        int employeeNo =
+                employeeVO.getEmployeeNo();
+
+
         AttendanceFindVO findVO =
                 AttendanceFindVO.builder()
                         .employeeNo(employeeNo)
@@ -173,6 +247,7 @@ public class EmployeeAttendanceServiceImpl
         EmployeeAttendanceDto attendanceDto =
                 employeeAttendanceDao.find(
                         findVO);
+
 
         if (attendanceDto == null) {
             throw new TargetNotfoundException();

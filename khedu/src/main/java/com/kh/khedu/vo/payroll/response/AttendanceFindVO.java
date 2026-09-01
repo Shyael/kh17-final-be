@@ -12,7 +12,7 @@ public class AttendanceFindVO {
 
 	    private Long contractNo;
 
-	    private Long employeeNo;
+	    private int employeeNo;
 
 	    private Timestamp workDate;
 

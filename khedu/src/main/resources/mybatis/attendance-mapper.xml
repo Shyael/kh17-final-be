@@ -159,5 +159,21 @@
 		order by A.work_date asc
 
 	</select>
+	
+	
+	<select id="findByAccountNo"
+        resultType="EmployeeDetailVO">
+
+    select E.employee_no,
+           E.account_no,
+           A.account_id,
+           A.account_name
+    from employee E
+    join account A
+        on A.account_no = E.account_no
+    where A.account_no = #{accountNo}
+
+</select>
+	
 
 </mapper>

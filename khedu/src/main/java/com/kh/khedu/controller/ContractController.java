@@ -57,7 +57,9 @@ public class ContractController {
 	public ContractEmployeeDeskResponseVO findDeskPersonInfo(
 	        @PathVariable int employeeNo,
 	        @CurrentUser TokenParseResponseVO parseVO) {
-
+		System.out.println("findDeskPersonInfo 진입");
+		System.out.println(parseVO);
+		System.out.println("employeeNo = " + employeeNo);
 	    return contractService.findDeskPersonInfo(employeeNo, parseVO);
 	}
 

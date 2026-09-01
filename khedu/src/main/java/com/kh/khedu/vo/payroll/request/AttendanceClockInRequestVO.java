@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 public class AttendanceClockInRequestVO {
-
     @NotBlank
     private String workDayType;
 }

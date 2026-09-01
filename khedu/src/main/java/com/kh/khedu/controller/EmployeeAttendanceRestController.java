@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CommonsApiResponse;
+import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.service.attendance.EmployeeAttendanceService;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentRequestVO;
@@ -39,6 +40,18 @@ public class EmployeeAttendanceRestController {
     private EmployeeAttendanceService employeeAttendanceService;
 
 
+    @ApiResponse(
+            responseCode = "200",
+            description = "직원 출근 여부 조회 성공"
+    )
+    @GetMapping("/working")
+    public boolean working(
+            @CurrentUser TokenParseResponseVO parseVO) {
+
+        return employeeAttendanceService.working(
+                parseVO);
+    }
+    
     // 출근
     @ApiResponse(
             responseCode = "200",
@@ -47,7 +60,7 @@ public class EmployeeAttendanceRestController {
     @PostMapping("/clockIn")
     public AttendanceClockInResponseVO clockIn(
             @RequestBody AttendanceClockInRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
+            @CurrentUser TokenParseResponseVO parseVO) {
 
         return employeeAttendanceService.clockIn(
                 requestVO,
@@ -62,7 +75,7 @@ public class EmployeeAttendanceRestController {
     )
     @PatchMapping("/clockOut")
     public AttendanceClockOutResponseVO clockOut(
-            TokenParseResponseVO parseVO) {
+            @CurrentUser TokenParseResponseVO parseVO) {
 
         return employeeAttendanceService.clockOut(
                 parseVO);
@@ -77,7 +90,7 @@ public class EmployeeAttendanceRestController {
     @PostMapping("/absent")
     public void absent(
             @RequestBody AttendanceAbsentRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
+           @CurrentUser TokenParseResponseVO parseVO) {
 
         employeeAttendanceService.absent(
                 requestVO,
@@ -93,7 +106,7 @@ public class EmployeeAttendanceRestController {
     @PostMapping("/paidLeave")
     public void paidLeave(
             @RequestBody AttendanceLeaveRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
+            @CurrentUser TokenParseResponseVO parseVO) {
 
         employeeAttendanceService.paidLeave(
                 requestVO,
@@ -173,7 +186,7 @@ public class EmployeeAttendanceRestController {
     @PatchMapping("/absentToAbsent")
     public void absentToAbsent(
             @RequestBody AttendanceAbsentToAbsentRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
+           @CurrentUser TokenParseResponseVO parseVO) {
 
         employeeAttendanceService.absentToAbsent(
                 requestVO,

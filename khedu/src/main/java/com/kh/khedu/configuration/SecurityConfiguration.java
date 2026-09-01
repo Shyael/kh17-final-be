@@ -72,7 +72,7 @@ public class SecurityConfiguration {
 					.requestMatchers(
 						// 무조건 허용
 							"/active"  //체크용 페이지 허용
-							
+							,"/swagger-ui.html"
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
 						).permitAll()
@@ -94,7 +94,7 @@ public class SecurityConfiguration {
 							,"/service/auth/logout" //로그아웃 페이지
 							,"/service/auth/refresh" //로그인 갱신페이지
 							,"/api/account/find-id" //아이디
-							,"/api/account/find-password" //비밀번호 찾기
+							,"/api/account/find-password"//비밀번호 찾기
 						).permitAll()
 						
 
@@ -106,6 +106,8 @@ public class SecurityConfiguration {
 						//cert service
 						.requestMatchers("/service/cert/**").permitAll()
 						
+						//계약 관련(임시)
+						.requestMatchers("/api/contract/**").permitAll()
 						//공개 화면
 						.requestMatchers(
 							"/academy/**",

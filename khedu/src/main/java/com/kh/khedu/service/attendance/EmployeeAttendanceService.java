@@ -16,6 +16,11 @@ import com.kh.khedu.vo.payroll.response.AttendanceClockOutResponseVO;
 import com.kh.khedu.vo.payroll.response.AttendanceSearchResponseVO;
 
 public interface EmployeeAttendanceService {
+	
+	boolean working(
+	        TokenParseResponseVO parseVO);
+	
+	
 	AttendanceClockInResponseVO clockIn(
             AttendanceClockInRequestVO requestVO,
             TokenParseResponseVO parseVO);

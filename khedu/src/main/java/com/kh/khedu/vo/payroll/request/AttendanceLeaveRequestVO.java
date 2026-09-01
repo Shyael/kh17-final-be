@@ -10,7 +10,7 @@ import lombok.Data;
 public class AttendanceLeaveRequestVO {
 
     @Positive
-    private long employeeNo;
+    private int employeeNo;
 
     @NotNull
     private Timestamp workDate;

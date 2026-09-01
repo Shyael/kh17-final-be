@@ -1,11 +1,14 @@
 package com.kh.khedu.dao;
 
+import java.util.List;
+
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.EmployeeDto;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
+import com.kh.khedu.vo.employee.EmployeeSearchByNameVO;
 import com.kh.khedu.vo.employee.EmployeeVO;
 
 @Repository
@@ -38,6 +41,11 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 	public EmployeeDto selectOneByAccountNo(int accountNo) {
 		return sqlSession.selectOne("mapper.employee.findEmployeeByAccountNo", accountNo);
 
+	}
+	//이름으로 직원 검색
+	@Override
+	public List<EmployeeSearchByNameVO> searchByName(String accountName){
+		return sqlSession.selectList("mapper.employee.searchByName",accountName);
 	}
 	
 }

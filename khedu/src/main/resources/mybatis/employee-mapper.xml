@@ -70,16 +70,27 @@
 	</select>
 	
 	
-	<!-- 최초 근로계약 체결 시 미배정 → 재직 -->
+	<!-- 최초 근로계약 체결 시 대기 → 재직 -->
 	<update id="changeUnassignedToWorking">
 
     update employee
     set employee_status = '재직'
     where employee_no = #{employeeNo}
-      and employee_status = '미배정'
+      and employee_status = '대기'
 
 	</update>
 	
-	
+	<!--이름으로 직원 검색  -->
+	<select id="searchByName" resultType="EmployeeSearchByNameVO">
+	Select E.employee_no,
+			A.account_name,
+			A.account_id
+		from employee E
+		join account A
+			on A.account_no = E.account_no
+		where A.account_name 
+		order by A.account_name asc,
+			     E.employee_no asc	  
+	</select>			     			
 	
 </mapper>

@@ -26,23 +26,21 @@ public class ContractAddRequestVO {
 	private String wageType;
 
 	@NotNull
-	@DecimalMin("0")
+	
 	// 기준 임금
 	private long baseWage;
 	@NotNull
-	@DecimalMin("0")
+	
 	// 1일 소정근로시간
-	private int dailyWorkHours;
+	private double dailyWorkHours;
 	@NotNull
-	@DecimalMin("0")
+	
 	// 주 소정근로시간
-	private int weeklyWorkHours;
+	private double weeklyWorkHours;
 	@NotNull
 	// 계약 시작일
 	private Timestamp contractStart;
 	@NotNull
-	@Min(1)
-	@Max(31)
 	// 계약 종료일
 	private Timestamp contractEnd;
 	@NotNull
@@ -55,5 +53,5 @@ public class ContractAddRequestVO {
 	private String contractContent;
 	
 	@PositiveOrZero
-	private Double writtenBreakMinutes;
+	private double writtenBreakMinutes;
 }
