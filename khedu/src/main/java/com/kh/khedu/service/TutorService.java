@@ -1,6 +1,9 @@
 package com.kh.khedu.service;
 
+import java.io.IOException;
 import java.util.List;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.khedu.dto.TutorCareerDto;
 import com.kh.khedu.dto.TutorDto;
@@ -13,7 +16,10 @@ public interface TutorService {
 
 	// ==================== 강사 기본정보 ====================
 	// 강사 등록
-	TutorDto insert(TutorDto tutorDto);
+	TutorDto insert(
+		TutorDto tutorDto,
+		MultipartFile image
+	) throws IllegalStateException, IOException;
 
 	// 강사 목록 조회
 	List<TutorListVO> selectList();
@@ -25,7 +31,11 @@ public interface TutorService {
 	TutorDetailVO selectDetail(int tutorNo);
 
 	// 강사정보 수정
-	TutorDto update(int tutorNo, TutorDto tutorDto);
+	TutorDto update(
+			int tutorNo, 
+			TutorDto tutorDto,
+			MultipartFile image
+			) throws IllegalStateException, IOException;
 
 	// 강사 삭제
 	boolean delete(int tutorNo);
@@ -58,5 +68,8 @@ public interface TutorService {
 
 	// 학력/경력 삭제
 	boolean deleteCareer(int tutorCareerNo);
+	
+	//이미지 삭제
+	void deleteImage(int tutorNo);
 
 }

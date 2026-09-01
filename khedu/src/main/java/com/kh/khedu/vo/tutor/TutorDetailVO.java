@@ -3,6 +3,7 @@ package com.kh.khedu.vo.tutor;
 import java.sql.Timestamp;
 import java.util.List;
 
+import com.kh.khedu.dto.AttachDto;
 import com.kh.khedu.dto.TutorCareerDto;
 import com.kh.khedu.dto.TutorSubjectDto;
 
@@ -30,5 +31,7 @@ public class TutorDetailVO {
 
 	private List<TutorSubjectDto> subjectList;
 	private List<TutorCareerDto> careerList;
+	//강사 이미지 첨부파일 
+	private AttachDto image;
 
 }

@@ -1,8 +1,10 @@
 package com.kh.khedu.controller;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,7 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.khedu.dto.TutorCareerDto;
 import com.kh.khedu.dto.TutorDto;
@@ -36,9 +40,13 @@ public class TutorRestController {
 	// ==================== 강사 기본정보 ====================
 	@Operation(summary = "강사 정보 등록")
 	@ApiResponse(responseCode = "200", description = "강사 등록 성공")
-	@PostMapping(value = "/", produces = "application/json")
-	public TutorDto insert(@RequestBody TutorDto tutorDto) {
-	    return tutorService.insert(tutorDto);
+	@PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public TutorDto insert(
+			@RequestPart("tutor") TutorDto tutorDto,
+			@RequestPart(value = "image", required = false)
+			MultipartFile image
+			) throws IllegalStateException, IOException {
+	    return tutorService.insert(tutorDto, image);
 	}
 	
 	@Operation(summary = "강사 정보 목록 조회")
@@ -68,12 +76,15 @@ public class TutorRestController {
 	
 	@Operation(summary = "강사 정보 수정")
 	@ApiResponse(responseCode = "200", description = "강사 정보 수정 성공")
-	@PutMapping(value = "/{tutorNo}", produces = "application/json")
+	@PutMapping(value = "/{tutorNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public TutorDto update(
-			@PathVariable int tutorNo,
-			@RequestBody TutorDto tutorDto) {
+		@PathVariable int tutorNo,
+		@RequestPart("tutor") TutorDto tutorDto,
+		@RequestPart(value= "image" , required = false)
+		MultipartFile image
+	) throws IllegalStateException, IOException {
 
-		return tutorService.update(tutorNo, tutorDto);
+		return tutorService.update(tutorNo, tutorDto, image);
 	}
 	
 	@Operation(summary = "강사 정보 삭제 ")
@@ -161,6 +172,14 @@ public class TutorRestController {
 			@PathVariable int tutorCareerNo) {
 
 		return tutorService.deleteCareer(tutorCareerNo);
+	}
+	
+	//강사 이미지 삭제
+	@Operation(summary = "강사 이미지 삭제")
+	@ApiResponse(responseCode = "200", description = "강사 이미지 삭제 성공")
+	@DeleteMapping("/{tutorNo}/image")
+	public void deleteImage(@PathVariable int tutorNo) {
+		tutorService.deleteImage(tutorNo);
 	}
 
 }

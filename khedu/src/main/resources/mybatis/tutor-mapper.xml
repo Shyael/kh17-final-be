@@ -149,5 +149,18 @@
 		)
 		order by a.account_name asc
 	</select>
+	
+	<!-- 이미지 연결 -->
+	<insert id="connect">
+		insert into tutor_file (tutor_no, attach_no)
+		values( #{academyNo}, #{attachNo})
+	</insert>
+	
+	<!-- 이미지찾기(하나) -->
+	<select id="selectImage" resultType="Integer">
+		select attach_no
+		from tutor_file
+		where tutor_no = #{tutorNo}
+	</select>
 
 </mapper>

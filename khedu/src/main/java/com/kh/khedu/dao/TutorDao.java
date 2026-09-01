@@ -25,5 +25,8 @@ public interface TutorDao {
 
 	// ==================== 강사 등록 가능한 직원 목록 ====================
 	List<TutorEmployeeVO> selectAvailableEmployeeList();
-
+	
+	//파일
+	void connect(int tutorNo, int attachNo);
+	Integer selectImage(int tutorNo);
 }

@@ -1,6 +1,8 @@
 package com.kh.khedu.dao;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +70,19 @@ public class TutorDaoMybatis implements TutorDao {
 		return sqlSession.selectList(
 				"mapper.tutor.selectAvailableEmployeeList"
 		);
+	}
+
+	@Override
+	public void connect(int tutorNo, int attachNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("tutorNo", tutorNo);
+		params.put("attachNo", attachNo);
+		sqlSession.insert("mapper.tutor.connect", params);
+	}
+
+	@Override
+	public Integer selectImage(int tutorNo) {
+		return sqlSession.selectOne("mapper.tutor.selectImage",tutorNo);
 	}
 
 }
