@@ -6,11 +6,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class EmployeeWorkScheduleResponseVO {
-    private long workScheduleNo;
-    private long employeeNo;
-    private Timestamp scheduleDate;
-    private String scheduleDayType;
+public class AttendanceClockInResponseVO {
+	private long empAttendanceNo;
+
+    private Timestamp workDate;
+    private Timestamp clockIn;
+
+    private Double breakMinutes;
+
+    private String workDayType;
 }

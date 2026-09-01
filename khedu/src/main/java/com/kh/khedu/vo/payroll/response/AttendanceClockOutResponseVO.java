@@ -8,15 +8,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class AttendanceTodayResponseVO {
-    private Long empAttendanceNo;
-    private Long workScheduleNo;
-    private Timestamp workDate;
-    private String workDayType;
-    private String attendanceType;
+public class AttendanceClockOutResponseVO {
+    private long empAttendanceNo;
+
     private Timestamp clockIn;
     private Timestamp clockOut;
-    private int breakMinutes;
+
+    private Double breakMinutes;
+
     private double nightHours;
     private double overtimeHours;
+    private String workDayType;
 }

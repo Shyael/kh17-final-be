@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.attendance">
+
+<!-- 근태 번호 발급 -->
+	<select id="attendanceSequence" resultType="long">
+		select employee_attendance_seq.nextval from dual
+	</select>
+
+
+	<!-- 근태 등록 -->
+	<!-- 출근 / 결근 / 유급휴가 / 무급휴가 -->
+	<insert id="attendanceAdd">
+		insert into employee_attendance(
+			emp_attendance_no,
+			contract_no,
+			work_date,
+			clock_in,
+			clock_out,
+			break_minutes,
+			attendance_type,
+			work_day_type,
+			night_hours,
+			overtime_hours
+		)
+		values(
+			#{empAttendanceNo},
+			#{contractNo},
+			#{workDate},
+			#{clockIn},
+			#{clockOut},
+			#{breakMinutes},
+			#{attendanceType},
+			#{workDayType},
+			#{nightHours},
+			#{overtimeHours}
+		)
+	</insert>
+
+
+	<!-- 근태 수정 -->
+	<!--
+		퇴근
+		정상 -> 정상
+		정상 -> 비근무
+		비근무 -> 정상
+		비근무 -> 비근무
+	-->
+	<update id="attendanceUpdate">
+	update employee_attendance
+
+	<set>
+		<choose>
+
+			<!-- 정상 -> 비근무 / 비근무 -> 비근무 -->
+			<when test="
+				attendanceType == 'absent'
+				or attendanceType == 'paid_leave'
+				or attendanceType == 'unpaid_leave'
+			">
+				clock_in = null,
+				clock_out = null,
+				break_minutes = 0,
+				attendance_type = #{attendanceType},
+				night_hours = 0,
+				overtime_hours = 0,
+			</when>
+
+			<!-- 퇴근 / 정상 -> 정상 / 비근무 -> 정상 -->
+			<otherwise>
+				clock_in = #{clockIn},
+				clock_out = #{clockOut},
+				break_minutes = #{breakMinutes},
+				attendance_type = #{attendanceType},
+				work_day_type = #{workDayType},
+				night_hours = #{nightHours},
+				overtime_hours = #{overtimeHours},
+			</otherwise>
+
+		</choose>
+	</set>
+
+	where emp_attendance_no = #{empAttendanceNo}
+</update>
+
+	<!-- 업무 판단용 근태 조회 -->
+	<select id="attendanceFind"
+			resultType="EmployeeAttendanceDto">
+
+		select A.*
+		from employee_attendance A
+
+		<!-- 직원번호 조건이 있을 때 계약을 통해 직원 추적 -->
+		<if test="employeeNo != null">
+			inner join employment_contract C
+				on A.contract_no = C.contract_no
+		</if>
+
+		<where>
+
+			<!-- 근태번호 -->
+			<if test="empAttendanceNo != null">
+				and A.emp_attendance_no = #{empAttendanceNo}
+			</if>
+
+			<!-- 계약번호 -->
+			<if test="contractNo != null">
+				and A.contract_no = #{contractNo}
+			</if>
+
+			<!-- 근태 귀속일 -->
+			<if test="workDate != null">
+				and A.work_date = #{workDate}
+			</if>
+
+			<!-- 직원번호 -->
+			<if test="employeeNo != null">
+				and C.employee_no = #{employeeNo}
+			</if>
+
+			<!-- 현재 열린 정상 근태 -->
+			<if test="working != null and working == true">
+				and A.attendance_type = '정상'
+				and A.clock_in is not null
+				and A.clock_out is null
+			</if>
+
+		</where>
+
+	</select>
+
+
+	<!-- 근태 수정 화면 / 향후 급여 Service 전달용 -->
+	<select id="attendanceSearch"
+			resultType="AttendanceSearchResponseVO">
+
+		select
+			A.emp_attendance_no,
+			C.employee_no,
+			A.contract_no,
+			A.work_date,
+			A.clock_in,
+			A.clock_out,
+			A.break_minutes,
+			A.attendance_type,
+			A.work_day_type,
+			A.night_hours,
+			A.overtime_hours
+		from employee_attendance A
+			inner join employment_contract C
+				on A.contract_no = C.contract_no
+		where C.employee_no = #{employeeNo}
+			and A.work_date <![CDATA[ >= ]]> #{startDate}
+			and A.work_date <![CDATA[ < ]]> #{endDate}
+		order by A.work_date asc
+
+	</select>
+
+</mapper>

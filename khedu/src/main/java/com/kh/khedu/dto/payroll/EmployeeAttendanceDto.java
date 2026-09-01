@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class EmployeeAttendanceDto {
     private long empAttendanceNo;
-    private long workScheduleNo;
     private long contractNo;
     private Timestamp workDate;
     private Timestamp clockIn;
