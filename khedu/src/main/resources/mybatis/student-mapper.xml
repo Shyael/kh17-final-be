@@ -29,5 +29,61 @@
 			#{studentEtc}
 		)
 	</insert>
+	<!-- no로 학생정보 조회 -->
+	<select id="findByAccountNo" resultType="StudentDto">
+		select * from student where account_no = #{accountNo}
+	</select>
+	<!-- accountNo로 학생 학부모 관계 테이블 조회 -->
+	<select id="findParentStudentByAccountNo" resultType="parentStudentDto">
+		select * from 
+		student s join 
+		parent_student ps on s.student_no = ps.student_no 
+		where s.account_no = #{accountNo}
+	</select>
+	<!-- 수정 -->
+	<update id="updateAll">
+		update student
+		set student_school = #{studentSchool},
+			student_grade = #{studentGrade},
+			student_utime = systimestamp
+		where account_no = #{accountNo}
+	</update>
 	
+	
+	<!-- student_link관련 코드 -->
+	
+	<!-- 시퀀스 생성 -->
+	<select id="sequenceLink" resultType="int">
+		select student_link_seq.nextval from dual
+	</select>
+	
+	
+	<!-- 학생번호로 studentLink만료 -->
+	<update id="expireStudentLink">
+		update student_link
+		set link_expire = systimestamp
+		where student_no = #{studentNo}
+		and link_used_yn = 'N'
+		and link_expire > systimestamp
+	</update>
+	
+	<!-- 연동코드 정보 저장 -->
+	<insert id="insertStudentLink">
+		insert into student_link (
+			student_link_no,
+	        student_no,
+	        link_code,
+	        link_expire,
+	        link_used_yn,
+	        student_link_ctime
+		)
+		values(
+			#{studentLinkNo},
+	        #{studentNo},
+	        #{linkCode},
+	        #{linkExpire},
+	        'N',
+	        SYSTIMESTAMP
+		)
+	</insert>
 </mapper>

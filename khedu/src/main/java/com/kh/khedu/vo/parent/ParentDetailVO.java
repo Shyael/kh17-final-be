@@ -1,7 +1,6 @@
-package com.kh.khedu.vo.employee;
+package com.kh.khedu.vo.parent;
 
 import java.sql.Timestamp;
-import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -9,14 +8,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Schema(name="직원 개인정보 조회용")
+@Schema(name="학부모 개인정보 조회용")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class EmployeeDetailVO {
-	// employee
-    private int employeeNo;
-    private String employeeType;
-    private Timestamp employeeHtime;
-    // account
+public class ParentDetailVO {
+	// parent
+	private int parentNo;
+	// parent_student
+	private Integer studentNo;
+	private String relationship; // 부 모 보호자 기타
+	// account
     private Timestamp accountUtime;
     private int accountNo;
     private String accountId;

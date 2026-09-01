@@ -72,7 +72,6 @@ public class SecurityConfiguration {
 					.requestMatchers(
 						// 무조건 허용
 							"/active"  //체크용 페이지 허용
-							
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
 						).permitAll()

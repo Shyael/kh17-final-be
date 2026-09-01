@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.vo.account.AccountRegisterVO;
+import com.kh.khedu.vo.account.CheckPasswordRequestVO;
 import com.kh.khedu.vo.employee.ChangeEmployeeRequestVO;
 import com.kh.khedu.vo.employee.ChangeEmployeeResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
@@ -35,6 +37,8 @@ public class EmployeeService {
 	private AccountRolesDao accountRolesDao;
 	@Autowired
 	private AccountService accountService;
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 	
 	//직원정보 등록
 	@Transactional
@@ -84,32 +88,71 @@ public class EmployeeService {
 			//아이디가 없으면
 		if(accountDto == null) throw new TargetNotfoundException();
 			//직원이 아니면
-		if(!accountDto.getAccountType().equals("직원")) throw new WhoAreYouException();
+		if(!accountDto.getAccountType().equals(AccountType.EMPLOYEE.getDescription())) throw new WhoAreYouException();
 		
 //		return employeeDao.findMyInfo(accountId);
 		EmployeeDetailVO employeeDetailVO = new EmployeeDetailVO();
+		EmployeeDto employeeDto = employeeDao.selectOneByAccountNo(accountDto.getAccountNo());
+		BeanUtils.copyProperties(employeeDto, employeeDetailVO);
 		BeanUtils.copyProperties(accountDto, employeeDetailVO);
-		
 		return employeeDetailVO;
 	}
 	
 	//직원정보 수정(본인)
-//	public ChangeEmployeeResponseVO updateMyInfo(
-//			ChangeEmployeeRequestVO request,
-//			TokenParseResponseVO parseVO) {
-//		int accountNo = parseVO.getAccountNo();
-//		//[1] 정보조회 후 없으면 404처리
-//		AccountDto accountDto = accountDao.selectOneByAccountNo(accountNo);
-//		if(accountDto == null) {
-//			throw new TargetNotfoundException();
-//		}
-//		
-//		//[2] 직원인지 확인
-//		EmployeeDto employeeDto = employeeDao.selectOneByAccountNo(accountNo);
-//		
-//		if(employeeDto == null) {
-//			throw new TargetNotfoundException();
-//		}
-//		
-//	}
+	public ChangeEmployeeResponseVO updateMyInfo(
+			ChangeEmployeeRequestVO request,
+			TokenParseResponseVO parseVO) {
+		//[1] 정보조회 후 없으면 404처리
+		int accountNo = parseVO.getAccountNo();
+		AccountDto accountDto = accountDao.selectOneByAccountNo(accountNo);
+		if(accountDto == null) {
+			throw new TargetNotfoundException();
+		}
+		
+		//[2] 직원인지 확인
+		EmployeeDto employeeDto = employeeDao.selectOneByAccountNo(accountNo);
+		
+		if(employeeDto == null) {
+			throw new TargetNotfoundException();
+		}
+		
+		//[3] 입력된 값이 있다면, account 수정 // 이름 연락처 생일 수정일
+		BeanUtils.copyProperties(request, accountDto);
+		accountDao.updateAll(accountDto);
+		
+		//[4] 수정된 정보 다시 조회
+		AccountDto resultAccount = accountDao.selectOneByAccountNo(accountNo);
+		
+		//[5] 필요한 값 세팅
+		ChangeEmployeeResponseVO response = new ChangeEmployeeResponseVO();
+		BeanUtils.copyProperties(resultAccount, response);
+		return response;
+	}
+	
+	//비밀번호 확인
+	public boolean checkPassword(
+			CheckPasswordRequestVO request,
+			TokenParseResponseVO parseVO
+	) {
+		int accountNo = parseVO.getAccountNo();
+		//[1] 정보조회 후 없으면 404처리
+		AccountDto accountDto = accountDao.selectOneByAccountNo(accountNo);
+		if(accountDto == null) {
+			throw new TargetNotfoundException();
+		}
+		
+		//[2] 직원인지 확인
+		EmployeeDto employeeDto = employeeDao.selectOneByAccountNo(accountNo);
+		
+		if(employeeDto == null) {
+			throw new TargetNotfoundException();
+		}
+		
+		//[3] 비밀번호 확인
+		return passwordEncoder
+			.matches(
+				request.getAccountPassword(), //입력된 비번
+				accountDto.getAccountPassword() //DB
+		);
+	}
 }

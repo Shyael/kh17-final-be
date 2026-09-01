@@ -90,4 +90,13 @@
 		and account_phone = #{accountPhone}
 		and account_name = #{accountName}
 	</select>
+	
+	<!-- 수정 -->
+	<update id="updateAll">
+		update account
+		set account_name = #{accountName},
+			account_phone = #{accountPhone},
+			account_utime = systimestamp
+		where account_no = #{accountNo}
+	</update>
 </mapper>

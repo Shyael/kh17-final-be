@@ -1,4 +1,4 @@
-package com.kh.khedu.vo.employee;
+package com.kh.khedu.vo.studentLink;
 
 import java.sql.Timestamp;
 
@@ -8,11 +8,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Schema(name= "개인정보 수정 응답")
+@Schema(name="연동링크 저장할 정보")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class ChangeEmployeeResponseVO {
-	private String accountName;
-	private String accountPhone;
-	private String accountBirth;
-	private Timestamp accountUtime;
+public class StudentLinkVO {
+	private int studentLinkNo;
+	private int studentNo;
+	private String linkCode;
+	private Timestamp expire;
 }
