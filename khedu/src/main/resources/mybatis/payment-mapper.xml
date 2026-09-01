@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.payment">
+	<!-- 1. 영수증 번호(PK) 미리 발급받기 -->
+    <select id="sequence" resultType="int">
+        select payment_seq.nextval from dual
+    </select>
+
+    <!-- 2. 영수증(마스터) 발행 -->
+    <insert id="insertPayment">
+        insert into payment (
+        	payment_no, 
+        	student_no, 
+        	payment_month, 
+        	payment_amount, 
+        	payment_status
+        )
+        values (
+        	#{paymentNo}, 
+        	#{studentNo}, 
+        	#{paymentMonth}, 
+        	#{paymentAmount}, 
+        	#{paymentStatus}
+        )
+    </insert>
+
+    <!-- 3. 수강 과목 상세 저장 (Service에서 반복문으로 호출할 예정) -->
+    <insert id="insertPaymentDetail">
+        insert into payment_detail (
+        	payment_detail_no, 
+        	payment_no, 
+        	course_no, 
+        	course_fee
+        )
+        values (
+        	payment_detail_seq.nextval, 
+        	#{paymentNo}, 
+        	#{courseNo}, 
+        	#{courseFee})
+    </insert>
+
+    <!-- 4. 할인 상세 저장 (Service에서 반복문으로 호출할 예정) -->
+    <insert id="insertPaymentDiscount">
+        insert into payment_discount (
+        	payment_discount_no, 
+        	payment_no, 
+        	discount_name, 
+        	discount_value
+        )
+        values (
+        	payment_discount_seq.nextval, 
+        	#{paymentNo}, 
+        	#{discountName}, 
+        	#{discountValue})
+    </insert>
+    
+    <!-- 수납 목록 조회 (검색 필터 포함) -->
+    <select id="selectPaymentList" resultType="com.kh.khedu.vo.payment.PaymentListResponseVO">
+        select 
+            P.payment_no as paymentNo,
+            A.account_name as studentName,
+            P.payment_month as paymentMonth,
+            P.payment_status as paymentStatus,
+            P.payment_amount as totalAmount,
+            
+            -- 납부 내역(history) 테이블에서 해당 결제건의 납부액을 모두 더함 (없으면 0)
+            NVL((select sum(payment_history_amount) from payment_history where payment_no = P.payment_no), 0) as paidAmount,
+            
+            -- 총액 - 납부액 = 남은 금액
+            P.payment_amount - NVL((select sum(payment_history_amount) from payment_history where payment_no = P.payment_no), 0) as remainingAmount,
+            
+            -- 최근 납부일 (가장 마지막에 돈 낸 날짜)
+            (select max(payment_history_at) from payment_history where payment_no = P.payment_no) as lastPaidDate
+            
+        from 
+            payment P
+        inner join student S on P.student_no = S.student_no
+        inner join account A on S.account_no = A.account_no
+        where 1=1
+        
+        <if test="studentNo != null and studentNo != 0">
+            and P.student_no = #{studentNo}
+        </if>
+        
+        <!-- 프론트엔드에서 보낸 검색 조건이 있을 때만 쿼리에 추가 (동적 SQL) -->
+        <if test="searchMonth != null and searchMonth != ''">
+            and P.payment_month = #{searchMonth}
+        </if>
+        <if test="searchStatus != null and searchStatus != '전체'">
+            and P.payment_status = #{searchStatus}
+        </if>
+        <if test="searchName != null and searchName != ''">
+            and A.account_name like '%' || #{searchName} || '%'
+        </if>
+        order by P.payment_no desc
+    </select>
+  
+</mapper>

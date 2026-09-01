@@ -14,6 +14,7 @@ import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.vo.account.AccountJoinResponseVO;
 import com.kh.khedu.vo.account.AccountRegisterVO;
+import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentJoinRequestVO;
 import com.kh.khedu.vo.student.StudentListResponseVO;
@@ -101,5 +102,25 @@ public class StudentService {
         
         // 2. Student 정보 변경
         studentDao.updateStudent(requestVO);
+    }
+    
+    // 특정 학생이 받고 있는 할인 목록 보기
+    public List<StudentDiscountVO> getStudentDiscounts(int studentNo) {
+        return studentDao.selectStudentDiscounts(studentNo);
+    }
+
+    // 특정 학생에게 새로운 할인 부여
+    public void addStudentDiscount(int studentNo, int discountNo) {
+        // DAO에 넘겨주기 위해 VO에 번호 2개를 포장합니다.
+        StudentDiscountVO vo = new StudentDiscountVO();
+        vo.setStudentNo(studentNo);
+        vo.setDiscountNo(discountNo);
+        
+        studentDao.insertStudentDiscount(vo);
+    }
+
+    // 학생의 할인 혜택 해제
+    public void removeStudentDiscount(int studentDiscountNo) {
+        studentDao.deleteStudentDiscount(studentDiscountNo);
     }
 }
