@@ -8,9 +8,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Schema(name = "상담 고객 저장 응답 객체")
+@Schema(name = "상담 내역 저장 결과")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class ConsultReservationUpdateResponseVO {
+public class ConsultUpdateResponseVO {
 	private boolean result;
-	private ConsultCustomerListItemVO item;
+	private String errMsg;
+	private Integer consultNo;
 }

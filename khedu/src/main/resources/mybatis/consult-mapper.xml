@@ -31,6 +31,17 @@
 		</where>
 	</select>
 	
+	<update id="reservationUpdate">
+		update	reservation
+		<set>
+	        	reservation_status = #{reservationStatus},
+	        <if test="reservationComment != null and reservationComment != ''">
+	            reservation_comment = #{reservationComment}
+	        </if>
+	    </set>
+		where	reservation_no = #{reservationNo}
+	</update>
+	
 	<select id="customerSequence" resultType="int">
 		select consult_customer_seq.nextval from dual
 	</select>
@@ -41,15 +52,29 @@
 		where	customer_no = #{customerNo}
 	</select>
 	
+	<select id="customerDupCheck" resultType="ConsultCustomerDto">
+		select	*
+		from	consult_customer
+		<where>
+			and	student_phone = #{studentPhone}
+			<if test="customerNo != null">
+			and customer_no != #{customerNo}
+			</if>
+		</where>	
+	</select>
+	
 	<select id="customerList" resultType="ConsultCustomerDto">
 		select	* 
 		from	consult_customer
 		<where>
+			<if test="search != null and search != ''" >
 			or	instr(student_name, #{search}) > 0
 			or	instr(student_phone, #{search}) > 0
 			or	instr(parent_name, #{search}) > 0
 			or	instr(parent_phone, #{search}) > 0
+			</if>
 		</where>
+		order by customer_no desc
 	</select>
 	
 	<insert id="customerAdd">
@@ -102,14 +127,49 @@
 		where	customer_no = #{customerNo}
 	</update>
 	
-	<update id="reservationUpdate">
-		update	reservation
+	<select id="consultSequence" resultType="int">
+		select consult_seq.nextval from dual
+	</select>
+	
+	<select id="consultInfo" resultType="ConsultDto">
+		select	*
+		from	consult
+		where	consult_no = #{consultNo}
+	</select>
+	
+	<select id="consultList" resultType="ConsultListItemVO">
+		select	c.*, e.employee_type, a.account_name
+		from	consult c
+		inner join employee e on e.employee_no = c.consult_employee_no
+		inner join account a on a.account_no = e.account_no
+		where	c.customer_no = #{customerNo}
+		order by c.consult_ctime desc
+	</select>
+	
+	<insert id="consultAdd">
+		insert into consult
+		(
+			consult_no,
+			customer_no,
+			consult_employee_no,
+			consult_title,
+			consult_content
+		) values (
+			#{consultNo},
+			#{customerNo},
+			#{consultEmployeeNo},
+			#{consultTitle},
+			#{consultContent}
+		)
+	</insert>
+	
+	<update id="consultUpdate">
+		update	consult
 		<set>
-	        	reservation_status = #{reservationStatus},
-	        <if test="reservationComment != null and reservationComment != ''">
-	            reservation_comment = #{reservationComment}
-	        </if>
-	    </set>
-		where	reservation_no = #{reservationNo}
+				consult_title = #{consultTitle},
+				consult_content = #{consultContent},
+		</set>
+		where	consult_no = #{consultNo}
 	</update>
+	
 </mapper>
