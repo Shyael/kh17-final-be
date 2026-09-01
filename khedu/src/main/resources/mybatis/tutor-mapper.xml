@@ -153,7 +153,7 @@
 	<!-- 이미지 연결 -->
 	<insert id="connect">
 		insert into tutor_file (tutor_no, attach_no)
-		values( #{academyNo}, #{attachNo})
+		values( #{tutorNo}, #{attachNo})
 	</insert>
 	
 	<!-- 이미지찾기(하나) -->
