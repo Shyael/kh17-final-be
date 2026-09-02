@@ -18,6 +18,9 @@ import com.kh.khedu.vo.payment.DiscountVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
 import com.kh.khedu.vo.payment.PaymentRequestVO;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "수납 관리")
 @RestController
 @RequestMapping("/api/payment")
 public class PaymentRestController {

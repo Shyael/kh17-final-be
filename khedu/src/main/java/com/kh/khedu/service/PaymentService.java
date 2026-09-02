@@ -18,6 +18,7 @@ import com.kh.khedu.vo.payment.PaymentDetailVO;
 import com.kh.khedu.vo.payment.PaymentDiscountVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
 import com.kh.khedu.vo.payment.PaymentRequestVO;
+import com.kh.khedu.vo.payment.StudentDiscountVO;
 
 @Service
 public class PaymentService {
@@ -100,4 +101,71 @@ public class PaymentService {
         
         return paymentDao.selectPaymentList(params);
     }
+//    
+//    @Transactional
+//    public void processMonthlyBilling(String currentMonth) {
+//        
+//        // 1. 현재 학원에 다니고 있는 전체 학생 번호 목록을 가져옵니다.
+//        List<Integer> targetStudents = paymentDao.selectAllActiveStudents();
+//        
+//        for (Integer studentNo : targetStudents) {
+//            
+//            // 🛡️ [방어 로직] 이 학생의 '이번 달' 청구서가 이미 존재하는지 카운트 확인
+//            int isAlreadyBilled = paymentDao.checkDuplicateBilling(studentNo, currentMonth);
+//            if (isAlreadyBilled > 0) {
+//                continue; // 이미 이번 달 청구서가 있으면 다음 학생으로 패스! (중복 발행 차단)
+//            }
+//            
+//            // 2. 학생이 듣고 있는 강좌 목록을 가져와서 '원금 총액' 계산
+//            // (만들어두신 복사 테이블을 조회하는 쿼리 결과를 받는 VO를 StudentCourseVO라 가정)
+//            List<StudentCourseVO> courses = paymentDao.selectStudentCourses(studentNo);
+//            if (courses.isEmpty()) {
+//                continue; // 듣는 강좌가 없으면 청구서 발행 안 함
+//            }
+//            
+//            int totalFee = 0;
+//            for (StudentCourseVO course : courses) {
+//                totalFee += course.getCourseFee(); // 미리 복사해 둔 수강료 합산
+//            }
+//            
+//            // 3. 학생이 받고 있는 할인 목록 가져와서 '할인 총액' 계산
+//            List<StudentDiscountVO> discounts = studentDao.selectStudentDiscounts(studentNo);
+//            int totalDiscount = 0;
+//            
+//            for (StudentDiscountVO discount : discounts) {
+//                if ("비율".equals(discount.getDiscountType())) {
+//                    // 비율 할인이면 원금 기준 퍼센트 계산 (예: 250000 * 10 / 100 = 25000)
+//                    totalDiscount += (totalFee * discount.getDiscountValue() / 100);
+//                } else {
+//                    // 금액 할인이면 그대로 뺌
+//                    totalDiscount += discount.getDiscountValue();
+//                }
+//            }
+//            
+//            // 최종 청구 금액 (할인이 원금보다 커서 마이너스가 되는 것을 방지: Math.max 사용)
+//            int finalAmount = Math.max(0, totalFee - totalDiscount);
+//            
+//            // 4. DB에 영수증 마스터(payment) INSERT
+//            PaymentDto payment = new PaymentDto();
+//            int paymentNo = paymentDao.sequence(); // 시퀀스 발급
+//            payment.setPaymentNo(paymentNo);
+//            payment.setStudentNo(studentNo);
+//            payment.setPaymentMonth(currentMonth);
+//            payment.setPaymentAmount(finalAmount);
+//            payment.setPaymentStatus("미납"); // 최초 발행이므로 무조건 미납
+//            
+//            paymentDao.insertPayment(payment);
+//            
+//            // 5. DB에 수강 내역 디테일(payment_detail) INSERT
+//            for (StudentCourseVO course : courses) {
+//                PaymentDetailDto detail = new PaymentDetailDto();
+//                detail.setPaymentNo(paymentNo);
+//                detail.setCourseNo(course.getCourseNo());
+//                detail.setCourseFee(course.getCourseFee());
+//                paymentDao.insertPaymentDetail(detail);
+//            }
+//            
+//            // (선택) 6. DB에 어떤 할인이 들어갔는지 기록(payment_discount) INSERT
+//            // 이 테이블이 있다면 반복문 돌려서 기록해 주면 나중에 영수증 볼 때 아주 좋습니다.
+//        }
 }
