@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.AccountRolesDao;
+import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.StudentDao;
 import com.kh.khedu.dao.StudentLinkDao;
 import com.kh.khedu.dto.AccountDto;
@@ -26,7 +27,7 @@ import com.kh.khedu.vo.account.AccountJoinResponseVO;
 import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.account.CheckPasswordRequestVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
-import com.kh.khedu.vo.parentStudent.ParentStudentVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentDetailVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.ChangeStudentRequestVO;
 import com.kh.khedu.vo.student.ChangeStudentResponseVO;
@@ -56,6 +57,8 @@ public class StudentService {
 	private RandomService randomService;
 	@Autowired
 	private StudentLinkDao studentLinkDao;
+	@Autowired
+	private ParentStudentDao parentStudentDao;
 	
 	//학생 정보 등록
 	@Transactional
@@ -154,31 +157,33 @@ public class StudentService {
 	
 	//학생 정보 조회
 	public StudentDetailVO findMyInfo(String accountId) {
-		//계정 존재 여부 검사
+		//[1] 계정 존재 여부 검사
 		AccountDto accountDto = accountDao.selectOne(accountId);
-		//아이디가 없으면
-		if(accountDto == null) throw new TargetNotfoundException();
-		//학생이 아니면
-		if(!accountDto.getAccountType().equals(AccountType.STUDENT.getDescription())) throw new WhoAreYouException();
+		if(accountDto == null) 
+			throw new TargetNotfoundException();
 		
-		//[2] 학부모학생테이블에 학부모가 없는경우
-		ParentStudentVO parentStudentVO = studentDao.selectOneRelationByAccountNo(accountDto.getAccountNo());
+		//[2] 학생이 아니면
+		if(!accountDto.getAccountType().equals(AccountType.STUDENT.getDescription())) 
+			throw new WhoAreYouException();
+		
+		//[3] 학생 번호로 부모정보 조회
+		//학생 정보 조회
+		StudentDto studentDto = studentDao.selectOne(accountDto.getAccountNo());
 		StudentDetailVO studentDetailVO = new StudentDetailVO();
 		
-		StudentDto studentDto = studentDao.selectOne(accountDto.getAccountNo());
-		
-		if(parentStudentVO == null) { //학부모 정보가 없으면
-			BeanUtils.copyProperties(studentDto, studentDetailVO); //학생정보
-			BeanUtils.copyProperties(accountDto, studentDetailVO); //계정 정보
-			return studentDetailVO;
-		}
-		
-		//[3] 학부모학생 테이블에 학부모 정보가 있는 경우
+		//계정 정보 복사
 		BeanUtils.copyProperties(accountDto, studentDetailVO);
-		return StudentDetailVO.builder()
-					.studentNo(studentDto.getStudentNo())
-					.parentNo(parentStudentVO.getParentNo())
-				.build();
+		//학생 정보 복사
+		BeanUtils.copyProperties(studentDto, studentDetailVO);
+		
+		//학생의 모든 보호자 조회
+		List<ParentStudentDetailVO> parents =
+				parentStudentDao.selectParentListByStudentNo(studentDto.getStudentNo());
+		
+		//보호자 목록 설정
+		studentDetailVO.setParents(parents);
+		
+		return studentDetailVO;
 	}
 	
 	//학생 정보 수정(본인)

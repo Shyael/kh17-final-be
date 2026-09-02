@@ -33,13 +33,6 @@
 	<select id="findByAccountNo" resultType="StudentDto">
 		select * from student where account_no = #{accountNo}
 	</select>
-	<!-- accountNo로 학생 학부모 관계 테이블 조회 -->
-	<select id="findParentStudentByAccountNo" resultType="parentStudentDto">
-		select * from 
-		student s join 
-		parent_student ps on s.student_no = ps.student_no 
-		where s.account_no = #{accountNo}
-	</select>
 	<!-- 수정 -->
 	<update id="updateAll">
 		update student

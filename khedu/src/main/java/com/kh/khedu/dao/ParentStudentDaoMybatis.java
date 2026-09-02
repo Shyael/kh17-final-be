@@ -34,6 +34,11 @@ public class ParentStudentDaoMybatis implements ParentStudentDao {
 	public List<ParentStudentDetailVO> selectStudentListByParentNo(int parentNo) {
 		return sqlSession.selectList("mapper.parentStudent.selectStudentListByParentNo", parentNo);
 	}
+	
+	@Override
+	public List<ParentStudentDetailVO> selectParentListByStudentNo(int studentNo) {
+		return sqlSession.selectList("mapper.parentStudent.selectParentListByStudentNo", studentNo);
+	}
 
 	@Override
 	public ParentStudentDto findParentStudentByStudentNo(int studentNo) {
@@ -43,6 +48,11 @@ public class ParentStudentDaoMybatis implements ParentStudentDao {
 	@Override
 	public boolean updateReltaionship(ParentStudentDto parentStudentDto) {
 		return sqlSession.update("mapper.parentStudent.updateRelationship", parentStudentDto) > 0;
+	}
+
+	@Override
+	public ParentStudentVO selectOneRelationByAccountNo(int accountNo) {
+		return sqlSession.selectOne("mapper.parentStudent.findParentStudentByAccountNo", accountNo);
 	}
 
 }
