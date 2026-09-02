@@ -1,6 +1,9 @@
 package com.kh.khedu.vo.parent;
 
 import java.sql.Timestamp;
+import java.util.List;
+
+import com.kh.khedu.vo.parentStudent.ParentStudentDetailVO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -25,4 +28,7 @@ public class ParentDetailVO {
     private String accountPhone;
     private String accountStatus;
     private String accountType;
+    
+    //자녀 목록
+    private List<ParentStudentDetailVO> students;
 }

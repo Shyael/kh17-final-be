@@ -2,6 +2,7 @@ package com.kh.khedu.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,6 +19,9 @@ import com.kh.khedu.vo.parent.ChangeParentRequestVO;
 import com.kh.khedu.vo.parent.ChangeParentResponseVO;
 import com.kh.khedu.vo.parent.ParentDetailVO;
 import com.kh.khedu.vo.parent.ParentJoinRequestVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentRelatioshipUpdateRequestVO;
+import com.kh.khedu.vo.studentLink.ParentLinkRequestVO;
+import com.kh.khedu.vo.studentLink.ParentLinkResponseVO;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -70,5 +74,23 @@ public class ParentRestController {
 	) {
 		return parentService.checkPassword(request, parseVO);
 	}
-		
+	
+	//연동코드
+	@PostMapping("/link-student")
+	public ResponseEntity<ParentLinkResponseVO> link(
+			@CurrentUser TokenParseResponseVO parseVO,
+			@Valid @RequestBody ParentLinkRequestVO request
+	) {
+		ParentLinkResponseVO response = parentService.linkStudent(request, parseVO);
+		return ResponseEntity.ok(response);
+	}
+	
+	//관계 수정
+	@PutMapping("/relationship")
+	public void relationship(
+			@RequestBody ParentStudentRelatioshipUpdateRequestVO request,
+			@CurrentUser TokenParseResponseVO parseVO) {
+		parentService.updateRelationship(parseVO, request);
+	}
+	
 }

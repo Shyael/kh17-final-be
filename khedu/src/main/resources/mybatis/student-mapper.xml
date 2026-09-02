@@ -49,41 +49,4 @@
 		where account_no = #{accountNo}
 	</update>
 	
-	
-	<!-- student_link관련 코드 -->
-	
-	<!-- 시퀀스 생성 -->
-	<select id="sequenceLink" resultType="int">
-		select student_link_seq.nextval from dual
-	</select>
-	
-	
-	<!-- 학생번호로 studentLink만료 -->
-	<update id="expireStudentLink">
-		update student_link
-		set link_expire = systimestamp
-		where student_no = #{studentNo}
-		and link_used_yn = 'N'
-		and link_expire > systimestamp
-	</update>
-	
-	<!-- 연동코드 정보 저장 -->
-	<insert id="insertStudentLink">
-		insert into student_link (
-			student_link_no,
-	        student_no,
-	        link_code,
-	        link_expire,
-	        link_used_yn,
-	        student_link_ctime
-		)
-		values(
-			#{studentLinkNo},
-	        #{studentNo},
-	        #{linkCode},
-	        #{linkExpire},
-	        'N',
-	        SYSTIMESTAMP
-		)
-	</insert>
 </mapper>

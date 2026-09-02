@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dao.StudentDao;
+import com.kh.khedu.dao.StudentLinkDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.dto.AccountRolesDto;
 import com.kh.khedu.dto.StudentDto;
@@ -23,7 +24,7 @@ import com.kh.khedu.vo.account.AccountJoinResponseVO;
 import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.account.CheckPasswordRequestVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
-import com.kh.khedu.vo.parent.ParentStudentVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 import com.kh.khedu.vo.student.ChangeStudentRequestVO;
 import com.kh.khedu.vo.student.ChangeStudentResponseVO;
 import com.kh.khedu.vo.student.StudentDetailVO;
@@ -47,6 +48,8 @@ public class StudentService {
 	private PasswordEncoder passwordEncoder;
 	@Autowired
 	private RandomService randomService;
+	@Autowired
+	private StudentLinkDao studentLinkDao;
 	
 	//학생 정보 등록
 	@Transactional
@@ -129,6 +132,7 @@ public class StudentService {
 	}
 	
 	//학생 정보 수정(본인)
+	@Transactional
 	public ChangeStudentResponseVO updateMyInfo(
 			ChangeStudentRequestVO request,
 			TokenParseResponseVO parseVO
@@ -205,7 +209,7 @@ public class StudentService {
 		}
 		
 		//[3] 기존 미사용 코드가 있다면 만료 시키기
-		studentDao.expireStudentLink(parseVO.getNoType());
+		studentLinkDao.expireStudentLink(parseVO.getNoType());
 		
 		//[4] 새로운 코드 생성
 		String linkCode = randomService.generateLinkCode();
@@ -216,16 +220,16 @@ public class StudentService {
 		);
 		
 		//[6] DB저장
-		int studentLinkNo = studentDao.sequenceLink();
+		int studentLinkNo = studentLinkDao.sequenceLink();
 				
 		StudentLinkVO studentLinkVO = StudentLinkVO.builder()
 					.studentLinkNo(studentLinkNo)
 					.studentNo(parseVO.getNoType())
 					.linkCode(linkCode)
-					.expire(expire)
+					.linkExpire(expire)
 				.build(); 
 		
-		studentDao.insertStudentLink(studentLinkVO);
+		studentLinkDao.insertStudentLink(studentLinkVO);
 		
 		return StudentLinkResponseVO.builder()
 					.linkCode(linkCode)

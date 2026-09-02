@@ -1,6 +1,4 @@
-package com.kh.khedu.vo.parent;
-
-import com.kh.khedu.dto.ParentDto;
+package com.kh.khedu.vo.parentStudent;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

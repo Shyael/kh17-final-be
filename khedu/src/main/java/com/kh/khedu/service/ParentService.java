@@ -1,5 +1,8 @@
 package com.kh.khedu.service;
 
+import java.sql.Timestamp;
+import java.util.List;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -9,12 +12,16 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dao.ParentDao;
+import com.kh.khedu.dao.ParentStudentDao;
+import com.kh.khedu.dao.StudentLinkDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.dto.AccountRolesDto;
-import com.kh.khedu.dto.EmployeeDto;
 import com.kh.khedu.dto.ParentDto;
+import com.kh.khedu.dto.ParentStudentDto;
+import com.kh.khedu.dto.StudentLinkDto;
 import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.enums.RoleType;
+import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.vo.account.AccountJoinResponseVO;
@@ -25,7 +32,10 @@ import com.kh.khedu.vo.parent.ChangeParentRequestVO;
 import com.kh.khedu.vo.parent.ChangeParentResponseVO;
 import com.kh.khedu.vo.parent.ParentDetailVO;
 import com.kh.khedu.vo.parent.ParentJoinRequestVO;
-import com.kh.khedu.vo.parent.ParentStudentVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentDetailVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentRelatioshipUpdateRequestVO;
+import com.kh.khedu.vo.studentLink.ParentLinkRequestVO;
+import com.kh.khedu.vo.studentLink.ParentLinkResponseVO;
 
 @Service
 public class ParentService {
@@ -39,6 +49,12 @@ public class ParentService {
 	private AccountDao accountDao;
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+	@Autowired
+	private StudentLinkDao studentLinkDao;
+	@Autowired
+	private ParentStudentDao parentStudentDao;
+	@Autowired
+	private AccountDao accounttDao;
 	
 	//학부모 정보 등록
 	@Transactional
@@ -83,33 +99,33 @@ public class ParentService {
 
 	//학부모 정보 조회
 	public ParentDetailVO findMyInfo(String accountId) {
-		//계정 존재 여부 검사
+		//[1] 계정 존재 여부 검사
 		AccountDto accountDto = accountDao.selectOne(accountId);
-		//아이디가 없으면
-		if(accountDto == null) throw new TargetNotfoundException();
-		//학부모가 아니면
-		if(!accountDto.getAccountType().equals(AccountType.PARENT.getDescription())) throw new WhoAreYouException();
+		if(accountDto == null) 
+			throw new TargetNotfoundException();
 		
-		//[2] 학부모학생테이블에 학생정보가 없는경우
-		ParentStudentVO parentStudentVO = parentDao.selectOneRelationByAccountNo(accountDto.getAccountNo());
+		//[2]학부모가 아니면
+		if(!accountDto.getAccountType().equals(AccountType.PARENT.getDescription())) 
+			throw new WhoAreYouException();
+		
+		//[3] 학부모 번호로 자녀정보 조회 
+		//학부모 정보 조회
+		ParentDto parentDto = parentDao.selectOneByAccountNo(accountDto.getAccountNo());		
 		ParentDetailVO parentDetailVO = new ParentDetailVO();
 		
-		ParentDto parentDto = parentDao.selectOneByAccountNo(accountDto.getAccountNo());		
+		//계정 정보 복사
+		BeanUtils.copyProperties(accountDto, parentDetailVO);
+		//학부모 정보 복사
+		BeanUtils.copyProperties(parentDto, parentDetailVO);
 		
-		if(parentStudentVO == null) { //학생정보가 없으면
-			BeanUtils.copyProperties(parentDto, parentDetailVO); //학부모 정보
-			BeanUtils.copyProperties(accountDto, parentDetailVO); //계정 정보
-			
-			return parentDetailVO;
-		}
+		//학부모의 모든 자녀 조회
+		List<ParentStudentDetailVO> students = 
+				parentStudentDao.selectStudentListByParentNo(parentDto.getParentNo());
 		
-		//[3] 학부모학생테이블에 학생정보가 있는 경우
-		BeanUtils.copyProperties(accountDto, parentDetailVO); //계정 정보
-		return ParentDetailVO.builder()
-					.parentNo(parentDto.getParentNo())
-					.studentNo(parentStudentVO.getStudentNo())
-					.relationship(parentStudentVO.getRelationship())
-				.build();
+		//자녀 목록 설정
+		parentDetailVO.setStudents(students);
+		
+		return parentDetailVO;
 	}
 
 	//학부모 정보 수정(본인)
@@ -168,6 +184,116 @@ public class ParentService {
 				request.getAccountPassword(), //입력된 비번
 				accountDto.getAccountPassword() //DB
 		);
+	}
+	
+	// 연동코드 등록
+	public ParentLinkResponseVO linkStudent(ParentLinkRequestVO request, TokenParseResponseVO parseVO) {
+		//[1] 로그인 한 계정정보
+		int accountNo = parseVO.getAccountNo();
+		//[2] accountNo로 학부모 조회
+		ParentDto parentDto = parentDao.selectOneByAccountNo(accountNo);
+		
+		if(parentDto == null) {
+			throw new TargetNotfoundException();
+		}
+		
+		//[3] 연동코드 조회
+		StudentLinkDto studentLinkDto = studentLinkDao.findByLinkCode(request.getLinkCode());
+			//존재하지 않을 경우
+			if(studentLinkDto == null) { 
+				throw new TargetNotfoundException();
+			}
+			//사용된 연동코드일 경우
+			if("Y".equals(studentLinkDto.getLinkUsedYn())) { 
+				throw new GetOutException();
+			}
+			//현재시각보다 만료코드가 이전일 경우(포함)
+			Timestamp now = new Timestamp(System.currentTimeMillis());
+			if(studentLinkDto.getLinkExpire().before(now)) { 
+				throw new GetOutException();
+			}
+			
+		//[4] 학생 번호 가져오기
+		int studentNo = studentLinkDto.getStudentNo();
+		//[4-1] 학생 번호로 학생 이름 가져오기
+		String studentName = accountDao.selectOneByStudentNo(studentNo);
+		
+		//[5] 해당 학생 중복확인
+		ParentStudentDto already = 
+				parentStudentDao.findByParentStudentNo(
+					ParentStudentDto.builder()
+							.parentNo(parentDto.getParentNo())
+							.studentNo(studentNo)
+					.build()
+				);
+		if(already != null) { //이미 연동되었으므로 아웃
+			throw new GetOutException();
+		}
+		
+		//[6] parent_student에 연결
+		ParentStudentDto parentStudentDto = ParentStudentDto.builder()
+					.parentNo(parentDto.getParentNo())
+					.studentNo(studentNo)
+					.relationship(request.getRelationship())
+				.build(); 
+		
+		parentStudentDao.insert(parentStudentDto);
+		
+		//[7] 사용된 연동코드 정리
+		studentLinkDao.usedLinkCode(studentLinkDto.getStudentLinkNo());
+		
+		//[8] 응답
+		return ParentLinkResponseVO.builder()
+					.studentNo(studentNo)
+					.studentName(studentName)
+					.relationship(request.getRelationship())
+				.build();
+	}
+
+	public void updateRelationship(
+			TokenParseResponseVO parseVO, 
+			ParentStudentRelatioshipUpdateRequestVO request
+	) {
+		//[1] 계정 조회
+		int accountNo = parseVO.getAccountNo();
+		AccountDto accountDto = accountDao.selectOneByAccountNo(accountNo);
+		if(accountDto == null) {
+			throw new TargetNotfoundException();
+		}
+		
+		//[2] 학부모 확인
+		if(!accountDto.getAccountType().equals(AccountType.PARENT.getDescription())){
+			throw new WhoAreYouException();
+		}
+		
+		//[3] 학부모 조회
+		ParentDto parentDto = parentDao.selectOneByAccountNo(accountNo);
+		
+		if(parentDto == null) {
+			throw new TargetNotfoundException();
+		}
+		
+		//[4] 학부모-학생 조회
+		ParentStudentDto parentStudentDto = parentStudentDao.findParentStudentByStudentNo(request.getStudentNo());
+		
+		//[5] 관계값 검증
+		String relationship = request.getRelationship();
+		if(!relationship.equals("부") 
+			&& !relationship.equals("모")
+			&& !relationship.equals("보호자")
+			&& !relationship.equals("기타")) {
+			
+			throw new GetOutException();
+		}
+		
+		//[6] 관계 수정
+		parentStudentDto.setRelationship(relationship);
+		boolean result = parentStudentDao.updateReltaionship(parentStudentDto);
+		
+		//[7] 해당 학생과 연동되어 있지 않은 경우
+	    if (!result) {
+	        throw new TargetNotfoundException();
+	    }
 	}
 	
 }

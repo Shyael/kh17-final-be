@@ -29,6 +29,7 @@ public interface AccountDao {
 	//accountNo로 찾기
 	AccountDto selectOneByAccountNo(int accountNo);
 	boolean updateAll(AccountDto accountDto);
+	String selectOneByStudentNo(int studentNo);
 	
 	
 }

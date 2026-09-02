@@ -24,11 +24,13 @@
 	<select id="findByAccountNo" resultType="parentDto">
 		select * from parent where account_no = #{accountNo}
 	</select>
+	
 	<!-- accountNo로 학생 학부모 관계 테이블 조회 -->
-	<select id="findParentStudentByAccountNo" resultType="parentStudentDto">
+	<select id="findParentStudentByAccountNo" resultType="parentStudentVO">
 		select * from 
 		parent p join 
 		parent_student ps on p.parent_no = ps.parent_no 
 		where p.account_no = #{accountNo}
 	</select>
+	
 </mapper>

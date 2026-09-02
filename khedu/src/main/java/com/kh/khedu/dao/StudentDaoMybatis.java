@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.StudentDto;
-import com.kh.khedu.vo.parent.ParentStudentVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 import com.kh.khedu.vo.student.StudentVO;
 import com.kh.khedu.vo.studentLink.StudentLinkVO;
 
@@ -40,20 +40,4 @@ public class StudentDaoMybatis implements StudentDao {
 	public ParentStudentVO selectOneRelationByAccountNo(int accountNo) {
 		return sqlSession.selectOne("mapper.student.findParentStudentByAccountNo", accountNo);
 	}
-
-	@Override
-	public void expireStudentLink(int studentNo) {
-		sqlSession.update("mapper.student.expireStudentLink", studentNo);
-	}
-
-	@Override
-	public void insertStudentLink(StudentLinkVO studentLinkVO) {
-		sqlSession.insert("mapper.student.insertStudentLink", studentLinkVO);
-	}
-
-	@Override
-	public int sequenceLink() {
-		return sqlSession.selectOne("mapper.student.sequenceLink");
-	}
-
 }

@@ -130,7 +130,6 @@ public class AccountRestController {
 	@PostMapping("/find-password")
 	public void findPassword(
 			@Valid @RequestBody FindAccountPasswordRequestVO request) throws MessagingException, IOException {
-		
 		accountService.resetPassword(request);
 	}
 	

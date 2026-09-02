@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.ParentDto;
-import com.kh.khedu.vo.parent.ParentStudentVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 @Repository
 public class ParentDaoMybatis implements ParentDao {

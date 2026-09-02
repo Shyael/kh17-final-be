@@ -1,7 +1,7 @@
 package com.kh.khedu.dao;
 
 import com.kh.khedu.dto.ParentDto;
-import com.kh.khedu.vo.parent.ParentStudentVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 public interface ParentDao {
 
