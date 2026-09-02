@@ -27,7 +27,7 @@ import com.kh.khedu.vo.account.AccountJoinResponseVO;
 import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.account.CheckPasswordRequestVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
-import com.kh.khedu.vo.parentStudent.ParentStudentDetailVO;
+import com.kh.khedu.vo.parentStudent.StudentParentDetailVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.ChangeStudentRequestVO;
 import com.kh.khedu.vo.student.ChangeStudentResponseVO;
@@ -177,12 +177,12 @@ public class StudentService {
 		BeanUtils.copyProperties(studentDto, studentDetailVO);
 		
 		//학생의 모든 보호자 조회
-		List<ParentStudentDetailVO> parents =
+		List<StudentParentDetailVO> parents =
 				parentStudentDao.selectParentListByStudentNo(studentDto.getStudentNo());
 		
 		//보호자 목록 설정
 		studentDetailVO.setParents(parents);
-		
+		System.out.println("보호자 목록" + studentDetailVO);
 		return studentDetailVO;
 	}
 	

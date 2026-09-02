@@ -3,7 +3,7 @@ package com.kh.khedu.vo.student;
 import java.sql.Timestamp;
 import java.util.List;
 
-import com.kh.khedu.vo.parentStudent.ParentStudentDetailVO;
+import com.kh.khedu.vo.parentStudent.StudentParentDetailVO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -35,5 +35,5 @@ public class StudentDetailVO {
     private String accountType;
     
     //보호자 목록
-    private List<ParentStudentDetailVO> parents;
+    private List<StudentParentDetailVO> parents;
 }

@@ -6,10 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Schema(name="학부모의 자녀 정보")
+@Schema(name="학생의 학부모 정보")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class ParentStudentDetailVO {
-	private int studentNo;
-	private String studentName;
+public class StudentParentDetailVO {
+	private int parentNo;
+	private String parentName;
 	private String relationship;
 }

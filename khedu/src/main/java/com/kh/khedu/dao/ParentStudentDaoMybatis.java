@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.kh.khedu.dto.ParentStudentDto;
 import com.kh.khedu.vo.parentStudent.ParentStudentDetailVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
+import com.kh.khedu.vo.parentStudent.StudentParentDetailVO;
 
 @Repository
 public class ParentStudentDaoMybatis implements ParentStudentDao {
@@ -36,7 +37,7 @@ public class ParentStudentDaoMybatis implements ParentStudentDao {
 	}
 	
 	@Override
-	public List<ParentStudentDetailVO> selectParentListByStudentNo(int studentNo) {
+	public List<StudentParentDetailVO> selectParentListByStudentNo(int studentNo) {
 		return sqlSession.selectList("mapper.parentStudent.selectParentListByStudentNo", studentNo);
 	}
 
