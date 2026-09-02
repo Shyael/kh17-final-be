@@ -88,11 +88,13 @@ public class AccountRestController {
 		}
 		
 		//[5] 변경 시도
-		accountDao.updateAccountPassword(AccountDto.builder()
+		boolean result = accountDao.updateAccountPassword(AccountDto.builder()
 					.accountNo(parseVO.getAccountNo())
 					.accountPassword(request.getNewAccountPassword())
 				.build());
-		
+		if(!result) {
+		    throw new TargetNotfoundException();
+		}
 		//[6] 성공 알림
 		return ChangePasswordResponseVO.builder()
 				.result(true)

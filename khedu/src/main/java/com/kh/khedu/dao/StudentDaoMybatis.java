@@ -80,8 +80,4 @@ public class StudentDaoMybatis implements StudentDao {
 		return sqlSession.update("mapper.student.updateAll", studentDto) > 0;
 	}
 
-	@Override
-	public ParentStudentVO selectOneRelationByAccountNo(int accountNo) {
-		return sqlSession.selectOne("mapper.student.findParentStudentByAccountNo", accountNo);
-	}
 }

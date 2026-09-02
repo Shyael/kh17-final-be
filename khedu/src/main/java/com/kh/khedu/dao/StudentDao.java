@@ -28,5 +28,4 @@ public interface StudentDao {
     void deleteStudentDiscount(int studentDiscountNo);
 	StudentDto selectOne(int accountNo);
 	boolean updateAll(StudentDto studentDto);
-	ParentStudentVO selectOneRelationByAccountNo(int accountNo);
 }
