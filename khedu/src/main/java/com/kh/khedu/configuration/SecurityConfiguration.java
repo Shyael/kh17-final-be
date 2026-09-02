@@ -141,6 +141,7 @@ public class SecurityConfiguration {
 						// [5] 직원
 						.requestMatchers(
 								"/api/employee/**"
+								,"/api/attendance/**"//근태관련
 						)
 						.hasAnyAuthority(
 								RoleType.TUTOR.getCode(), 

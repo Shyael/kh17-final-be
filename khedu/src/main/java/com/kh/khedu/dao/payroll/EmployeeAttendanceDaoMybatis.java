@@ -76,6 +76,12 @@ public class EmployeeAttendanceDaoMybatis implements EmployeeAttendanceDao{
 	}
 
 
+	@Override
+	public EmployeeAttendanceDto findBySchedule(long workScheduleNo) {
+		return sqlSession.selectOne("mapper.attendance.findBySchedule",workScheduleNo);
+	}
+
+
 	
 
 }

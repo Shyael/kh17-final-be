@@ -16,7 +16,7 @@ public class EmployeeAttendanceDto {
     private Timestamp clockOut;
     private Double breakMinutes;
     private String attendanceType;
-    private String workDayType;
     private double nightHours;
     private double overtimeHours;
+	
 }

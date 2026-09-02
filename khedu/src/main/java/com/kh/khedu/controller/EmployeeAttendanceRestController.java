@@ -1,7 +1,6 @@
 package com.kh.khedu.controller;
 
-import java.sql.Timestamp;
-import java.util.List;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,7 +8,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CommonsApiResponse;
@@ -19,13 +18,13 @@ import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentToNormalRequestVO;
-import com.kh.khedu.vo.payroll.request.AttendanceClockInRequestVO;
+
 import com.kh.khedu.vo.payroll.request.AttendanceLeaveRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToNormalRequestVO;
 import com.kh.khedu.vo.payroll.response.AttendanceClockInResponseVO;
 import com.kh.khedu.vo.payroll.response.AttendanceClockOutResponseVO;
-import com.kh.khedu.vo.payroll.response.AttendanceSearchResponseVO;
+
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +32,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "직원 근태 관련 컨트롤러")
 @CommonsApiResponse
 @RestController
-@RequestMapping("/attendance")
+@RequestMapping("/api/attendance")
 public class EmployeeAttendanceRestController {
 
     @Autowired
@@ -52,18 +51,18 @@ public class EmployeeAttendanceRestController {
                 parseVO);
     }
     
-    // 출근
+ // 출근
     @ApiResponse(
             responseCode = "200",
             description = "직원 출근 성공"
     )
     @PostMapping("/clockIn")
     public AttendanceClockInResponseVO clockIn(
-            @RequestBody AttendanceClockInRequestVO requestVO,
+            
             @CurrentUser TokenParseResponseVO parseVO) {
 
         return employeeAttendanceService.clockIn(
-                requestVO,
+               
                 parseVO);
     }
 
@@ -75,7 +74,7 @@ public class EmployeeAttendanceRestController {
     )
     @PatchMapping("/clockOut")
     public AttendanceClockOutResponseVO clockOut(
-            @CurrentUser TokenParseResponseVO parseVO) {
+           @CurrentUser TokenParseResponseVO parseVO) {
 
         return employeeAttendanceService.clockOut(
                 parseVO);
@@ -122,7 +121,7 @@ public class EmployeeAttendanceRestController {
     @PostMapping("/unpaidLeave")
     public void unpaidLeave(
             @RequestBody AttendanceLeaveRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
+           @CurrentUser TokenParseResponseVO parseVO) {
 
         employeeAttendanceService.unpaidLeave(
                 requestVO,
@@ -138,7 +137,7 @@ public class EmployeeAttendanceRestController {
     @PatchMapping("/normalToNormal")
     public void normalToNormal(
             @RequestBody AttendanceNormalToNormalRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
+           @CurrentUser TokenParseResponseVO parseVO) {
 
         employeeAttendanceService.normalToNormal(
                 requestVO,
@@ -154,7 +153,7 @@ public class EmployeeAttendanceRestController {
     @PatchMapping("/normalToAbsent")
     public void normalToAbsent(
             @RequestBody AttendanceNormalToAbsentRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
+           @CurrentUser TokenParseResponseVO parseVO) {
 
         employeeAttendanceService.normalToAbsent(
                 requestVO,
@@ -170,7 +169,7 @@ public class EmployeeAttendanceRestController {
     @PatchMapping("/absentToNormal")
     public void absentToNormal(
             @RequestBody AttendanceAbsentToNormalRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
+           @CurrentUser TokenParseResponseVO parseVO) {
 
         employeeAttendanceService.absentToNormal(
                 requestVO,
@@ -194,20 +193,4 @@ public class EmployeeAttendanceRestController {
     }
 
 
-    // 기간별 근태 조회
-    @ApiResponse(
-            responseCode = "200",
-            description = "직원 기간별 근태 조회 성공"
-    )
-    @GetMapping("/search")
-    public List<AttendanceSearchResponseVO> search(
-            @RequestParam long employeeNo,
-            @RequestParam Timestamp startDate,
-            @RequestParam Timestamp endDate) {
-
-        return employeeAttendanceService.search(
-                employeeNo,
-                startDate,
-                endDate);
-    }
 }

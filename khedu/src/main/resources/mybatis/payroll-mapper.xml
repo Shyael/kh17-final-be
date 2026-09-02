@@ -185,7 +185,7 @@ values(
         </if>
         
         <if test="writtenBreakMinutes != null">
-        	break_minutes = #{writtenBreakMinutes}
+        	written_break_minutes = #{writtenBreakMinutes}
         </if>
     </set>
 
@@ -240,7 +240,7 @@ values(
         </if>
         
         <if test="writtenBreakMinutes !=null">
-        	break_minutes =#{writtenBreakMinutes}
+        	written_break_minutes =#{writtenBreakMinutes}
         </if>
     </set>
 

@@ -7,7 +7,7 @@ import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentToNormalRequestVO;
-import com.kh.khedu.vo.payroll.request.AttendanceClockInRequestVO;
+
 import com.kh.khedu.vo.payroll.request.AttendanceLeaveRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToNormalRequestVO;
@@ -22,7 +22,7 @@ public interface EmployeeAttendanceService {
 	
 	
 	AttendanceClockInResponseVO clockIn(
-            AttendanceClockInRequestVO requestVO,
+           
             TokenParseResponseVO parseVO);
 
     AttendanceClockOutResponseVO clockOut(
@@ -57,10 +57,6 @@ public interface EmployeeAttendanceService {
     void absentToAbsent(
             AttendanceAbsentToAbsentRequestVO requestVO,
             TokenParseResponseVO parseVO);
-
-
-    List<AttendanceSearchResponseVO> search(
-            long employeeNo,
-            Timestamp startDate,
-            Timestamp endDate);
+    
+    void autoAbsent();
 }

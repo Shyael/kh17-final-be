@@ -15,7 +15,7 @@ public class AttendanceClockInResponseVO {
 
     private Double breakMinutes;
 
-    private String workDayType;
+    private String scheduledWorkDayType;
     private int employeeNo;
     private String accountName;
 }

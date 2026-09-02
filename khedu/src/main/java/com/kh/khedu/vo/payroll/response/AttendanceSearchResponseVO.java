@@ -19,7 +19,7 @@ public class AttendanceSearchResponseVO {
 	    private Double breakMinutes;
 
 	    private String attendanceType;
-	    private String workDayType;
+	    private String scheduledWorkDayType;
 
 	    private double nightHours;
 	    private double overtimeHours;

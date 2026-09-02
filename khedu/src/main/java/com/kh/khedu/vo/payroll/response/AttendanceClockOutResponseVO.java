@@ -18,5 +18,5 @@ public class AttendanceClockOutResponseVO {
 
     private double nightHours;
     private double overtimeHours;
-    private String workDayType;
+    private String scheduledWorkDayType;
 }

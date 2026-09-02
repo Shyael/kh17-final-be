@@ -24,4 +24,7 @@ public interface EmployeeAttendanceDao {
             Timestamp endDate);
     
     EmployeeDetailVO findByAccountNo(int accountNo);
+    
+    EmployeeAttendanceDto findBySchedule(
+            long workScheduleNo);
 }

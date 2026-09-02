@@ -12,24 +12,29 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dao.payroll.EmployeeAttendanceDao;
+import com.kh.khedu.dao.payroll.EmployeeWorkScheduleDao;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.dto.payroll.EmployeeAttendanceDto;
+import com.kh.khedu.dto.payroll.EmployeeWorkScheduleDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
+import com.kh.khedu.vo.employee.EmployeeSearchByNameVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentToNormalRequestVO;
-import com.kh.khedu.vo.payroll.request.AttendanceClockInRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceLeaveRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToNormalRequestVO;
+import com.kh.khedu.vo.payroll.request.WorkScheduleUpdateRequestVO;
 import com.kh.khedu.vo.payroll.response.AttendanceClockInResponseVO;
 import com.kh.khedu.vo.payroll.response.AttendanceClockOutResponseVO;
 import com.kh.khedu.vo.payroll.response.AttendanceFindVO;
-import com.kh.khedu.vo.payroll.response.AttendanceSearchResponseVO;
 
+
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 @Service
 @Transactional
 public class EmployeeAttendanceServiceImpl
@@ -41,50 +46,13 @@ public class EmployeeAttendanceServiceImpl
     @Autowired
     private ContractDao contractDao;
     
+    @Autowired
+    private EmployeeWorkScheduleDao employeeWorkScheduleDao;
+    
 
     @Override
     @Transactional(readOnly = true)
     public boolean working(
-            TokenParseResponseVO parseVO) {
-
-        if (!"직원".equals(
-                parseVO.getAccountType())) {
-
-            throw new GetOutException();
-        }
-
-
-        EmployeeDetailVO employeeVO =
-                employeeAttendanceDao.findByAccountNo(
-                        parseVO.getAccountNo());
-
-        if (employeeVO == null) {
-            throw new TargetNotfoundException();
-        }
-
-
-        AttendanceFindVO findVO =
-                AttendanceFindVO.builder()
-                        .employeeNo(
-                                employeeVO.getEmployeeNo())
-                        .working(true)
-                        .build();
-
-
-        EmployeeAttendanceDto attendanceDto =
-                employeeAttendanceDao.find(
-                        findVO);
-
-
-        return attendanceDto != null;
-    }
-    
-    
-    
-    
-    @Override
-    public AttendanceClockInResponseVO clockIn(
-            AttendanceClockInRequestVO requestVO,
             TokenParseResponseVO parseVO) {
 
         // 로그인 계정이 직원인지 확인
@@ -104,144 +72,21 @@ public class EmployeeAttendanceServiceImpl
             throw new TargetNotfoundException();
         }
 
-        int employeeNo =
-                employeeVO.getEmployeeNo();
 
-
-        LocalDateTime now =
-                LocalDateTime.now();
-
-        LocalDateTime workDate =
-                now.toLocalDate()
-                        .atStartOfDay();
-
-
-        // 아직 퇴근하지 않은 근태가 있는지 확인
-        AttendanceFindVO workingFindVO =
-                AttendanceFindVO.builder()
-                        .employeeNo(employeeNo)
-                        .working(true)
-                        .build();
-
-        EmployeeAttendanceDto workingDto =
-                employeeAttendanceDao.find(
-                        workingFindVO);
-
-        if (workingDto != null) {
-            throw new GetOutException();
-        }
-
-
-        // 현재 근로계약 조회
-        ContractDto contractDto =
-                contractDao.findCurrent(
-                        employeeNo);
-
-        if (contractDto == null) {
-            throw new TargetNotfoundException();
-        }
-
-
-        // 오늘 이미 근태가 생성됐는지 확인
-        AttendanceFindVO todayFindVO =
-                AttendanceFindVO.builder()
-                        .employeeNo(employeeNo)
-                        .workDate(
-                                Timestamp.valueOf(
-                                        workDate))
-                        .build();
-
-        EmployeeAttendanceDto todayDto =
-                employeeAttendanceDao.find(
-                        todayFindVO);
-
-        if (todayDto != null) {
-            throw new GetOutException();
-        }
-
-
-        // 출근 근태 생성
-        EmployeeAttendanceDto attendanceDto =
-                EmployeeAttendanceDto.builder()
-                        .empAttendanceNo(
-                                employeeAttendanceDao.sequence())
-                        .contractNo(
-                                contractDto.getContractNo())
-                        .workDate(
-                                Timestamp.valueOf(
-                                        workDate))
-                        .clockIn(
-                                Timestamp.valueOf(
-                                        now))
-                        .clockOut(null)
-                        .breakMinutes(
-                                (double) contractDto.getWrittenBreakMinutes())
-                        .attendanceType(
-                                "정상")
-                        .workDayType(
-                                requestVO.getWorkDayType())
-                        .nightHours(0)
-                        .overtimeHours(0)
-                        .build();
-
-
-        boolean result =
-                employeeAttendanceDao.add(
-                        attendanceDto);
-
-        if (!result) {
-            throw new GetOutException();
-        }
-
-
-        // 출근 결과 반환
-        return AttendanceClockInResponseVO.builder()
-                .empAttendanceNo(
-                        attendanceDto.getEmpAttendanceNo())
-                .employeeNo(
-                        employeeVO.getEmployeeNo())
-                .accountName(
-                        employeeVO.getAccountName())
-                .workDate(
-                        attendanceDto.getWorkDate())
-                .clockIn(
-                        attendanceDto.getClockIn())
-                .breakMinutes(
-                        attendanceDto.getBreakMinutes())
-                .workDayType(
-                        attendanceDto.getWorkDayType())
-                .build();
-    }
-
-    // 퇴근
-    @Override
-    public AttendanceClockOutResponseVO clockOut(
-            TokenParseResponseVO parseVO) {
-
-        if (!"직원".equals(
-                parseVO.getAccountType())) {
-
-            throw new GetOutException();
-        }
-
-
-        EmployeeDetailVO employeeVO =
-                employeeAttendanceDao.findByAccountNo(
-                        parseVO.getAccountNo());
-
-        if (employeeVO == null) {
-            throw new TargetNotfoundException();
-        }
-
-
-        int employeeNo =
-                employeeVO.getEmployeeNo();
-
+        // 현재 퇴근하지 않은 정상 근태 조회
+        Timestamp workDate =
+                Timestamp.valueOf(
+                        LocalDate.now()
+                                .atStartOfDay());
 
         AttendanceFindVO findVO =
                 AttendanceFindVO.builder()
-                        .employeeNo(employeeNo)
-                        .working(true)
+                        .employeeNo(
+                                employeeVO.getEmployeeNo())
+                        .workDate(
+                                workDate)
+                        .working(
+                                true)
                         .build();
 
         EmployeeAttendanceDto attendanceDto =
@@ -249,42 +94,522 @@ public class EmployeeAttendanceServiceImpl
                         findVO);
 
 
+        return attendanceDto != null;
+    }
+    
+    
+    @Override
+    public AttendanceClockInResponseVO clockIn(
+            TokenParseResponseVO parseVO) {
+
+        // 로그인 계정이 직원인지 확인
+        if (!"직원".equals(
+                parseVO.getAccountType())) throw new GetOutException();
+        
+
+
+        // 로그인 계정 기준 직원정보 조회
+        
+        EmployeeDetailVO employeeDetailVO =
+                employeeAttendanceDao.findByAccountNo(
+                        parseVO.getAccountNo());
+
+        if (employeeDetailVO == null) {
+            throw new TargetNotfoundException();
+        }
+
+
+        int employeeNo =
+                employeeDetailVO.getEmployeeNo();
+
+        
+        // 현재 퇴근하지 않은 근태 확인
+        
+        Timestamp workDate =
+                Timestamp.valueOf(
+                        LocalDate.now()
+                                .atStartOfDay());
+        
+        AttendanceFindVO workingFindVO =
+                AttendanceFindVO.builder()
+                        .employeeNo(
+                                employeeNo)
+                        .workDate(
+                                workDate)
+                        .working(
+                                true)
+                        .build();
+        EmployeeAttendanceDto leftClockOut = employeeAttendanceDao.find(workingFindVO);
+        if(leftClockOut!=null) throw new GetOutException();
+        
+        // 일정 조회용 직원정보
+        EmployeeSearchByNameVO employeeVO =
+                EmployeeSearchByNameVO.builder()
+                        .employeeNo(employeeDetailVO.getEmployeeNo())
+                        .accountName(employeeDetailVO.getAccountName())
+                        .accountId(employeeDetailVO.getAccountId())
+                        .build();
+        
+        
+
+        // 오늘 예정 근무 일정 조회
+     
+        LocalDateTime now = LocalDateTime.now();
+        Timestamp today = Timestamp.valueOf(now.toLocalDate().atStartOfDay());
+        
+        EmployeeWorkScheduleDto todaySchedule=
+                employeeWorkScheduleDao.find(
+                        employeeVO,
+                        today);
+
+        // 일정 자체가 없으면 출근 불가
+      if(todaySchedule==null) throw new GetOutException();
+
+
+        
+     
+
+
+        // 오늘 이미 근태가 생성되었는지 확인
+      EmployeeAttendanceDto alreadyClockIn = employeeAttendanceDao.findBySchedule(todaySchedule.getWorkScheduleNo());
+      if(alreadyClockIn != null) throw new GetOutException(); 
+
+
+   // 스케줄의 contractNo를 사용해 정상 근태 생성
+      EmployeeAttendanceDto attendanceDto =
+              EmployeeAttendanceDto.builder()
+                      .empAttendanceNo(
+                              employeeAttendanceDao.sequence())
+                      .contractNo(
+                              todaySchedule.getContractNo())
+                      .workDate(
+                              today)
+                      .clockIn(
+                              Timestamp.valueOf(LocalDateTime.now()))
+                      .clockOut(
+                              null)
+                      .breakMinutes(
+                              0.0)
+                      .attendanceType(
+                              "normal")
+                      .nightHours(
+                              0)
+                      .overtimeHours(
+                              0)
+                      .build();
+
+
+      // 실제 출근 근태 기록
+      boolean result =
+              employeeAttendanceDao.add(
+                      attendanceDto);
+
+      if (!result) {
+          throw new GetOutException();
+      }
+
+   // 출근 결과 반환
+      return AttendanceClockInResponseVO.builder()
+              .empAttendanceNo(
+                      attendanceDto.getEmpAttendanceNo())
+              .employeeNo(
+                      employeeDetailVO.getEmployeeNo())
+              .accountName(
+                      employeeDetailVO.getAccountName())
+              .workDate(
+                      attendanceDto.getWorkDate())
+              .clockIn(
+                      attendanceDto.getClockIn())
+              .breakMinutes(
+                      attendanceDto.getBreakMinutes())
+              .scheduledWorkDayType(
+                      todaySchedule.getScheduledDayType())
+              .build();
+    }
+   // 퇴근
+    @Override
+    @Transactional
+    public AttendanceClockOutResponseVO clockOut(
+        TokenParseResponseVO parseVO) {
+
+    // 로그인 계정이 직원인지 확인
+    if (!"직원".equals(
+            parseVO.getAccountType())) {
+
+        throw new GetOutException();
+    }
+
+
+    // 로그인 계정 기준 직원정보 조회
+    EmployeeDetailVO employeeDetailVO =
+            employeeAttendanceDao.findByAccountNo(
+                    parseVO.getAccountNo());
+
+    if (employeeDetailVO == null) {
+        throw new TargetNotfoundException();
+    }
+
+
+    // 현재 퇴근하지 않은 근태 조회
+    AttendanceFindVO findVO =
+            AttendanceFindVO.builder()
+                    .employeeNo(
+                            employeeDetailVO.getEmployeeNo())
+                    .working(
+                            true)
+                    .build();
+
+    EmployeeAttendanceDto attendanceDto =
+            employeeAttendanceDao.find(
+                    findVO);
+
+    if (attendanceDto == null) {
+        throw new TargetNotfoundException();
+    }
+
+
+    // 일정 조회용 직원정보
+    EmployeeSearchByNameVO employeeVO =
+            EmployeeSearchByNameVO.builder()
+                    .employeeNo(
+                            employeeDetailVO.getEmployeeNo())
+                    .accountName(
+                            employeeDetailVO.getAccountName())
+                    .accountId(
+                            employeeDetailVO.getAccountId())
+                    .build();
+
+
+    // 실제 근태가 발생한 날짜의 일정 조회
+    EmployeeWorkScheduleDto scheduleDto =
+            employeeWorkScheduleDao.find(
+                    employeeVO,
+                    attendanceDto.getWorkDate());
+
+    if (scheduleDto == null) {
+        throw new TargetNotfoundException();
+    }
+
+
+    // 계약의 근무시간 조건 조회
+    ContractDto contractDto =
+            contractDao.findWorkTimeCondition(
+                    attendanceDto.getContractNo());
+
+    if (contractDto == null) {
+        throw new TargetNotfoundException();
+    }
+
+
+    LocalDateTime clockIn =
+            attendanceDto.getClockIn()
+                    .toLocalDateTime();
+
+    LocalDateTime clockOut =
+            LocalDateTime.now();
+
+
+    // 퇴근시간 검증
+    if (!clockOut.isAfter(
+            clockIn)) {
+
+        throw new GetOutException();
+    }
+
+
+    // 출근 ~ 퇴근 전체 시간
+    long totalWorkMinutes =
+            Duration.between(
+                    clockIn,
+                    clockOut)
+                    .toMinutes();
+
+
+    double breakMinutes =
+            attendanceDto.getBreakMinutes() == null
+                    ? 0
+                    : attendanceDto.getBreakMinutes();
+
+
+    // 휴게시간 제외 실제 근무시간
+    double actualWorkMinutes =
+            totalWorkMinutes
+                    - breakMinutes;
+
+    if (actualWorkMinutes < 0) {
+        throw new GetOutException();
+    }
+
+
+    double actualWorkHours =
+            actualWorkMinutes / 60.0;
+
+
+    // 연장근무시간 계산
+    double standardWorkMinutes =
+            contractDto.getDailyWorkHours()
+                    * 60;
+
+
+    double overtimeMinutes =
+            actualWorkMinutes
+                    - standardWorkMinutes;
+
+    if (overtimeMinutes < 0) {
+        overtimeMinutes = 0;
+    }
+
+
+    double actualOvertimeHours =
+            overtimeMinutes / 60.0;
+
+
+    // 야간근무시간 계산
+    long nightMinutes = 0;
+
+
+    LocalDate workDate =
+            attendanceDto.getWorkDate()
+                    .toLocalDateTime()
+                    .toLocalDate();
+
+
+    // 00:00 ~ 06:00
+    LocalDateTime earlyNightStart =
+            workDate.atStartOfDay();
+
+    LocalDateTime earlyNightEnd =
+            workDate.atTime(
+                    6,
+                    0);
+
+
+    LocalDateTime earlyStart =
+            clockIn.isAfter(
+                    earlyNightStart)
+                    ? clockIn
+                    : earlyNightStart;
+
+    LocalDateTime earlyEnd =
+            clockOut.isBefore(
+                    earlyNightEnd)
+                    ? clockOut
+                    : earlyNightEnd;
+
+
+    if (earlyEnd.isAfter(
+            earlyStart)) {
+
+        nightMinutes +=
+                Duration.between(
+                        earlyStart,
+                        earlyEnd)
+                        .toMinutes();
+    }
+
+
+    // 22:00 ~ 익일 06:00
+    LocalDateTime lateNightStart =
+            workDate.atTime(
+                    22,
+                    0);
+
+    LocalDateTime lateNightEnd =
+            workDate.plusDays(1)
+                    .atTime(
+                            6,
+                            0);
+
+
+    LocalDateTime lateStart =
+            clockIn.isAfter(
+                    lateNightStart)
+                    ? clockIn
+                    : lateNightStart;
+
+    LocalDateTime lateEnd =
+            clockOut.isBefore(
+                    lateNightEnd)
+                    ? clockOut
+                    : lateNightEnd;
+
+
+    if (lateEnd.isAfter(
+            lateStart)) {
+
+        nightMinutes +=
+                Duration.between(
+                        lateStart,
+                        lateEnd)
+                        .toMinutes();
+    }
+
+
+    double actualNightHours =
+            nightMinutes / 60.0;
+
+
+    // 휴일 / 휴무일 실제 근무시간 계산
+    double actualHolidayHours =
+            0;
+
+
+    if ("holiday".equals(
+            scheduleDto.getScheduledDayType())
+            || "dayOff".equals(
+                    scheduleDto.getScheduledDayType())) {
+
+        actualHolidayHours =
+                actualWorkHours;
+    }
+
+
+    // 실제 근태 퇴근 반영
+    attendanceDto.setClockOut(
+            Timestamp.valueOf(
+                    clockOut));
+
+    attendanceDto.setNightHours(
+            actualNightHours);
+
+    attendanceDto.setOvertimeHours(
+            actualOvertimeHours);
+
+
+    boolean attendanceResult =
+            employeeAttendanceDao.update(
+                    attendanceDto);
+
+    if (!attendanceResult) {
+        throw new GetOutException();
+    }
+
+
+    // 실제 근태 결과를 일정 actual에 반영
+    WorkScheduleUpdateRequestVO scheduleUpdateVO =
+            WorkScheduleUpdateRequestVO.builder()
+                    .workScheduleNo(
+                            scheduleDto.getWorkScheduleNo())
+                    .actualWorkHours(
+                            actualWorkHours)
+                    .actualOvertimeHours(
+                            actualOvertimeHours)
+                    .actualNightHours(
+                            actualNightHours)
+                    .actualHolidayHours(
+                            actualHolidayHours)
+                    .build();
+
+
+    boolean scheduleResult =
+            employeeWorkScheduleDao.update(
+                    scheduleUpdateVO);
+
+    if (!scheduleResult) {
+        throw new GetOutException();
+    }
+
+
+    // 퇴근 결과 반환
+    return AttendanceClockOutResponseVO.builder()
+            .empAttendanceNo(
+                    attendanceDto.getEmpAttendanceNo())
+            .clockIn(
+                    attendanceDto.getClockIn())
+            .clockOut(
+                    attendanceDto.getClockOut())
+            .breakMinutes(
+                    attendanceDto.getBreakMinutes())
+            .scheduledWorkDayType(
+                    scheduleDto.getScheduledDayType())
+            .nightHours(
+                    attendanceDto.getNightHours())
+            .overtimeHours(
+                    attendanceDto.getOvertimeHours())
+            .build();
+    }
+    
+ // 정상 근태 -> 정상 근태 수정
+    @Override
+    @Transactional
+    public void normalToNormal(
+            AttendanceNormalToNormalRequestVO requestVO,
+            TokenParseResponseVO parseVO) {
+
+        // 수정할 근태 조회
+        AttendanceFindVO findVO =
+                AttendanceFindVO.builder()
+                        .empAttendanceNo(
+                                requestVO.getEmpAttendanceNo())
+                        .build();
+
+        EmployeeAttendanceDto attendanceDto =
+                employeeAttendanceDao.find(
+                        findVO);
+
         if (attendanceDto == null) {
             throw new TargetNotfoundException();
         }
 
-        if (attendanceDto.getClockIn() == null) {
+
+        // 기존 근태가 정상 근태인지 확인
+        if (!"normal".equals(
+                attendanceDto.getAttendanceType())) {
+
             throw new GetOutException();
         }
 
 
-        // Timestamp -> LocalDateTime
+        // 수정할 출근 / 퇴근시간 확인
+        if (requestVO.getClockIn() == null
+                || requestVO.getClockOut() == null) {
+
+            throw new GetOutException();
+        }
+
+
+        // 휴게시간 확인
+        if (
+               requestVO.getBreakMinutes() < 0) {
+
+            throw new GetOutException();
+        }
+
+
         LocalDateTime clockIn =
-                attendanceDto.getClockIn()
+                requestVO.getClockIn()
                         .toLocalDateTime();
 
         LocalDateTime clockOut =
-                LocalDateTime.now();
+                requestVO.getClockOut()
+                        .toLocalDateTime();
 
 
-        if (!clockOut.isAfter(clockIn)) {
-            throw new GetOutException();
-        }
-
-
-        if (attendanceDto.getBreakMinutes() == null
-                || attendanceDto.getBreakMinutes() < 0) {
+        // 퇴근시간은 출근시간 이후
+        if (!clockOut.isAfter(
+                clockIn)) {
 
             throw new GetOutException();
         }
 
 
-        // 계약상 근로시간 조회
+        // 근태에 적용된 계약의 근무시간 조건 조회
         ContractDto contractDto =
                 contractDao.findWorkTimeCondition(
                         attendanceDto.getContractNo());
 
         if (contractDto == null) {
+            throw new TargetNotfoundException();
+        }
+
+
+        // 해당 근태와 연결된 근무 일정 조회
+        EmployeeWorkScheduleDto scheduleDto =
+                employeeWorkScheduleDao.findByContract(
+                        attendanceDto.getContractNo(),
+                        attendanceDto.getWorkDate());
+
+        if (scheduleDto == null) {
             throw new TargetNotfoundException();
         }
 
@@ -300,619 +625,6 @@ public class EmployeeAttendanceServiceImpl
         // 휴게시간 제외 실제 근무시간
         double actualWorkMinutes =
                 totalWorkMinutes
-                        - attendanceDto.getBreakMinutes();
-
-        if (actualWorkMinutes < 0) {
-            throw new GetOutException();
-        }
-
-
-        // 계약상 하루 근무시간
-        double contractWorkMinutes =
-                contractDto.getDailyWorkHours()
-                        * 60;
-
-
-        // 연장근무 계산
-        double overtimeMinutes =
-                actualWorkMinutes
-                        - contractWorkMinutes;
-
-        if (overtimeMinutes < 0) {
-            overtimeMinutes = 0;
-        }
-
-
-        // 야간근무 계산
-        // 근태일 00:00 ~ 06:00
-        // 근태일 22:00 ~ 익일 06:00
-        long nightWorkMinutes = 0;
-
-        LocalDate attendanceDate =
-                attendanceDto.getWorkDate()
-                        .toLocalDateTime()
-                        .toLocalDate();
-
-
-        // 근태일 00:00 ~ 06:00
-        LocalDateTime earlyNightStart =
-                attendanceDate.atStartOfDay();
-
-        LocalDateTime earlyNightEnd =
-                attendanceDate.atTime(
-                        6,
-                        0);
-
-
-        LocalDateTime actualEarlyNightStart;
-
-        if (clockIn.isAfter(
-                earlyNightStart)) {
-
-            actualEarlyNightStart = clockIn;
-        }
-        else {
-            actualEarlyNightStart =
-                    earlyNightStart;
-        }
-
-
-        LocalDateTime actualEarlyNightEnd;
-
-        if (clockOut.isBefore(
-                earlyNightEnd)) {
-
-            actualEarlyNightEnd = clockOut;
-        }
-        else {
-            actualEarlyNightEnd =
-                    earlyNightEnd;
-        }
-
-
-        if (actualEarlyNightEnd.isAfter(
-                actualEarlyNightStart)) {
-
-            nightWorkMinutes +=
-                    Duration.between(
-                            actualEarlyNightStart,
-                            actualEarlyNightEnd)
-                            .toMinutes();
-        }
-
-
-        // 근태일 22:00 ~ 익일 06:00
-        LocalDateTime lateNightStart =
-                attendanceDate.atTime(
-                        22,
-                        0);
-
-        LocalDateTime lateNightEnd =
-                attendanceDate.plusDays(1)
-                        .atTime(
-                                6,
-                                0);
-
-
-        LocalDateTime actualLateNightStart;
-
-        if (clockIn.isAfter(
-                lateNightStart)) {
-
-            actualLateNightStart = clockIn;
-        }
-        else {
-            actualLateNightStart =
-                    lateNightStart;
-        }
-
-
-        LocalDateTime actualLateNightEnd;
-
-        if (clockOut.isBefore(
-                lateNightEnd)) {
-
-            actualLateNightEnd = clockOut;
-        }
-        else {
-            actualLateNightEnd =
-                    lateNightEnd;
-        }
-
-
-        if (actualLateNightEnd.isAfter(
-                actualLateNightStart)) {
-
-            nightWorkMinutes +=
-                    Duration.between(
-                            actualLateNightStart,
-                            actualLateNightEnd)
-                            .toMinutes();
-        }
-
-
-        // 연장근무와 야간근무는 독립 계산
-        // 같은 시간이 연장이면서 야간이면 양쪽 모두 포함
-        attendanceDto.setClockOut(
-                Timestamp.valueOf(
-                        clockOut));
-
-        attendanceDto.setNightHours(
-                nightWorkMinutes / 60.0);
-
-        attendanceDto.setOvertimeHours(
-                overtimeMinutes / 60.0);
-
-
-        boolean result =
-                employeeAttendanceDao.update(
-                        attendanceDto);
-
-        if (!result) {
-            throw new GetOutException();
-        }
-
-
-        return AttendanceClockOutResponseVO.builder()
-                .empAttendanceNo(
-                        attendanceDto.getEmpAttendanceNo())
-                .clockIn(
-                        attendanceDto.getClockIn())
-                .clockOut(
-                        attendanceDto.getClockOut())
-                .breakMinutes(
-                        attendanceDto.getBreakMinutes())
-                .workDayType(
-                        attendanceDto.getWorkDayType())
-                .nightHours(
-                        attendanceDto.getNightHours())
-                .overtimeHours(
-                        attendanceDto.getOvertimeHours())
-                .build();
-    }
-
-
-    // 결근
-    @Override
-    public void absent(
-            AttendanceAbsentRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
-
-        if (requestVO.getWorkDate() == null) {
-            throw new GetOutException();
-        }
-
-
-        LocalDateTime workDate =
-                requestVO.getWorkDate()
-                        .toLocalDateTime()
-                        .toLocalDate()
-                        .atStartOfDay();
-
-
-        // 미래 결근 등록 불가
-        if (workDate.toLocalDate()
-                .isAfter(LocalDate.now())) {
-
-            throw new GetOutException();
-        }
-
-
-        // 직원의 전체 근로계약 조회
-        List<ContractDto> contractList =
-                contractDao.findAllByEmployee(
-                        requestVO.getEmployeeNo());
-
-        if (contractList == null
-                || contractList.isEmpty()) {
-
-            throw new TargetNotfoundException();
-        }
-
-
-        // 해당 날짜에 적용되는 계약 판단
-        ContractDto contractDto = null;
-
-        for (ContractDto dto : contractList) {
-
-            if (dto.getContractStart() == null) {
-                continue;
-            }
-
-
-            LocalDateTime contractStart =
-                    dto.getContractStart()
-                            .toLocalDateTime();
-
-            LocalDateTime contractEnd = null;
-
-
-            if (dto.getContractEnd() != null) {
-
-                contractEnd =
-                        dto.getContractEnd()
-                                .toLocalDateTime();
-            }
-
-
-            if (!workDate.isBefore(contractStart)
-                    && (contractEnd == null
-                    || workDate.isBefore(contractEnd))) {
-
-                contractDto = dto;
-                break;
-            }
-        }
-
-
-        if (contractDto == null) {
-            throw new TargetNotfoundException();
-        }
-
-
-        // 같은 날짜 기존 근태 확인
-        AttendanceFindVO findVO =
-                AttendanceFindVO.builder()
-                        .employeeNo(
-                                requestVO.getEmployeeNo())
-                        .workDate(
-                                Timestamp.valueOf(
-                                        workDate))
-                        .build();
-
-        EmployeeAttendanceDto existsDto =
-                employeeAttendanceDao.find(
-                        findVO);
-
-        if (existsDto != null) {
-            throw new GetOutException();
-        }
-
-
-        EmployeeAttendanceDto attendanceDto =
-                EmployeeAttendanceDto.builder()
-                        .empAttendanceNo(
-                                employeeAttendanceDao.sequence())
-                        .contractNo(
-                                contractDto.getContractNo())
-                        .workDate(
-                                Timestamp.valueOf(workDate))
-                        .clockIn(null)
-                        .clockOut(null)
-                        .breakMinutes(0.0)
-                        .attendanceType("결근")
-                        .workDayType("근무일")
-                        .nightHours(0)
-                        .overtimeHours(0)
-                        .build();
-
-
-        boolean result =
-                employeeAttendanceDao.add(
-                        attendanceDto);
-
-        if (!result) {
-            throw new GetOutException();
-        }
-    }
-
-
-    // 유급휴가
-    @Override
-    public void paidLeave(
-            AttendanceLeaveRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
-
-        if (requestVO.getWorkDate() == null) {
-            throw new GetOutException();
-        }
-
-
-        LocalDateTime workDate =
-                requestVO.getWorkDate()
-                        .toLocalDateTime()
-                        .toLocalDate()
-                        .atStartOfDay();
-
-
-        if (workDate.toLocalDate()
-                .isAfter(LocalDate.now())) {
-
-            throw new GetOutException();
-        }
-
-
-        List<ContractDto> contractList =
-                contractDao.findAllByEmployee(
-                        requestVO.getEmployeeNo());
-
-        if (contractList == null
-                || contractList.isEmpty()) {
-
-            throw new TargetNotfoundException();
-        }
-
-
-        ContractDto contractDto = null;
-
-        for (ContractDto dto : contractList) {
-
-            if (dto.getContractStart() == null) {
-                continue;
-            }
-
-
-            LocalDateTime contractStart =
-                    dto.getContractStart()
-                            .toLocalDateTime();
-
-            LocalDateTime contractEnd = null;
-
-
-            if (dto.getContractEnd() != null) {
-
-                contractEnd =
-                        dto.getContractEnd()
-                                .toLocalDateTime();
-            }
-
-
-            if (!workDate.isBefore(contractStart)
-                    && (contractEnd == null
-                    || workDate.isBefore(contractEnd))) {
-
-                contractDto = dto;
-                break;
-            }
-        }
-
-
-        if (contractDto == null) {
-            throw new TargetNotfoundException();
-        }
-
-
-        AttendanceFindVO findVO =
-                AttendanceFindVO.builder()
-                        .employeeNo(
-                                requestVO.getEmployeeNo())
-                        .workDate(
-                                Timestamp.valueOf(
-                                        workDate))
-                        .build();
-
-        EmployeeAttendanceDto existsDto =
-                employeeAttendanceDao.find(
-                        findVO);
-
-        if (existsDto != null) {
-            throw new GetOutException();
-        }
-
-
-        EmployeeAttendanceDto attendanceDto =
-                EmployeeAttendanceDto.builder()
-                        .empAttendanceNo(
-                                employeeAttendanceDao.sequence())
-                        .contractNo(
-                                contractDto.getContractNo())
-                        .workDate(
-                                Timestamp.valueOf(workDate))
-                        .clockIn(null)
-                        .clockOut(null)
-                        .breakMinutes(0.0)
-                        .attendanceType("유급휴가")
-                        .workDayType("근무일")
-                        .nightHours(0)
-                        .overtimeHours(0)
-                        .build();
-
-
-        boolean result =
-                employeeAttendanceDao.add(
-                        attendanceDto);
-
-        if (!result) {
-            throw new GetOutException();
-        }
-    }
-
-
-    // 무급휴가
-    @Override
-    public void unpaidLeave(
-            AttendanceLeaveRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
-
-        if (requestVO.getWorkDate() == null) {
-            throw new GetOutException();
-        }
-
-
-        LocalDateTime workDate =
-                requestVO.getWorkDate()
-                        .toLocalDateTime()
-                        .toLocalDate()
-                        .atStartOfDay();
-
-
-        if (workDate.toLocalDate()
-                .isAfter(LocalDate.now())) {
-
-            throw new GetOutException();
-        }
-
-
-        List<ContractDto> contractList =
-                contractDao.findAllByEmployee(
-                        requestVO.getEmployeeNo());
-
-        if (contractList == null
-                || contractList.isEmpty()) {
-
-            throw new TargetNotfoundException();
-        }
-
-
-        ContractDto contractDto = null;
-
-        for (ContractDto dto : contractList) {
-
-            if (dto.getContractStart() == null) {
-                continue;
-            }
-
-
-            LocalDateTime contractStart =
-                    dto.getContractStart()
-                            .toLocalDateTime();
-
-            LocalDateTime contractEnd = null;
-
-
-            if (dto.getContractEnd() != null) {
-
-                contractEnd =
-                        dto.getContractEnd()
-                                .toLocalDateTime();
-            }
-
-
-            if (!workDate.isBefore(contractStart)
-                    && (contractEnd == null
-                    || workDate.isBefore(contractEnd))) {
-
-                contractDto = dto;
-                break;
-            }
-        }
-
-
-        if (contractDto == null) {
-            throw new TargetNotfoundException();
-        }
-
-
-        AttendanceFindVO findVO =
-                AttendanceFindVO.builder()
-                        .employeeNo(
-                                requestVO.getEmployeeNo())
-                        .workDate(
-                                Timestamp.valueOf(
-                                        workDate))
-                        .build();
-
-        EmployeeAttendanceDto existsDto =
-                employeeAttendanceDao.find(
-                        findVO);
-
-        if (existsDto != null) {
-            throw new GetOutException();
-        }
-
-
-        EmployeeAttendanceDto attendanceDto =
-                EmployeeAttendanceDto.builder()
-                        .empAttendanceNo(
-                                employeeAttendanceDao.sequence())
-                        .contractNo(
-                                contractDto.getContractNo())
-                        .workDate(
-                                Timestamp.valueOf(workDate))
-                        .clockIn(null)
-                        .clockOut(null)
-                        .breakMinutes(0.0)
-                        .attendanceType("무급휴가")
-                        .workDayType("근무일")
-                        .nightHours(0)
-                        .overtimeHours(0)
-                        .build();
-
-
-        boolean result =
-                employeeAttendanceDao.add(
-                        attendanceDto);
-
-        if (!result) {
-            throw new GetOutException();
-        }
-    }
-
-
-    // 정상 -> 정상
-    @Override
-    public void normalToNormal(
-            AttendanceNormalToNormalRequestVO requestVO,
-            TokenParseResponseVO parseVO) {
-
-        AttendanceFindVO findVO =
-                AttendanceFindVO.builder()
-                        .empAttendanceNo(
-                                requestVO.getEmpAttendanceNo())
-                        .build();
-
-
-        EmployeeAttendanceDto attendanceDto =
-                employeeAttendanceDao.find(
-                        findVO);
-
-        if (attendanceDto == null) {
-            throw new TargetNotfoundException();
-        }
-
-
-        if (!"정상".equals(
-                attendanceDto.getAttendanceType())) {
-
-            throw new GetOutException();
-        }
-
-
-        if (requestVO.getClockIn() == null
-                || requestVO.getClockOut() == null
-                || requestVO.getBreakMinutes() == null) {
-
-            throw new GetOutException();
-        }
-
-
-        LocalDateTime clockIn =
-                requestVO.getClockIn()
-                        .toLocalDateTime();
-
-        LocalDateTime clockOut =
-                requestVO.getClockOut()
-                        .toLocalDateTime();
-
-
-        if (!clockOut.isAfter(clockIn)) {
-            throw new GetOutException();
-        }
-
-
-        if (requestVO.getBreakMinutes() < 0) {
-            throw new GetOutException();
-        }
-
-
-        ContractDto contractDto =
-                contractDao.findWorkTimeCondition(
-                        attendanceDto.getContractNo());
-
-        if (contractDto == null) {
-            throw new TargetNotfoundException();
-        }
-
-
-        long totalWorkMinutes =
-                Duration.between(
-                        clockIn,
-                        clockOut)
-                        .toMinutes();
-
-
-        double actualWorkMinutes =
-                totalWorkMinutes
                         - requestVO.getBreakMinutes();
 
         if (actualWorkMinutes < 0) {
@@ -920,168 +632,196 @@ public class EmployeeAttendanceServiceImpl
         }
 
 
-        double contractWorkMinutes =
+        double actualWorkHours =
+                actualWorkMinutes / 60.0;
+
+
+        // 계약상 하루 근무시간
+        double standardWorkMinutes =
                 contractDto.getDailyWorkHours()
                         * 60;
 
 
-        // 연장근무
+        // 연장근무시간 계산
         double overtimeMinutes =
                 actualWorkMinutes
-                        - contractWorkMinutes;
+                        - standardWorkMinutes;
 
         if (overtimeMinutes < 0) {
             overtimeMinutes = 0;
         }
 
 
-        // 야간근무
-        long nightWorkMinutes = 0;
+        double actualOvertimeHours =
+                overtimeMinutes / 60.0;
 
-        LocalDate attendanceDate =
+
+        // 야간근무시간 계산
+        long nightMinutes = 0;
+
+
+        LocalDate workDate =
                 attendanceDto.getWorkDate()
                         .toLocalDateTime()
                         .toLocalDate();
 
 
-        // 근태일 00:00 ~ 06:00
+        // 00:00 ~ 06:00
         LocalDateTime earlyNightStart =
-                attendanceDate.atStartOfDay();
+                workDate.atStartOfDay();
 
         LocalDateTime earlyNightEnd =
-                attendanceDate.atTime(
+                workDate.atTime(
                         6,
                         0);
 
 
-        LocalDateTime actualEarlyNightStart;
+        LocalDateTime earlyStart =
+                clockIn.isAfter(
+                        earlyNightStart)
+                        ? clockIn
+                        : earlyNightStart;
 
-        if (clockIn.isAfter(
-                earlyNightStart)) {
-
-            actualEarlyNightStart = clockIn;
-        }
-        else {
-            actualEarlyNightStart =
-                    earlyNightStart;
-        }
-
-
-        LocalDateTime actualEarlyNightEnd;
-
-        if (clockOut.isBefore(
-                earlyNightEnd)) {
-
-            actualEarlyNightEnd = clockOut;
-        }
-        else {
-            actualEarlyNightEnd =
-                    earlyNightEnd;
-        }
+        LocalDateTime earlyEnd =
+                clockOut.isBefore(
+                        earlyNightEnd)
+                        ? clockOut
+                        : earlyNightEnd;
 
 
-        if (actualEarlyNightEnd.isAfter(
-                actualEarlyNightStart)) {
+        if (earlyEnd.isAfter(
+                earlyStart)) {
 
-            nightWorkMinutes +=
+            nightMinutes +=
                     Duration.between(
-                            actualEarlyNightStart,
-                            actualEarlyNightEnd)
+                            earlyStart,
+                            earlyEnd)
                             .toMinutes();
         }
 
 
-        // 근태일 22:00 ~ 익일 06:00
+        // 22:00 ~ 익일 06:00
         LocalDateTime lateNightStart =
-                attendanceDate.atTime(
+                workDate.atTime(
                         22,
                         0);
 
         LocalDateTime lateNightEnd =
-                attendanceDate.plusDays(1)
+                workDate.plusDays(1)
                         .atTime(
                                 6,
                                 0);
 
 
-        LocalDateTime actualLateNightStart;
+        LocalDateTime lateStart =
+                clockIn.isAfter(
+                        lateNightStart)
+                        ? clockIn
+                        : lateNightStart;
 
-        if (clockIn.isAfter(
-                lateNightStart)) {
-
-            actualLateNightStart = clockIn;
-        }
-        else {
-            actualLateNightStart =
-                    lateNightStart;
-        }
-
-
-        LocalDateTime actualLateNightEnd;
-
-        if (clockOut.isBefore(
-                lateNightEnd)) {
-
-            actualLateNightEnd = clockOut;
-        }
-        else {
-            actualLateNightEnd =
-                    lateNightEnd;
-        }
+        LocalDateTime lateEnd =
+                clockOut.isBefore(
+                        lateNightEnd)
+                        ? clockOut
+                        : lateNightEnd;
 
 
-        if (actualLateNightEnd.isAfter(
-                actualLateNightStart)) {
+        if (lateEnd.isAfter(
+                lateStart)) {
 
-            nightWorkMinutes +=
+            nightMinutes +=
                     Duration.between(
-                            actualLateNightStart,
-                            actualLateNightEnd)
+                            lateStart,
+                            lateEnd)
                             .toMinutes();
         }
 
 
+        double actualNightHours =
+                nightMinutes / 60.0;
+
+
+        // 휴일 / 휴무일 실제 근무시간 계산
+        double actualHolidayHours = 0;
+
+
+        if ("holiday".equals(
+                scheduleDto.getScheduledDayType())
+                || "dayOff".equals(
+                        scheduleDto.getScheduledDayType())) {
+
+            actualHolidayHours =
+                    actualWorkHours;
+        }
+
+
+        // 실제 근태 수정
         attendanceDto.setClockIn(
-                Timestamp.valueOf(clockIn));
+                requestVO.getClockIn());
 
         attendanceDto.setClockOut(
-                Timestamp.valueOf(clockOut));
+                requestVO.getClockOut());
 
         attendanceDto.setBreakMinutes(
                 requestVO.getBreakMinutes());
 
-        attendanceDto.setWorkDayType(
-                requestVO.getWorkDayType());
+        attendanceDto.setAttendanceType(
+                "normal");
 
         attendanceDto.setNightHours(
-                nightWorkMinutes / 60.0);
+                actualNightHours);
 
         attendanceDto.setOvertimeHours(
-                overtimeMinutes / 60.0);
+                actualOvertimeHours);
 
 
-        boolean result =
+        boolean attendanceResult =
                 employeeAttendanceDao.update(
                         attendanceDto);
 
-        if (!result) {
+        if (!attendanceResult) {
+            throw new GetOutException();
+        }
+
+
+        // 수정된 실제 근태 결과를 근무 일정에 반영
+        WorkScheduleUpdateRequestVO scheduleUpdateVO =
+                WorkScheduleUpdateRequestVO.builder()
+                        .workScheduleNo(
+                                scheduleDto.getWorkScheduleNo())
+                        .actualWorkHours(
+                                actualWorkHours)
+                        .actualOvertimeHours(
+                                actualOvertimeHours)
+                        .actualNightHours(
+                                actualNightHours)
+                        .actualHolidayHours(
+                                actualHolidayHours)
+                        .build();
+
+
+        boolean scheduleResult =
+                employeeWorkScheduleDao.update(
+                        scheduleUpdateVO);
+
+        if (!scheduleResult) {
             throw new GetOutException();
         }
     }
-
-
-    // 정상 -> 비근무
+    
+ // 정상 근태 -> 비근무 근태 수정
     @Override
+    @Transactional
     public void normalToAbsent(
             AttendanceNormalToAbsentRequestVO requestVO,
             TokenParseResponseVO parseVO) {
 
+        // 수정할 근태 조회
         AttendanceFindVO findVO =
                 AttendanceFindVO.builder()
                         .empAttendanceNo(
                                 requestVO.getEmpAttendanceNo())
                         .build();
-
 
         EmployeeAttendanceDto attendanceDto =
                 employeeAttendanceDao.find(
@@ -1092,50 +832,91 @@ public class EmployeeAttendanceServiceImpl
         }
 
 
-        if (!"정상".equals(
+        // 기존 근태가 정상 근태인지 확인
+        if (!"normal".equals(
                 attendanceDto.getAttendanceType())) {
 
             throw new GetOutException();
         }
 
 
-        if (!"결근".equals(
+        // 변경할 비근무 유형 확인
+        if (!"absent".equals(
                 requestVO.getAttendanceType())
-                && !"유급휴가".equals(
+                && !"paid_leave".equals(
                         requestVO.getAttendanceType())
-                && !"무급휴가".equals(
+                && !"unpaid_leave".equals(
                         requestVO.getAttendanceType())) {
 
             throw new GetOutException();
         }
 
 
+        // 해당 근태와 연결된 근무 일정 조회
+        EmployeeWorkScheduleDto scheduleDto =
+                employeeWorkScheduleDao.findByContract(
+                        attendanceDto.getContractNo(),
+                        attendanceDto.getWorkDate());
+
+        if (scheduleDto == null) {
+            throw new TargetNotfoundException();
+        }
+
+
+        // 정상 근태 -> 비근무 근태 변경
         attendanceDto.setAttendanceType(
                 requestVO.getAttendanceType());
 
 
-        boolean result =
+        boolean attendanceResult =
                 employeeAttendanceDao.update(
                         attendanceDto);
 
-        if (!result) {
+        if (!attendanceResult) {
+            throw new GetOutException();
+        }
+
+
+        // 실제 근무가 사라졌으므로
+        // 스케줄 actual 4종 초기화
+        WorkScheduleUpdateRequestVO scheduleUpdateVO =
+                WorkScheduleUpdateRequestVO.builder()
+                        .workScheduleNo(
+                                scheduleDto.getWorkScheduleNo())
+                        .actualWorkHours(
+                                0.0)
+                        .actualOvertimeHours(
+                                0.0)
+                        .actualNightHours(
+                                0.0)
+                        .actualHolidayHours(
+                                0.0)
+                        .build();
+
+
+        boolean scheduleResult =
+                employeeWorkScheduleDao.update(
+                        scheduleUpdateVO);
+
+        if (!scheduleResult) {
             throw new GetOutException();
         }
     }
-
-
-    // 비근무 -> 정상
+    
+    
+ // 비근무 근태 -> 정상 근태 수정
     @Override
+    @Transactional
     public void absentToNormal(
             AttendanceAbsentToNormalRequestVO requestVO,
             TokenParseResponseVO parseVO) {
 
+        // 수정할 근태 조회
         AttendanceFindVO findVO =
                 AttendanceFindVO.builder()
                         .empAttendanceNo(
                                 requestVO.getEmpAttendanceNo())
                         .build();
-
 
         EmployeeAttendanceDto attendanceDto =
                 employeeAttendanceDao.find(
@@ -1146,20 +927,28 @@ public class EmployeeAttendanceServiceImpl
         }
 
 
-        if (!"결근".equals(
+        // 기존 근태가 비근무 상태인지 확인
+        if (!"absent".equals(
                 attendanceDto.getAttendanceType())
-                && !"유급휴가".equals(
+                && !"paid_leave".equals(
                         attendanceDto.getAttendanceType())
-                && !"무급휴가".equals(
+                && !"unpaid_leave".equals(
                         attendanceDto.getAttendanceType())) {
 
             throw new GetOutException();
         }
 
 
+        // 출근 / 퇴근시간 확인
         if (requestVO.getClockIn() == null
-                || requestVO.getClockOut() == null
-                || requestVO.getBreakMinutes() == null) {
+                || requestVO.getClockOut() == null) {
+
+            throw new GetOutException();
+        }
+
+
+        // 휴게시간 확인
+        if (requestVO.getBreakMinutes() < 0) {
 
             throw new GetOutException();
         }
@@ -1174,16 +963,15 @@ public class EmployeeAttendanceServiceImpl
                         .toLocalDateTime();
 
 
-        if (!clockOut.isAfter(clockIn)) {
+        // 퇴근시간은 출근시간 이후
+        if (!clockOut.isAfter(
+                clockIn)) {
+
             throw new GetOutException();
         }
 
 
-        if (requestVO.getBreakMinutes() < 0) {
-            throw new GetOutException();
-        }
-
-
+        // 계약 근무시간 조건 조회
         ContractDto contractDto =
                 contractDao.findWorkTimeCondition(
                         attendanceDto.getContractNo());
@@ -1193,6 +981,18 @@ public class EmployeeAttendanceServiceImpl
         }
 
 
+        // 해당 근태와 연결된 근무 일정 조회
+        EmployeeWorkScheduleDto scheduleDto =
+                employeeWorkScheduleDao.findByContract(
+                        attendanceDto.getContractNo(),
+                        attendanceDto.getWorkDate());
+
+        if (scheduleDto == null) {
+            throw new TargetNotfoundException();
+        }
+
+
+        // 출근 ~ 퇴근 전체시간
         long totalWorkMinutes =
                 Duration.between(
                         clockIn,
@@ -1200,6 +1000,7 @@ public class EmployeeAttendanceServiceImpl
                         .toMinutes();
 
 
+        // 휴게시간 제외 실제 근무시간
         double actualWorkMinutes =
                 totalWorkMinutes
                         - requestVO.getBreakMinutes();
@@ -1209,171 +1010,197 @@ public class EmployeeAttendanceServiceImpl
         }
 
 
-        double contractWorkMinutes =
+        double actualWorkHours =
+                actualWorkMinutes / 60.0;
+
+
+        // 계약상 하루 근무시간
+        double standardWorkMinutes =
                 contractDto.getDailyWorkHours()
                         * 60;
 
 
-        // 연장근무
+        // 연장근무시간 계산
         double overtimeMinutes =
                 actualWorkMinutes
-                        - contractWorkMinutes;
+                        - standardWorkMinutes;
 
         if (overtimeMinutes < 0) {
             overtimeMinutes = 0;
         }
 
 
-        // 야간근무
-        long nightWorkMinutes = 0;
+        double actualOvertimeHours =
+                overtimeMinutes / 60.0;
 
-        LocalDate attendanceDate =
+
+        // 야간근무시간 계산
+        long nightMinutes = 0;
+
+
+        LocalDate workDate =
                 attendanceDto.getWorkDate()
                         .toLocalDateTime()
                         .toLocalDate();
 
 
-        // 근태일 00:00 ~ 06:00
+        // 00:00 ~ 06:00
         LocalDateTime earlyNightStart =
-                attendanceDate.atStartOfDay();
+                workDate.atStartOfDay();
 
         LocalDateTime earlyNightEnd =
-                attendanceDate.atTime(
+                workDate.atTime(
                         6,
                         0);
 
 
-        LocalDateTime actualEarlyNightStart;
+        LocalDateTime earlyStart =
+                clockIn.isAfter(
+                        earlyNightStart)
+                        ? clockIn
+                        : earlyNightStart;
 
-        if (clockIn.isAfter(
-                earlyNightStart)) {
-
-            actualEarlyNightStart = clockIn;
-        }
-        else {
-            actualEarlyNightStart =
-                    earlyNightStart;
-        }
-
-
-        LocalDateTime actualEarlyNightEnd;
-
-        if (clockOut.isBefore(
-                earlyNightEnd)) {
-
-            actualEarlyNightEnd = clockOut;
-        }
-        else {
-            actualEarlyNightEnd =
-                    earlyNightEnd;
-        }
+        LocalDateTime earlyEnd =
+                clockOut.isBefore(
+                        earlyNightEnd)
+                        ? clockOut
+                        : earlyNightEnd;
 
 
-        if (actualEarlyNightEnd.isAfter(
-                actualEarlyNightStart)) {
+        if (earlyEnd.isAfter(
+                earlyStart)) {
 
-            nightWorkMinutes +=
+            nightMinutes +=
                     Duration.between(
-                            actualEarlyNightStart,
-                            actualEarlyNightEnd)
+                            earlyStart,
+                            earlyEnd)
                             .toMinutes();
         }
 
 
-        // 근태일 22:00 ~ 익일 06:00
+        // 22:00 ~ 익일 06:00
         LocalDateTime lateNightStart =
-                attendanceDate.atTime(
+                workDate.atTime(
                         22,
                         0);
 
         LocalDateTime lateNightEnd =
-                attendanceDate.plusDays(1)
+                workDate.plusDays(1)
                         .atTime(
                                 6,
                                 0);
 
 
-        LocalDateTime actualLateNightStart;
+        LocalDateTime lateStart =
+                clockIn.isAfter(
+                        lateNightStart)
+                        ? clockIn
+                        : lateNightStart;
 
-        if (clockIn.isAfter(
-                lateNightStart)) {
-
-            actualLateNightStart = clockIn;
-        }
-        else {
-            actualLateNightStart =
-                    lateNightStart;
-        }
-
-
-        LocalDateTime actualLateNightEnd;
-
-        if (clockOut.isBefore(
-                lateNightEnd)) {
-
-            actualLateNightEnd = clockOut;
-        }
-        else {
-            actualLateNightEnd =
-                    lateNightEnd;
-        }
+        LocalDateTime lateEnd =
+                clockOut.isBefore(
+                        lateNightEnd)
+                        ? clockOut
+                        : lateNightEnd;
 
 
-        if (actualLateNightEnd.isAfter(
-                actualLateNightStart)) {
+        if (lateEnd.isAfter(
+                lateStart)) {
 
-            nightWorkMinutes +=
+            nightMinutes +=
                     Duration.between(
-                            actualLateNightStart,
-                            actualLateNightEnd)
+                            lateStart,
+                            lateEnd)
                             .toMinutes();
         }
 
 
-        attendanceDto.setAttendanceType(
-                "정상");
+        double actualNightHours =
+                nightMinutes / 60.0;
 
+
+        // 휴일 / 휴무일 실제 근무시간 계산
+        double actualHolidayHours = 0;
+
+
+        if ("holiday".equals(
+                scheduleDto.getScheduledDayType())
+                || "dayOff".equals(
+                        scheduleDto.getScheduledDayType())) {
+
+            actualHolidayHours =
+                    actualWorkHours;
+        }
+
+
+        // 비근무 -> 정상 근태 변경
         attendanceDto.setClockIn(
-                Timestamp.valueOf(clockIn));
+                requestVO.getClockIn());
 
         attendanceDto.setClockOut(
-                Timestamp.valueOf(clockOut));
+                requestVO.getClockOut());
 
         attendanceDto.setBreakMinutes(
                 requestVO.getBreakMinutes());
 
-        attendanceDto.setWorkDayType(
-                requestVO.getWorkDayType());
+        attendanceDto.setAttendanceType(
+                "normal");
 
         attendanceDto.setNightHours(
-                nightWorkMinutes / 60.0);
+                actualNightHours);
 
         attendanceDto.setOvertimeHours(
-                overtimeMinutes / 60.0);
+                actualOvertimeHours);
 
 
-        boolean result =
+        boolean attendanceResult =
                 employeeAttendanceDao.update(
                         attendanceDto);
 
-        if (!result) {
+        if (!attendanceResult) {
+            throw new GetOutException();
+        }
+
+
+        // 실제 근태 결과를 스케줄 actual에 반영
+        WorkScheduleUpdateRequestVO scheduleUpdateVO =
+                WorkScheduleUpdateRequestVO.builder()
+                        .workScheduleNo(
+                                scheduleDto.getWorkScheduleNo())
+                        .actualWorkHours(
+                                actualWorkHours)
+                        .actualOvertimeHours(
+                                actualOvertimeHours)
+                        .actualNightHours(
+                                actualNightHours)
+                        .actualHolidayHours(
+                                actualHolidayHours)
+                        .build();
+
+
+        boolean scheduleResult =
+                employeeWorkScheduleDao.update(
+                        scheduleUpdateVO);
+
+        if (!scheduleResult) {
             throw new GetOutException();
         }
     }
-
-
-    // 비근무 -> 비근무
+    
+    
+ // 비근무 근태 -> 비근무 근태 수정
     @Override
+    @Transactional
     public void absentToAbsent(
             AttendanceAbsentToAbsentRequestVO requestVO,
             TokenParseResponseVO parseVO) {
 
+        // 수정할 근태 조회
         AttendanceFindVO findVO =
                 AttendanceFindVO.builder()
                         .empAttendanceNo(
                                 requestVO.getEmpAttendanceNo())
                         .build();
-
 
         EmployeeAttendanceDto attendanceDto =
                 employeeAttendanceDao.find(
@@ -1384,95 +1211,467 @@ public class EmployeeAttendanceServiceImpl
         }
 
 
-        // 기존 상태가 비근무인지 확인
-        if (!"결근".equals(
+        // 기존 근태가 비근무 상태인지 확인
+        if (!"absent".equals(
                 attendanceDto.getAttendanceType())
-                && !"유급휴가".equals(
+                && !"paid_leave".equals(
                         attendanceDto.getAttendanceType())
-                && !"무급휴가".equals(
+                && !"unpaid_leave".equals(
                         attendanceDto.getAttendanceType())) {
 
             throw new GetOutException();
         }
 
 
-        // 변경 상태도 비근무인지 확인
-        if (!"결근".equals(
+        // 변경할 근태도 비근무 상태인지 확인
+        if (!"absent".equals(
                 requestVO.getAttendanceType())
-                && !"유급휴가".equals(
+                && !"paid_leave".equals(
                         requestVO.getAttendanceType())
-                && !"무급휴가".equals(
+                && !"unpaid_leave".equals(
                         requestVO.getAttendanceType())) {
 
             throw new GetOutException();
         }
 
 
-        if (attendanceDto.getAttendanceType()
-                .equals(
-                        requestVO.getAttendanceType())) {
+        // 해당 근태와 연결된 근무 일정 조회
+        EmployeeWorkScheduleDto scheduleDto =
+                employeeWorkScheduleDao.findByContract(
+                        attendanceDto.getContractNo(),
+                        attendanceDto.getWorkDate());
 
-            return;
+        if (scheduleDto == null) {
+            throw new TargetNotfoundException();
         }
 
 
+        // 비근무 유형 변경
         attendanceDto.setAttendanceType(
                 requestVO.getAttendanceType());
 
 
-        boolean result =
+        boolean attendanceResult =
                 employeeAttendanceDao.update(
                         attendanceDto);
 
-        if (!result) {
+        if (!attendanceResult) {
+            throw new GetOutException();
+        }
+
+
+        // 비근무 상태이므로 actual 4종은 0 유지
+        WorkScheduleUpdateRequestVO scheduleUpdateVO =
+                WorkScheduleUpdateRequestVO.builder()
+                        .workScheduleNo(
+                                scheduleDto.getWorkScheduleNo())
+                        .actualWorkHours(
+                                0.0)
+                        .actualOvertimeHours(
+                                0.0)
+                        .actualNightHours(
+                                0.0)
+                        .actualHolidayHours(
+                                0.0)
+                        .build();
+
+
+        boolean scheduleResult =
+                employeeWorkScheduleDao.update(
+                        scheduleUpdateVO);
+
+        if (!scheduleResult) {
             throw new GetOutException();
         }
     }
-
-
-    // 기간별 근태 조회
+    
+ // 결근 등록
     @Override
-    @Transactional(readOnly = true)
-    public List<AttendanceSearchResponseVO> search(
-            long employeeNo,
-            Timestamp startDate,
-            Timestamp endDate) {
+    @Transactional
+    public void absent(
+            AttendanceAbsentRequestVO requestVO,
+            TokenParseResponseVO parseVO) {
 
-        if (employeeNo <= 0) {
+        // 일정 조회용 직원정보
+        EmployeeSearchByNameVO employeeVO =
+                EmployeeSearchByNameVO.builder()
+                        .employeeNo(
+                                requestVO.getEmployeeNo())
+                        .build();
+
+
+        // 해당 날짜 근무 일정 조회
+        EmployeeWorkScheduleDto scheduleDto =
+                employeeWorkScheduleDao.find(
+                        employeeVO,
+                        requestVO.getWorkDate());
+
+        if (scheduleDto == null) {
+            throw new TargetNotfoundException();
+        }
+
+
+        // 해당 날짜에 이미 근태가 있는지 확인
+        AttendanceFindVO findVO =
+                AttendanceFindVO.builder()
+                        .employeeNo(
+                                requestVO.getEmployeeNo())
+                        .workDate(
+                                requestVO.getWorkDate())
+                        .build();
+
+        EmployeeAttendanceDto attendanceDto =
+                employeeAttendanceDao.find(
+                        findVO);
+
+        if (attendanceDto != null) {
             throw new GetOutException();
         }
 
 
-        if (startDate == null
-                || endDate == null) {
+        // 결근 근태 생성
+        EmployeeAttendanceDto absentDto =
+                EmployeeAttendanceDto.builder()
+                        .empAttendanceNo(
+                                employeeAttendanceDao.sequence())
+                        .contractNo(
+                                scheduleDto.getContractNo())
+                        .workDate(
+                                requestVO.getWorkDate())
+                        .clockIn(
+                                null)
+                        .clockOut(
+                                null)
+                        .breakMinutes(
+                                0.0)
+                        .attendanceType(
+                                "absent")
+                        .nightHours(
+                                0)
+                        .overtimeHours(
+                                0)
+                        .build();
 
+
+        boolean attendanceResult =
+                employeeAttendanceDao.add(
+                        absentDto);
+
+        if (!attendanceResult) {
             throw new GetOutException();
         }
 
 
-        LocalDateTime searchStart =
-                startDate.toLocalDateTime()
-                        .toLocalDate()
-                        .atStartOfDay();
+        // 실제 근무가 없으므로 Schedule actual 4종 0
+        WorkScheduleUpdateRequestVO scheduleUpdateVO =
+                WorkScheduleUpdateRequestVO.builder()
+                        .workScheduleNo(
+                                scheduleDto.getWorkScheduleNo())
+                        .actualWorkHours(
+                                0.0)
+                        .actualOvertimeHours(
+                                0.0)
+                        .actualNightHours(
+                                0.0)
+                        .actualHolidayHours(
+                                0.0)
+                        .build();
 
-        LocalDateTime searchEnd =
-                endDate.toLocalDateTime()
-                        .toLocalDate()
-                        .atStartOfDay();
 
+        boolean scheduleResult =
+                employeeWorkScheduleDao.update(
+                        scheduleUpdateVO);
 
-        if (!searchStart.isBefore(
-                searchEnd)) {
-
+        if (!scheduleResult) {
             throw new GetOutException();
         }
-
-
-        return employeeAttendanceDao.search(
-                employeeNo,
-                Timestamp.valueOf(
-                        searchStart),
-                Timestamp.valueOf(
-                        searchEnd));
     }
+    
+    
+ // 유급휴가 등록
+    @Override
+    @Transactional
+    public void paidLeave(
+            AttendanceLeaveRequestVO requestVO,
+            TokenParseResponseVO parseVO) {
+
+        // 일정 조회용 직원정보
+        EmployeeSearchByNameVO employeeVO =
+                EmployeeSearchByNameVO.builder()
+                        .employeeNo(
+                                requestVO.getEmployeeNo())
+                        .build();
+
+
+        // 해당 날짜 근무 일정 조회
+        EmployeeWorkScheduleDto scheduleDto =
+                employeeWorkScheduleDao.find(
+                        employeeVO,
+                        requestVO.getWorkDate());
+
+        if (scheduleDto == null) {
+            throw new TargetNotfoundException();
+        }
+
+
+        // 해당 날짜에 이미 근태가 있는지 확인
+        AttendanceFindVO findVO =
+                AttendanceFindVO.builder()
+                        .employeeNo(
+                                requestVO.getEmployeeNo())
+                        .workDate(
+                                requestVO.getWorkDate())
+                        .build();
+
+        EmployeeAttendanceDto attendanceDto =
+                employeeAttendanceDao.find(
+                        findVO);
+
+        if (attendanceDto != null) {
+            throw new GetOutException();
+        }
+
+
+        // 유급휴가 근태 생성
+        EmployeeAttendanceDto leaveDto =
+                EmployeeAttendanceDto.builder()
+                        .empAttendanceNo(
+                                employeeAttendanceDao.sequence())
+                        .contractNo(
+                                scheduleDto.getContractNo())
+                        .workDate(
+                                requestVO.getWorkDate())
+                        .clockIn(
+                                null)
+                        .clockOut(
+                                null)
+                        .breakMinutes(
+                                0.0)
+                        .attendanceType(
+                                "paid_leave")
+                        .nightHours(
+                                0)
+                        .overtimeHours(
+                                0)
+                        .build();
+
+
+        boolean attendanceResult =
+                employeeAttendanceDao.add(
+                        leaveDto);
+
+        if (!attendanceResult) {
+            throw new GetOutException();
+        }
+
+
+        // 실제 근무가 없으므로 Schedule actual 4종 0
+        WorkScheduleUpdateRequestVO scheduleUpdateVO =
+                WorkScheduleUpdateRequestVO.builder()
+                        .workScheduleNo(
+                                scheduleDto.getWorkScheduleNo())
+                        .actualWorkHours(
+                                0.0)
+                        .actualOvertimeHours(
+                                0.0)
+                        .actualNightHours(
+                                0.0)
+                        .actualHolidayHours(
+                                0.0)
+                        .build();
+
+
+        boolean scheduleResult =
+                employeeWorkScheduleDao.update(
+                        scheduleUpdateVO);
+
+        if (!scheduleResult) {
+            throw new GetOutException();
+        }
+    }
+    
+ // 무급휴가 등록
+    @Override
+    @Transactional
+    public void unpaidLeave(
+            AttendanceLeaveRequestVO requestVO,
+            TokenParseResponseVO parseVO) {
+
+        // 일정 조회용 직원정보
+        EmployeeSearchByNameVO employeeVO =
+                EmployeeSearchByNameVO.builder()
+                        .employeeNo(
+                                requestVO.getEmployeeNo())
+                        .build();
+
+
+        // 해당 날짜 근무 일정 조회
+        EmployeeWorkScheduleDto scheduleDto =
+                employeeWorkScheduleDao.find(
+                        employeeVO,
+                        requestVO.getWorkDate());
+
+        if (scheduleDto == null) {
+            throw new TargetNotfoundException();
+        }
+
+
+        // 해당 날짜에 이미 근태가 있는지 확인
+        AttendanceFindVO findVO =
+                AttendanceFindVO.builder()
+                        .employeeNo(
+                                requestVO.getEmployeeNo())
+                        .workDate(
+                                requestVO.getWorkDate())
+                        .build();
+
+        EmployeeAttendanceDto attendanceDto =
+                employeeAttendanceDao.find(
+                        findVO);
+
+        if (attendanceDto != null) {
+            throw new GetOutException();
+        }
+
+
+        // 무급휴가 근태 생성
+        EmployeeAttendanceDto leaveDto =
+                EmployeeAttendanceDto.builder()
+                        .empAttendanceNo(
+                                employeeAttendanceDao.sequence())
+                        .contractNo(
+                                scheduleDto.getContractNo())
+                        .workDate(
+                                requestVO.getWorkDate())
+                        .clockIn(
+                                null)
+                        .clockOut(
+                                null)
+                        .breakMinutes(
+                                0.0)
+                        .attendanceType(
+                                "unpaid_leave")
+                        .nightHours(
+                                0)
+                        .overtimeHours(
+                                0)
+                        .build();
+
+
+        boolean attendanceResult =
+                employeeAttendanceDao.add(
+                        leaveDto);
+
+        if (!attendanceResult) {
+            throw new GetOutException();
+        }
+
+
+        // 실제 근무가 없으므로 Schedule actual 4종 0
+        WorkScheduleUpdateRequestVO scheduleUpdateVO =
+                WorkScheduleUpdateRequestVO.builder()
+                        .workScheduleNo(
+                                scheduleDto.getWorkScheduleNo())
+                        .actualWorkHours(
+                                0.0)
+                        .actualOvertimeHours(
+                                0.0)
+                        .actualNightHours(
+                                0.0)
+                        .actualHolidayHours(
+                                0.0)
+                        .build();
+
+
+        boolean scheduleResult =
+                employeeWorkScheduleDao.update(
+                        scheduleUpdateVO);
+
+        if (!scheduleResult) {
+            throw new GetOutException();
+        }
+    }
+    
+    
+ // 자동 결근 처리
+    @Override
+    @Transactional
+    public void autoAbsent() {
+
+        Timestamp now =
+                Timestamp.valueOf(
+                        LocalDateTime.now());
+
+
+        // 예정 퇴근시간이 지났지만
+        // 실제 근태가 없는 근무 일정 조회
+        List<EmployeeWorkScheduleDto> scheduleList =
+                employeeWorkScheduleDao.findAutoAbsentTarget(
+                        now);
+
+
+        for (EmployeeWorkScheduleDto scheduleDto
+                : scheduleList) {
+
+
+            // 결근 근태 생성
+            EmployeeAttendanceDto attendanceDto =
+                    EmployeeAttendanceDto.builder()
+                            .empAttendanceNo(
+                                    employeeAttendanceDao.sequence())
+                            .contractNo(
+                                    scheduleDto.getContractNo())
+                            .workDate(
+                                    scheduleDto.getScheduledWorkDate())
+                            .clockIn(
+                                    null)
+                            .clockOut(
+                                    null)
+                            .breakMinutes(
+                                    0.0)
+                            .attendanceType(
+                                    "absent")
+                            .nightHours(
+                                    0)
+                            .overtimeHours(
+                                    0)
+                            .build();
+
+
+            boolean attendanceResult =
+                    employeeAttendanceDao.add(
+                            attendanceDto);
+
+            if (!attendanceResult) {
+                throw new GetOutException();
+            }
+
+
+            // 결근이므로 실제 근무 결과는 전부 0
+            WorkScheduleUpdateRequestVO scheduleUpdateVO =
+                    WorkScheduleUpdateRequestVO.builder()
+                            .workScheduleNo(
+                                    scheduleDto.getWorkScheduleNo())
+                            .actualWorkHours(
+                                    0.0)
+                            .actualOvertimeHours(
+                                    0.0)
+                            .actualNightHours(
+                                    0.0)
+                            .actualHolidayHours(
+                                    0.0)
+                            .build();
+
+
+            boolean scheduleResult =
+                    employeeWorkScheduleDao.update(
+                            scheduleUpdateVO);
+
+            if (!scheduleResult) {
+                throw new GetOutException();
+            }
+        }
+    }
+    
+    
 }
