@@ -22,8 +22,8 @@ public class PaymentScheduler {
         // 이번 달 문자열 생성 (예: "2026-09")
         String currentMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
         
-//        System.out.println("============== [자동 청구 스케줄러 작동 시작] : " + currentMonth + " ==============");
-//        paymentService.processMonthlyBilling(currentMonth);
-//        System.out.println("============== [자동 청구 스케줄러 작동 완료] ==============");
+        System.out.println("============== [자동 청구 스케줄러 작동 시작] : " + currentMonth + " ==============");
+        paymentService.processMonthlyBilling(currentMonth);
+        System.out.println("============== [자동 청구 스케줄러 작동 완료] ==============");
     }
 }

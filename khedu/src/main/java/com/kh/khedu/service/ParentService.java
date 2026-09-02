@@ -296,4 +296,9 @@ public class ParentService {
 	    }
 	}
 	
+	//학생 번호로 학부모 상세 정보 조회 로직 추가
+    public ParentDetailVO findParentDetailByStudentNo(int studentNo) {
+        return parentDao.findParentDetailByStudentNo(studentNo);
+    }
+	
 }

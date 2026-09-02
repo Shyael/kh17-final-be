@@ -114,7 +114,7 @@
             student_school = #{studentSchool},
             student_grade = #{studentGrade},
             student_gender = #{studentGender},
-            student_etc = #{studentEtc} -- 🚨 이전에 발견한 DB 컬럼명 오타(ect) 주의!
+            student_etc = #{studentEtc}
         WHERE 
             student_no = #{studentNo}
     </update>

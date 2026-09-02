@@ -33,4 +33,21 @@
 		where p.account_no = #{accountNo}
 	</select>
 	
+	<!-- 학생 번호로 학부모 상세 정보(Account 정보 포함) 조회 -->
+	<select id="findParentDetailByStudentNo" resultType="com.kh.khedu.vo.parent.ParentDetailVO">
+		select 
+			p.parent_no as parentNo,
+			ps.student_no as studentNo,
+			ps.relationship as relationship,
+			a.account_no as accountNo,
+			a.account_id as accountId,
+			a.account_name as accountName,
+			a.account_phone as accountPhone,
+			a.account_status as accountStatus
+		from parent_student ps
+		join parent p on ps.parent_no = p.parent_no
+		join account a on p.account_no = a.account_no
+		where ps.student_no = #{studentNo}
+	</select>
+	
 </mapper>

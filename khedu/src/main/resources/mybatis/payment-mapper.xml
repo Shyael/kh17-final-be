@@ -98,5 +98,36 @@
         </if>
         order by P.payment_no desc
     </select>
+    
+    <!-- ============================================== -->
+    <!-- [자동 청구 스케줄러 전용 쿼리] -->
+    <!-- ============================================== -->
+
+    <!-- 1. 현재 학원에 다니는(퇴원하지 않은) 전체 학생 번호 조회 -->
+    <!-- (결과값이 단일 숫자(int)이므로 resultType="int"를 씁니다) -->
+    <!-- <select id="selectAllActiveStudents" resultType="int">
+        select student_no 
+        from student
+         만약 퇴원 여부(상태)를 관리하는 컬럼이 있다면 아래 주석을 풀고 사용하세요!
+        where student_status = '재원' 
+    </select>
+
+    2. 중복 청구 검사 (이번 달에 이미 청구서가 발행되었는지 카운트)
+    <select id="checkDuplicateBilling" resultType="int">
+        select count(*) 
+        from payment 
+        where student_no = #{studentNo} 
+          and payment_month = #{currentMonth}
+    </select>
+
+    3. 특정 학생이 수강 중인 강좌 번호와 복사된 강좌비 조회
+    (본인이 만드신 수강-복사 테이블 이름으로 바꿔주세요. 예: student_course)
+    <select id="selectStudentCourses" resultType="com.kh.khedu.vo.payment.StudentCourseVO">
+        select 
+            course_no as courseNo, 
+            course_fee as courseFee 
+        from student_course 
+        where student_no = #{studentNo}
+    </select> -->
   
 </mapper>
