@@ -41,4 +41,10 @@ public interface AssignmentSubmitDao {
 
 	// 과제 제출 삭제
 	boolean delete(int submitNo);
+	
+	//파일
+	void connect(int submitNo, int attachNo);
+	List<Integer> selectFiles(int submitNo);
+	
+	List<Integer> selectFilesByAssignment(int assignmentNo);
 }

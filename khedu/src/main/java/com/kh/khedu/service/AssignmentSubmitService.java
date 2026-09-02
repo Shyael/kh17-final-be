@@ -1,6 +1,9 @@
 package com.kh.khedu.service;
 
+import java.io.IOException;
 import java.util.List;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.khedu.dto.AssignmentSubmitDto;
 import com.kh.khedu.vo.assignment.AssignmentSubmitDetailVO;
@@ -10,7 +13,10 @@ import com.kh.khedu.vo.assignment.AssignmentSubmitStudentListVO;
 public interface AssignmentSubmitService {
 
     // 과제 제출 등록
-    int insert(AssignmentSubmitDto assignmentSubmitDto);
+    int insert(
+		AssignmentSubmitDto assignmentSubmitDto,
+		List<MultipartFile> files
+    ) throws IllegalStateException, IOException;
 
     // 특정 제출 상세 조회
     AssignmentSubmitDetailVO selectOne(int submitNo);
@@ -30,12 +36,18 @@ public interface AssignmentSubmitService {
             int assignmentNo);
 
     // 제출 내용 수정
-    boolean update(AssignmentSubmitDto assignmentSubmitDto);
+    boolean update(
+    		AssignmentSubmitDto assignmentSubmitDto,
+    		List<MultipartFile> files,
+    		int studentNo
+    		) throws IllegalStateException, IOException;
 
     // 강사 피드백 등록 및 수정
     boolean updateComment(AssignmentSubmitDto assignmentSubmitDto);
 
     // 과제 제출 삭제
-    boolean delete(int submitNo);
-
+    boolean delete(int submitNo, int studentNo);
+    
+    //파일 삭제
+    void deleteFile(int submitNo, int attachNo, int studentNo);
 }

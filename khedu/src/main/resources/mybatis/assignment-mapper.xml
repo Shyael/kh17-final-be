@@ -197,4 +197,18 @@
         delete from assignment
         where assignment_no = #{assignmentNo}
     </delete>
+    
+    <!-- 파일 연결 -->
+    <insert id="connect">
+    	insert into assignment_file (assignment_no, attach_no)
+    	values( #{assignmentNo}, #{attachNo})
+    </insert>
+    
+    <!-- 파일찾기 -->
+    <select id="selectFiles" resultType="Integer">
+    	select attach_no
+    	from assignment_file
+    	where assignment_no = #{assignmentNo}
+    	order by attach_no asc
+    </select>
 </mapper>

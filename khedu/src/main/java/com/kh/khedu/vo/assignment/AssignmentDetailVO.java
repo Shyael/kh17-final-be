@@ -1,6 +1,9 @@
 package com.kh.khedu.vo.assignment;
 
 import java.sql.Timestamp;
+import java.util.List;
+
+import com.kh.khedu.dto.AttachDto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -21,4 +24,6 @@ public class AssignmentDetailVO {
     private String assignmentStatus;//과제상태
     private Timestamp assignmentDueDate;//과제마감일
     private Timestamp assignmentWtime;
+    //과제 파일
+    private List<AttachDto> fileList;
 }

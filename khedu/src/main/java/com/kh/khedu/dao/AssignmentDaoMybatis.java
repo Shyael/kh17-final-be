@@ -1,6 +1,8 @@
 package com.kh.khedu.dao;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,5 +78,19 @@ public class AssignmentDaoMybatis implements AssignmentDao {
         return sqlSession.delete(
                 "mapper.assignment.delete", assignmentNo) > 0;
     }
+
+	@Override
+	public void connect(int assignmentNo, int attachNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("assignmentNo", assignmentNo);
+		params.put("attachNo", attachNo);
+		sqlSession.insert("mapper.assignment.connect", params);
+		
+	}
+
+	@Override
+	public List<Integer> selectFiles(int assignmentNo) {
+		return sqlSession.selectList("mapper.assignment.selectFiles",assignmentNo);
+	}
 
 }

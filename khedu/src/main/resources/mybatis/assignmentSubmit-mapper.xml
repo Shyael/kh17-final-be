@@ -227,5 +227,27 @@
         where submit_no = #{submitNo}
 
     </delete>
-
+    
+    <!-- 제출 파일 연결 -->
+    <insert id="connect">
+    	insert into submit_file (submit_no, attach_no)
+    	values( #{submitNo}, #{attachNo})
+    </insert>
+	
+	<!-- 파일찾기 -->
+	<select id="selectFiles" resultType="Integer">
+		select attach_no
+		from submit_file
+		where submit_no = #{submitNo}
+		order by attach_no asc
+	</select>
+	
+	<!-- 특정 과제의 모든 제출 첨부파일 번호 조회 -->
+	<select id="selectFilesByAssignment" resultType="Integer">
+	    select distinct asf.attach_no
+	    from assignment_submit_file asf
+	    join assignment_submit s
+	        on asf.submit_no = s.submit_no
+	    where s.assignment_no = #{assignmentNo}
+	</select>
 </mapper>

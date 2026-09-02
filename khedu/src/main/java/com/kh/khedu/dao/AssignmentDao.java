@@ -34,4 +34,8 @@ public interface AssignmentDao {
 
 	// 과제 삭제
 	boolean delete(int assignmentNo);
+	
+	//파일
+	void connect(int assignmentNo, int attachNo);
+	List<Integer> selectFiles(int assignmentNo);
 }

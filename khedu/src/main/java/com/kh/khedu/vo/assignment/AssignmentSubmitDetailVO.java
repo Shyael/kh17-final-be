@@ -1,6 +1,9 @@
 package com.kh.khedu.vo.assignment;
 
 import java.sql.Timestamp;
+import java.util.List;
+
+import com.kh.khedu.dto.AttachDto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -20,4 +23,6 @@ public class AssignmentSubmitDetailVO {
     private String submitComment;//피드백
     private Timestamp submitWtime;
     private Timestamp submitEtime;
+    //과제 제출 파일
+    private List<AttachDto> fileList;
 }

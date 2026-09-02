@@ -37,7 +37,7 @@ public class AttachDaoMybatis implements AttachDao {
 	@Override
 	public AttachDto selectOne(Integer attachNo) {
 		if(attachNo == null) return null;
-		return sqlSession.selectOne("mapper.attach.find", attachNo);
+		return sqlSession.selectOne("mapper.attach.selectOne", attachNo);
 	}
 
 	@Override

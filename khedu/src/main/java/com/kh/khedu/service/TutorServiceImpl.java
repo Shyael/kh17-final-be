@@ -70,12 +70,20 @@ public class TutorServiceImpl implements TutorService {
 
 	@Override
 	public List<TutorListVO> selectList() {
-		return tutorDao.selectList();
+		List<TutorListVO> tutorList = tutorDao.selectList();
+		
+		setTutorImages(tutorList);
+		
+		return tutorList;
 	}
 
 	@Override
 	public List<TutorListVO> selectListBySubject(int academySubjectNo) {
-		return tutorDao.selectListBySubject(academySubjectNo);
+		
+		List<TutorListVO> tutorList = tutorDao.selectListBySubject(academySubjectNo);
+		//이미지 불러와서 세팅
+		setTutorImages(tutorList);
+		return tutorList;
 	}
 
 	@Override
@@ -255,6 +263,19 @@ public class TutorServiceImpl implements TutorService {
 		
 		//attach DB + 실제파일 삭제
 		attachService.delete(attachNo);
+	}
+	
+	//이미지 불러오기 메소드
+	private void setTutorImages(
+			List<TutorListVO> tutorList) {
+		for(TutorListVO tutor : tutorList) {
+			Integer attachNo = tutorDao.selectImage(tutor.getTutorNo());
+			
+			if(attachNo != null) {
+				AttachDto image = attachDao.selectOne(attachNo);
+				tutor.setImage(image);
+			}
+		}
 	}
 
 }

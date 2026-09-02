@@ -1,19 +1,23 @@
 package com.kh.khedu.controller;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dto.AssignmentDto;
+import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.service.AssignmentService;
 import com.kh.khedu.vo.assignment.AssignmentDetailVO;
 import com.kh.khedu.vo.assignment.AssignmentListVO;
@@ -35,19 +39,26 @@ public class AssignmentRestController {
     // 과제 등록
     @Operation(summary = "과제 등록")
     @ApiResponse(responseCode = "200", description = "과제 등록 성공")
-    @PostMapping("/")
+    @PostMapping(
+            value = "/",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+        )
     public int insert(
-            @RequestBody AssignmentDto assignmentDto,
-            @CurrentUser TokenParseResponseVO parseVO) {
+    		@RequestPart("assignment") AssignmentDto assignmentDto,
+
+            @RequestPart(value = "files", required = false) 
+    		List<MultipartFile> files,
+
+            @CurrentUser
+            TokenParseResponseVO parseVO
+    	) throws IllegalStateException, IOException {
     	
     	
         // 로그인한 강사번호 설정
         assignmentDto.setEmployeeNo(parseVO.getNoType());
         
-        System.out.println("employeeNo = " + assignmentDto.getEmployeeNo());
-        System.out.println("courseNo = " + assignmentDto.getCourseNo());
     	
-        return assignmentService.insert(assignmentDto);
+        return assignmentService.insert(assignmentDto, files);
     }
 
     //직원용 과제 목록 조회
@@ -57,7 +68,7 @@ public class AssignmentRestController {
     		@CurrentUser TokenParseResponseVO parseVO){
     	
     	// 강사라면 본인이 작성한 과제만
-        if (parseVO.getRoleNames().contains("강사")) {
+        if (parseVO.getRoleNames().contains(RoleType.TUTOR.getCode())) {
             return assignmentService.selectListByEmployee(
                     parseVO.getNoType());
         }
@@ -119,14 +130,34 @@ public class AssignmentRestController {
     // 과제 수정
     @Operation(summary = "과제 수정")
     @ApiResponse(responseCode = "200", description = "과제 수정 성공")
-    @PutMapping("/{assignmentNo}")
+    @PutMapping(
+            value = "/{assignmentNo}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+        )
     public boolean update(
-            @PathVariable int assignmentNo,
-            @RequestBody AssignmentDto assignmentDto) {
+    		 @PathVariable int assignmentNo,
+
+             @RequestPart("assignment") AssignmentDto assignmentDto,
+
+             @RequestPart(value = "files", required = false)
+             List<MultipartFile> files,
+
+             @CurrentUser
+             TokenParseResponseVO parseVO
+     ) throws IllegalStateException, IOException {
 
         assignmentDto.setAssignmentNo(assignmentNo);
+        
+        // 강사 여부
+        boolean tutor =
+                parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
 
-        return assignmentService.update(assignmentDto);
+        return assignmentService.update(
+                assignmentDto,
+                files,
+                parseVO.getNoType(),
+                tutor
+        );
     }
 
 
@@ -135,9 +166,37 @@ public class AssignmentRestController {
     @ApiResponse(responseCode = "200", description = "과제 삭제 성공")
     @DeleteMapping("/{assignmentNo}")
     public boolean delete(
-            @PathVariable int assignmentNo) {
+            @PathVariable int assignmentNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+    	
+        boolean tutor =
+                parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
 
-        return assignmentService.delete(assignmentNo);
+        return assignmentService.delete(
+                assignmentNo,
+                parseVO.getNoType(),
+                tutor
+        );
+    }
+
+    // 과제 첨부파일 삭제
+    @Operation(summary = "과제 첨부파일 삭제")
+    @ApiResponse(responseCode = "200", description = "과제 첨부파일 삭제 성공")
+    @DeleteMapping("/{assignmentNo}/file/{attachNo}")
+    public void deleteFile(
+            @PathVariable int assignmentNo,
+            @PathVariable int attachNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+
+        boolean tutor =
+                parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
+
+        assignmentService.deleteFile(
+                assignmentNo,
+                attachNo,
+                parseVO.getNoType(),
+                tutor
+        );
     }
 
 }
