@@ -6,6 +6,8 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.kh.khedu.dto.StudentDto;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentListResponseVO;
@@ -68,4 +70,18 @@ public class StudentDaoMybatis implements StudentDao {
     public void deleteStudentDiscount(int studentDiscountNo) {
         sqlSession.delete("mapper.discount.deleteStudentDiscount", studentDiscountNo);
     }
+	@Override
+	public StudentDto selectOne(int accountNo) {
+		return sqlSession.selectOne("mapper.student.findByAccountNo", accountNo);
+	}
+
+	@Override
+	public boolean updateAll(StudentDto studentDto) {
+		return sqlSession.update("mapper.student.updateAll", studentDto) > 0;
+	}
+
+	@Override
+	public ParentStudentVO selectOneRelationByAccountNo(int accountNo) {
+		return sqlSession.selectOne("mapper.student.findParentStudentByAccountNo", accountNo);
+	}
 }

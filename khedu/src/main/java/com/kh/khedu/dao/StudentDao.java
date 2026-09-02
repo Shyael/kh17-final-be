@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import com.kh.khedu.dto.StudentDto;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentListResponseVO;
@@ -24,4 +26,7 @@ public interface StudentDao {
     List<StudentDiscountVO> selectStudentDiscounts(int studentNo);
     void insertStudentDiscount(StudentDiscountVO studentDiscountVO);
     void deleteStudentDiscount(int studentDiscountNo);
+	StudentDto selectOne(int accountNo);
+	boolean updateAll(StudentDto studentDto);
+	ParentStudentVO selectOneRelationByAccountNo(int accountNo);
 }

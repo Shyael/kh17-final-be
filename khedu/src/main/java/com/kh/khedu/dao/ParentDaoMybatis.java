@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.ParentDto;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 @Repository
 public class ParentDaoMybatis implements ParentDao {
@@ -20,6 +21,16 @@ public class ParentDaoMybatis implements ParentDao {
 	@Override
 	public void insert(ParentDto parentDto) {
 		sqlSession.insert("mapper.parent.join", parentDto);
+	}
+
+	@Override
+	public ParentStudentVO selectOneRelationByAccountNo(int accountNo) {
+		return sqlSession.selectOne("mapper.parent.findParentStudentByAccountNo", accountNo);
+	}
+
+	@Override
+	public ParentDto selectOneByAccountNo(int accountNo) {
+		return sqlSession.selectOne("mapper.parent.findByAccountNo", accountNo);
 	}
 
 }

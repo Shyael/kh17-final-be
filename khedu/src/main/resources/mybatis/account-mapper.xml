@@ -35,9 +35,13 @@
 		
 	</insert>
 	
-	<!-- 회원 상세  -->
+	<!-- 회원 상세(accountId)  -->
 	<select id="find" resultType="AccountDto">
 		select * from account where account_id = #{accountId}
+	</select>
+	<!-- 회원 상세(accountNo) -->
+	<select id="findFromNo" resultType="AccountDto">
+		select * from account where account_no = #{accountNo}
 	</select>
 	
 	<!-- 존재 유무 판단(아이디(=이메일)) -->
@@ -85,5 +89,21 @@
 		where account_id = #{accountId} 
 		and account_phone = #{accountPhone}
 		and account_name = #{accountName}
+	</select>
+	
+	<!-- 수정 -->
+	<update id="updateAll">
+		update account
+		set account_name = #{accountName},
+			account_phone = #{accountPhone},
+			account_utime = systimestamp
+		where account_no = #{accountNo}
+	</update>
+	
+	<!-- studentNo로 이름찾기  -->
+	<select id="findAccountNameByStudentNo" resultType = "String">
+		select a.account_name from 
+		account a join student s on a.account_no = s.account_no
+		where s.student_no = #{studentNo}
 	</select>
 </mapper>

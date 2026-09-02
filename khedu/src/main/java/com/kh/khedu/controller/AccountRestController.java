@@ -32,7 +32,7 @@ import jakarta.validation.Valid;
 @Tag(name = "계정 정보 관리 서비스")
 @RestController
 @RequestMapping("/api/account")
-public class AccountController {
+public class AccountRestController {
 	@Autowired
 	private AccountDao accountDao;
 	@Autowired
@@ -130,7 +130,7 @@ public class AccountController {
 	@PostMapping("/find-password")
 	public void findPassword(
 			@Valid @RequestBody FindAccountPasswordRequestVO request) throws MessagingException, IOException {
-		
 		accountService.resetPassword(request);
 	}
+	
 }

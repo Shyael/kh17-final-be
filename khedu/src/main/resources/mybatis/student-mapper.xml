@@ -29,6 +29,25 @@
 			#{studentEtc}
 		)
 	</insert>
+	<!-- no로 학생정보 조회 -->
+	<select id="findByAccountNo" resultType="StudentDto">
+		select * from student where account_no = #{accountNo}
+	</select>
+	<!-- accountNo로 학생 학부모 관계 테이블 조회 -->
+	<select id="findParentStudentByAccountNo" resultType="parentStudentDto">
+		select * from 
+		student s join 
+		parent_student ps on s.student_no = ps.student_no 
+		where s.account_no = #{accountNo}
+	</select>
+	<!-- 수정 -->
+	<update id="updateAll">
+		update student
+		set student_school = #{studentSchool},
+			student_grade = #{studentGrade},
+			student_utime = systimestamp
+		where account_no = #{accountNo}
+	</update>
 	
 	<!-- 학생 목록 전체 조회 (Account 테이블과 JOIN) -->
 	<select id="list" resultType="com.kh.khedu.vo.student.StudentListResponseVO">
