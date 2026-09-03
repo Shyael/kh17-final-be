@@ -138,6 +138,13 @@ public class SecurityConfiguration {
 								RoleType.DESK.getCode(),
 								RoleType.ADMIN.getCode()
 						)
+						.requestMatchers(
+								"/api/admin/employee/**"
+						)
+						.hasAnyAuthority(
+								RoleType.DESK.getCode(),
+								RoleType.ADMIN.getCode()
+						)
 						//나머지 모두 허용
 						.anyRequest().permitAll()
 			)

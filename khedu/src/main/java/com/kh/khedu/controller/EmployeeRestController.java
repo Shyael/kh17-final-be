@@ -42,8 +42,7 @@ public class EmployeeRestController {
 	private EmployeeDao employeeDao;
 	@Autowired
 	private EmployeeService employeeService;
-	@Autowired
-	private PasswordEncoder passwordEncoder;
+	
 	//직원 등록
 	@ApiResponse(responseCode = "200", description = "등록 성공")
 	@PostMapping(value ="/", produces = "application/json")
