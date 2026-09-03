@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.tutor">
+
+	<!-- ==================== 강사 기본정보 ==================== -->
+
+
+	<!-- 강사 번호 생성 -->
+	<select id="sequence" resultType="int">
+		select tutor_seq.nextval from dual
+	</select>
+
+
+	<!-- 강사정보 등록 -->
+	<insert id="insert">
+		insert into tutor(
+			tutor_no,
+			employee_no,
+			tutor_tagline,
+			tutor_intro,
+			tutor_wtime
+		)
+		values(
+			#{tutorNo},
+			#{employeeNo},
+			#{tutorTagline},
+			#{tutorIntro},
+			systimestamp
+		)
+	</insert>
+
+
+	<!-- 강사 단일 조회 -->
+	<select id="selectOne" resultType="TutorDto">
+		select *
+		from tutor
+		where tutor_no = #{tutorNo}
+	</select>
+
+
+	<!-- 강사정보 수정 -->
+	<update id="update">
+		update tutor
+		set
+			tutor_tagline = #{tutorTagline},
+			tutor_intro = #{tutorIntro},
+			tutor_etime = systimestamp
+		where tutor_no = #{tutorNo}
+	</update>
+
+
+	<!-- 강사정보 삭제 -->
+	<delete id="delete">
+		delete from tutor
+		where tutor_no = #{tutorNo}
+	</delete>
+
+
+
+	<!-- ==================== 강사 목록 ==================== -->
+
+
+	<!-- 전체 강사 목록 -->
+	<select id="selectList" resultType="TutorListVO">
+		select
+			t.tutor_no,
+			t.employee_no,
+			a.account_name,
+			a.account_phone,
+			t.tutor_tagline
+		from tutor t
+		join employee e
+			on t.employee_no = e.employee_no
+		join account a
+			on e.account_no = a.account_no
+		order by t.tutor_no asc
+	</select>
+
+
+	<!-- 과목별 강사 목록 -->
+	<select id="selectListBySubject" resultType="TutorListVO">
+		select
+			t.tutor_no,
+			t.employee_no,
+			a.account_name,
+			a.account_phone,
+			t.tutor_tagline
+		from tutor t
+		join employee e
+			on t.employee_no = e.employee_no
+		join account a
+			on e.account_no = a.account_no
+		where exists (
+			select 1
+			from tutor_subject ts
+			where ts.tutor_no = t.tutor_no
+			and ts.academy_subject_no = #{academySubjectNo}
+		)
+		order by t.tutor_no asc
+	</select>
+
+
+
+	<!-- ==================== 강사 상세 ==================== -->
+
+
+	<!-- 강사 + 직원 계정정보 상세 조회 -->
+	<select id="selectDetail" resultType="TutorDetailVO">
+		select
+			t.tutor_no,
+			t.employee_no,
+			t.tutor_tagline,
+			t.tutor_intro,
+			t.tutor_wtime,
+			t.tutor_etime,
+			a.account_name,
+			a.account_phone
+		from tutor t
+		join employee e
+			on t.employee_no = e.employee_no
+		join account a
+			on e.account_no = a.account_no
+		where t.tutor_no = #{tutorNo}
+	</select>
+
+
+
+	<!-- ==================== 강사 등록 ==================== -->
+
+
+	<!-- 강사로 등록 가능한 직원 목록 -->
+	<select id="selectAvailableEmployeeList" resultType="TutorEmployeeVO">
+		select
+			e.employee_no,
+			a.account_name
+		from employee e
+		join account a
+			on e.account_no = a.account_no
+		where e.employee_type = '강사'
+		and e.employee_status = '재직'
+		and not exists (
+			select 1
+			from tutor t
+			where t.employee_no = e.employee_no
+		)
+		order by a.account_name asc
+	</select>
+	
+	<!-- 이미지 연결 -->
+	<insert id="connect">
+		insert into tutor_file (tutor_no, attach_no)
+		values( #{tutorNo}, #{attachNo})
+	</insert>
+	
+	<!-- 이미지찾기(하나) -->
+	<select id="selectImage" resultType="Integer">
+		select attach_no
+		from tutor_file
+		where tutor_no = #{tutorNo}
+	</select>
+
+</mapper>

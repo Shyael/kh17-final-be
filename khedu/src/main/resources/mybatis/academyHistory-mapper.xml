@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.academyHistory">
+
+	<!-- 학원 연혁 번호 생성 -->
+	<select id="sequence" resultType="int">
+		select academy_history_seq.nextval from dual
+	</select>
+
+	<!-- 학원 연혁 등록 -->
+	<insert id="insert">
+		insert into academy_history(
+			academy_history_no,
+			academy_no,
+			academy_history_year,
+			academy_history_content
+		)
+		values(
+			#{academyHistoryNo},
+			#{academyNo},
+			#{academyHistoryYear},
+			#{academyHistoryContent}
+		)
+	</insert>
+
+	<!-- 학원별 연혁 목록 -->
+	<select id="selectList" resultType="AcademyHistoryDto">
+		select *
+		from academy_history
+		where academy_no = #{academyNo}
+		order by academy_history_year desc
+	</select>
+
+	<!-- 연혁 상세 -->
+	<select id="selectOne" resultType="AcademyHistoryDto">
+		select *
+		from academy_history
+		where academy_history_no = #{academyHistoryNo}
+	</select>
+
+	<!-- 연혁 수정 -->
+	<update id="update">
+		update academy_history
+		set
+			academy_history_year = #{academyHistoryYear},
+			academy_history_content = #{academyHistoryContent}
+		where academy_history_no = #{academyHistoryNo}
+	</update>
+
+	<!-- 연혁 삭제 -->
+	<delete id="delete">
+		delete from academy_history
+		where academy_history_no = #{academyHistoryNo}
+	</delete>
+
+</mapper>
