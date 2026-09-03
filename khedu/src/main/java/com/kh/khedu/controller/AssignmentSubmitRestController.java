@@ -195,5 +195,18 @@ public class AssignmentSubmitRestController {
                 parseVO.getNoType()
         );
     }
+    
+    //학부모용 : 자녀 과제 제출내용 조회
+    @GetMapping("/parent/student/{studentNo}/assignment/{assignmentNo}")
+    public AssignmentSubmitDetailVO selectOneByParentStudent(
+    		@PathVariable int studentNo,
+    		@PathVariable int assignmentNo,
+    		@CurrentUser TokenParseResponseVO parseVO) {
+    	return assignmentSubmitService.selectOneByParentStudent(
+    			parseVO.getNoType(),//parentNO
+    			studentNo,
+    			assignmentNo
+    	);
+    }
 
 }

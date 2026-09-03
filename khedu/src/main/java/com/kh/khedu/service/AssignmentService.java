@@ -45,4 +45,9 @@ public interface AssignmentService {
     
     //파일 삭제
     void deleteFile(int assignmentNo, int attachNo, int employee, boolean tutor);
+    
+    //학부모용 : 자녀 과제 목록 조회
+    List<StudentAssignmentListVO> selectListByParentStudent(int parentNo,int studentNo);
+    // 학부모용 : 자녀 과제 상세 조회
+    AssignmentDetailVO selectOneByParentStudent(int parentNo, int studentNo, int assignmentNo);
 }

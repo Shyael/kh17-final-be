@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.kh.khedu.dao.AssignmentDao;
 import com.kh.khedu.dao.AssignmentSubmitDao;
 import com.kh.khedu.dao.AttachDao;
+import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dto.AssignmentSubmitDto;
 import com.kh.khedu.dto.AttachDto;
 import com.kh.khedu.error.GetOutException;
@@ -22,6 +23,7 @@ import com.kh.khedu.vo.assignment.AssignmentDetailVO;
 import com.kh.khedu.vo.assignment.AssignmentSubmitDetailVO;
 import com.kh.khedu.vo.assignment.AssignmentSubmitListVO;
 import com.kh.khedu.vo.assignment.AssignmentSubmitStudentListVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 @Service
 @Transactional
@@ -35,7 +37,10 @@ public class AssignmentSubmitServiceImpl implements AssignmentSubmitService {
     private AttachService attachService;
     @Autowired
     private AttachDao attachDao;
+    @Autowired
+    private ParentStudentDao parentStudentDao;
     
+    //공통 메소드
     // 과제 제출 기한 검사
     private void checkDueDate(int assignmentNo) {
     	
@@ -97,6 +102,20 @@ public class AssignmentSubmitServiceImpl implements AssignmentSubmitService {
         }
 
         return submit;
+    }
+    
+    //이 학생이 내 자녀인지 검사
+    private void checkParentStudent(int parentNo, int studentNo) {
+        List<ParentStudentVO> studentList = parentStudentDao.findByParentNo(parentNo);
+        
+        boolean connected =
+                studentList.stream()
+                        .anyMatch(student ->
+                                student.getStudentNo() == studentNo
+                        );
+        if (!connected) {
+            throw new GetOutException();
+        }
     }
     
     // 과제 제출 등록
@@ -270,4 +289,25 @@ public class AssignmentSubmitServiceImpl implements AssignmentSubmitService {
 
         attachService.delete(attachNo);
     }
+
+	@Override
+	public AssignmentSubmitDetailVO selectOneByParentStudent(int parentNo, int studentNo, int assignmentNo) {
+		//자기 자녀인지 확인
+		checkParentStudent(parentNo, studentNo);
+		
+		AssignmentSubmitDto dto = 
+				AssignmentSubmitDto.builder()
+						.assignmentNo(assignmentNo)
+						.studentNo(studentNo)
+					.build();
+		
+		AssignmentSubmitDetailVO submit = 
+				assignmentSubmitDao
+					.selectOneByAssignmentStudent(dto);
+		
+		//제출한게 없으면 null가능
+		setFiles(submit);
+		
+		return submit;
+	}
 }

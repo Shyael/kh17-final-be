@@ -198,5 +198,29 @@ public class AssignmentRestController {
                 tutor
         );
     }
+    
+    //학부모용  : 자녀 과제 목록 조회
+    @GetMapping("/parent/student/{studentNo}")
+    public List<StudentAssignmentListVO> selectListByParentStudent(
+    		@PathVariable int studentNo,
+    		@CurrentUser TokenParseResponseVO parseVO){
+    	return assignmentService.selectListByParentStudent(
+    			parseVO.getNoType(),//parentNo
+    			studentNo
+    	);
+    }
+    
+    //학부모용 : 자녀 과제 상세 조회
+    @GetMapping("/parent/student/{studentNo}/{assignmentNo}")
+    public AssignmentDetailVO selectOneByParentStudent(
+    		@PathVariable int studentNo,
+    		@PathVariable int assignmentNo,
+    		@CurrentUser TokenParseResponseVO parseVO) {
+    	return assignmentService.selectOneByParentStudent(
+    			parseVO.getNoType(), // parentNo
+    			studentNo,
+    			assignmentNo
+    	);
+    }
 
 }

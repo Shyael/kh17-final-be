@@ -50,4 +50,7 @@ public interface AssignmentSubmitService {
     
     //파일 삭제
     void deleteFile(int submitNo, int attachNo, int studentNo);
+    
+    //학부모용 과제 제출 상세
+    AssignmentSubmitDetailVO selectOneByParentStudent(int parentNo, int studentNo, int assignmentNo);
 }

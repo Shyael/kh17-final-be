@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.kh.khedu.dao.AssignmentDao;
 import com.kh.khedu.dao.AssignmentSubmitDao;
 import com.kh.khedu.dao.AttachDao;
+import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dto.AssignmentDto;
 import com.kh.khedu.dto.AttachDto;
 import com.kh.khedu.error.GetOutException;
@@ -18,6 +19,7 @@ import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.assignment.AssignmentDetailVO;
 import com.kh.khedu.vo.assignment.AssignmentListVO;
 import com.kh.khedu.vo.assignment.StudentAssignmentListVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 @Service
 @Transactional
@@ -35,6 +37,10 @@ public class AssignmentServiceImpl implements AssignmentService {
     @Autowired
     private AssignmentSubmitDao assignmentSubmitDao;
     
+    @Autowired
+    private ParentStudentDao parentStudentDao;
+    
+    //공통 메소드
     // 과제 수정/삭제 권한 확인
     private AssignmentDetailVO checkAuthority(
             int assignmentNo,
@@ -57,6 +63,23 @@ public class AssignmentServiceImpl implements AssignmentService {
         // 원장/데스크는 tutor == false이므로 통과
         return assignment;
     }
+    //학부모-자녀 관계 확인
+    private void checkParentStudent(
+    		int parentNo,
+    		int studentNo) {
+    	List<ParentStudentVO> studentList = 
+    			parentStudentDao.findByParentNo(parentNo);
+    	
+    	boolean connected = 
+    			studentList.stream()
+    				.anyMatch(student ->
+    						student.getStudentNo() == studentNo
+    				);
+    	if(!connected) {
+    		throw new GetOutException();
+    	}
+    }
+    
     
     // 과제 등록
     @Override
@@ -225,6 +248,40 @@ public class AssignmentServiceImpl implements AssignmentService {
 		
 		//DB + 실제 파일 삭제
 		attachService.delete(attachNo);
+	}
+	
+	//학부모용 : 자녀 과제 목록 조회
+	@Override
+	public List<StudentAssignmentListVO> selectListByParentStudent(
+			int parentNo,
+			int studentNo
+	){
+		//자신의 자녀인지 확인
+		checkParentStudent(parentNo, studentNo);
+		
+		//기존 학생 과제 목록 조회 재사용
+		return assignmentDao.selectListByStudent(studentNo);
+	}
+	
+	// 학부모용 : 자녀 과제 상세 조회
+	@Override
+	public AssignmentDetailVO selectOneByParentStudent(int parentNo, int studentNo, int assignmentNo) {
+		 // 1. 자신의 자녀인지 확인
+	    checkParentStudent(parentNo, studentNo);
+	    // 2. 해당 자녀가 볼 수 있는 과제인지 확인
+	    List<StudentAssignmentListVO> assignmentList =
+	            assignmentDao.selectListByStudent(studentNo);
+	    boolean accessible =
+	            assignmentList.stream()
+	                    .anyMatch(assignment ->
+	                            assignment.getAssignmentNo() == assignmentNo
+	                    );
+
+	    if (!accessible) {
+	        throw new GetOutException();
+	    }
+	    // 3. 기존 과제 상세조회 재사용
+	    return selectOne(assignmentNo);
 	}
 
 }
