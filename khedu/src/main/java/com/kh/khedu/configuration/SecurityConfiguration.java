@@ -74,6 +74,7 @@ public class SecurityConfiguration {
 							"/active"  //체크용 페이지 허용
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
+							,"/api/admin/employee/**"
 						).permitAll()
 						
 						
@@ -84,7 +85,7 @@ public class SecurityConfiguration {
 						
 						//임시 전부 공개화면 
 //						.requestMatchers(
-//								
+//							
 //						).permitAll()
 					
 						//auth service
@@ -120,13 +121,6 @@ public class SecurityConfiguration {
 								RoleType.DESK.getCode(),
 								RoleType.ADMIN.getCode()
 						)
-						// [2] 강사
-						.requestMatchers(
-								"/api/employee/me" // 직원 내정보
-								)
-						.hasAnyAuthority(
-								RoleType.TUTOR.getCode() 
-								)
 						// [3] 데스크
 						// [4] 원장
 						// [5] 직원

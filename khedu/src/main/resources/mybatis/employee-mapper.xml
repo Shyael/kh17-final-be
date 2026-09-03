@@ -25,7 +25,7 @@
 		)
 	</insert>
 	
-	<!-- 직원정보 조회 -->
+	<!-- 직원 본인정보 조회 -->
 	<select id="findMyInfo" resultType="EmployeeDetailVO">
 		select
 			a.account_no,
@@ -45,6 +45,7 @@
 		and 
 			a.account_type = '직원'
 	</select>
+	
 	<!-- accountNo로 직원정보 조회 -->
 	<select id="findEmployeeByAccountNo" resultType="EmployeeDto">
 		select * from employee where account_no = #{accountNo}
@@ -58,4 +59,44 @@
 	        account_utime = systimestamp
 	    where account_no = #{accountNo} 
 	</update>
+	
+	<!-- 관리자 기능  -->
+	
+	<!-- 관리자 직원 목록 조회 -->
+	<select id="selectAdminEmployeeList" resultType="AdminEmployeeListVO">
+		select 
+			e.employee_no,
+			a.account_name,
+			a.account_id,
+			a.account_phone,
+			e.employee_type,
+			e.employee_htime,
+			e.employee_status,
+			a.account_status			
+		from employee e
+		join account a
+		on e.account_no = a.account_no
+		order by a.account_name asc
+	</select>
+	
+	<!-- 관리자 직원 상세 조회 -->
+	<select id="selectAdminEmployeeDetailByEmployeeNo" resultType="AdminEmployeeDetailVO">
+		select
+			e.employee_no,
+			e.employee_type,
+			e.employee_htime,
+			e.employee_status,
+			a.account_no,
+			a.account_id,
+			a.account_birth,
+			a.account_name,
+			a.account_phone,
+			a.account_status,
+			a.account_type,
+			a.account_utime
+		from employee e
+		join account a
+		on e.account_no = a.account_no
+		where e.employee_no = #{employeeNo}
+	</select>
 </mapper>

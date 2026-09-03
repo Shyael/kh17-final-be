@@ -20,7 +20,6 @@ public class AdminEmployeeDetailVO {
     private Timestamp employeeHtime;
     private String employeeStatus; // 데스크/강사/원장
     // account
-    private Timestamp accountUtime;
     private int accountNo;
     private String accountId;
     private String accountBirth;
@@ -28,6 +27,7 @@ public class AdminEmployeeDetailVO {
     private String accountPhone;
     private String accountStatus;
     private String accountType;
+    private Timestamp accountUtime;
     //roles
     private List<RoleVO> roles;
 }

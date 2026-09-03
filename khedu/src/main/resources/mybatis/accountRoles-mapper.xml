@@ -29,4 +29,17 @@
 				join 
 			roles R on A.role_no = R.role_no where A.account_no = #{accountNo}
 	</select>
+	
+	<!-- 계정번호로 권한 객체 조회 -->
+	<select id="selectRoleListByAccountNo" resultType="RoleVO">
+		select
+			r.role_no,
+			r.role_name,
+			r.role_description		
+		from account_roles ar 
+		join roles r 
+		on ar.role_no = r.role_no
+		where ar.account_no = #{accountNo}
+		order by r.role_no
+	</select>
 </mapper>
