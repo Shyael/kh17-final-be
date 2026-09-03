@@ -4,7 +4,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
   
-<mapper namespace="mapper.parentStudent">
+<mapper namespace="mapper.parent-student">
 	
 	<!-- 복합키(parentNo, studentNo)로 부모학생 테이블 정보 조회하기 -->
 	<select id="findByParentStudentNo" resultType="ParentStudentDto">
@@ -90,9 +90,10 @@
 	</update>
 	
 	<!-- 특정 학부모-학생 연동 관계 해제(삭제) -->
-	<delete id="deleteRelationship">
-		delete from parent_student
+	<!-- <update id="deleteRelationship">
+		update parent_student
+		set connection_yn = 'N'  👈 팀원분이 알려준 컬럼명으로 변경하세요!
 		where parent_no = #{parentNo} 
 		  and student_no = #{studentNo}
-	</delete>
+	</update> -->
 </mapper>
