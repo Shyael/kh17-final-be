@@ -50,4 +50,18 @@
 		where ps.student_no = #{studentNo}
 	</select>
 	
+	<!-- 관리자용: 학부모 이름이나 전화번호로 검색 -->
+	<select id="searchParents" resultType="com.kh.khedu.vo.parent.ParentDetailVO">
+		select 
+			p.parent_no as parentNo,
+			a.account_no as accountNo,
+			a.account_id as accountId,
+			a.account_name as accountName,
+			a.account_phone as accountPhone
+		from parent p
+		join account a on p.account_no = a.account_no
+		where a.account_name like '%' || #{keyword} || '%'
+		   or a.account_phone like '%' || #{keyword} || '%'
+	</select>
+	
 </mapper>

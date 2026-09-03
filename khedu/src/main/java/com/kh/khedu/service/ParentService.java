@@ -300,5 +300,10 @@ public class ParentService {
     public ParentDetailVO findParentDetailByStudentNo(int studentNo) {
         return parentDao.findParentDetailByStudentNo(studentNo);
     }
+    
+    //검색으로 학부모 정보 조회 로직 추가
+    public List<ParentDetailVO> searchParents(String keyword) {
+        return parentDao.searchParents(keyword);
+    }
 	
 }

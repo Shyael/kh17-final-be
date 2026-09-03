@@ -25,5 +25,7 @@ public interface ParentStudentDao {
 	boolean updateReltaionship(ParentStudentDto parentStudentDto);
 	
 	ParentStudentVO selectOneRelationByAccountNo(int accountNo);
+	
+	boolean deleteRelationship(ParentStudentDto dto);
 
 }

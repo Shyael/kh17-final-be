@@ -53,7 +53,9 @@
 	<select id="selectParentListByStudentNo" resultType="StudentParentDetailVO">
 		select 
 			ps.parent_no,
-			a.account_name AS parent_name,
+			a.account_name AS parent_name, 
+			a.account_phone AS parent_phone, 
+			a.account_id AS parent_id, 
 			ps.relationship
 		from parent_student ps
 		join parent p
@@ -86,4 +88,11 @@
 		where parent_no = #{parentNo}
 		and student_no = #{studentNo}
 	</update>
+	
+	<!-- 특정 학부모-학생 연동 관계 해제(삭제) -->
+	<delete id="deleteRelationship">
+		delete from parent_student
+		where parent_no = #{parentNo} 
+		  and student_no = #{studentNo}
+	</delete>
 </mapper>

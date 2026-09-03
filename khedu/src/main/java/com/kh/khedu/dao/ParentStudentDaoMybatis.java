@@ -55,5 +55,11 @@ public class ParentStudentDaoMybatis implements ParentStudentDao {
 	public ParentStudentVO selectOneRelationByAccountNo(int accountNo) {
 		return sqlSession.selectOne("mapper.parentStudent.findParentStudentByAccountNo", accountNo);
 	}
+	
+	@Override
+	public boolean deleteRelationship(ParentStudentDto dto) {
+	    // 삭제된 행(row)이 1개 이상이면 true 반환
+	    return sqlSession.delete("mapper.parentStudent.deleteRelationship", dto) > 0;
+	}
 
 }
