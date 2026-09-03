@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.attempt">
+
+    <!-- 응시 번호 시퀀스 -->
+    <select id="sequence" resultType="int">
+        select attempt_seq.nextval
+        from dual
+    </select>
+
+
+    <!-- 시험 응시 시작 -->
+    <insert id="insert">
+        insert into attempt (
+            attempt_no,
+            exam_no,
+            student_no,
+            attempt_status,
+            attempt_start,
+            attempt_submit,
+            attempt_score
+        )
+        values (
+            #{attemptNo},
+            #{examNo},
+            #{studentNo},
+            #{attemptStatus},
+            systimestamp,
+            null,
+            null
+        )
+    </insert>
+
+
+    <!-- 응시 단일 조회 -->
+    <select id="selectOne" resultType="AttemptDto">
+        select *
+        from attempt
+        where attempt_no = #{attemptNo}
+    </select>
+
+
+    <!-- 특정 학생의 특정 시험 응시 조회 -->
+    <select id="selectOneByExamStudent" resultType="AttemptDto">
+        select *
+        from attempt
+        where exam_no = #{examNo}
+          and student_no = #{studentNo}
+    </select>
+
+
+    <!-- 특정 시험 응시 목록 -->
+    <select id="selectListByExam" resultType="AttemptDto">
+        select *
+        from attempt
+        where exam_no = #{examNo}
+        order by attempt_start asc
+    </select>
+
+
+    <!-- 특정 학생의 전체 시험 응시 목록 -->
+    <select id="selectListByStudent" resultType="AttemptDto">
+        select *
+        from attempt
+        where student_no = #{studentNo}
+        order by attempt_start desc
+    </select>
+
+
+    <!-- 시험 제출 -->
+    <update id="submit">
+        update attempt
+        set
+            attempt_status = '제출완료',
+            attempt_submit = systimestamp,
+            attempt_score = #{attemptScore}
+        where attempt_no = #{attemptNo}
+    </update>
+
+
+    <!-- 응시 상태 수정 -->
+    <update id="updateStatus">
+        update attempt
+        set attempt_status = #{attemptStatus}
+        where attempt_no = #{attemptNo}
+    </update>
+
+
+    <!-- 응시 삭제 -->
+    <delete id="delete">
+        delete from attempt
+        where attempt_no = #{attemptNo}
+    </delete>
+
+</mapper>

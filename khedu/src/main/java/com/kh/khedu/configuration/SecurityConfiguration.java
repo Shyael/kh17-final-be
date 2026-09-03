@@ -72,12 +72,14 @@ public class SecurityConfiguration {
 					.requestMatchers(
 						// 무조건 허용
 							"/active"  //체크용 페이지 허용
-							
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
 						).permitAll()
 						
-						
+						//직원(학원 정보 수정)
+						.requestMatchers("/api/academy/**").permitAll() 
+						//직원(강사 정보 수정)
+						.requestMatchers("/api/tutor/**").permitAll() 
 						//메소드(crud) 중 일부 메소드만 허용하고 싶은경우 아래와 같이 추가
 						//예시
 						//.requestMatchers(HttpMethod.POST, "/api/lecture").authenticated()
@@ -93,6 +95,8 @@ public class SecurityConfiguration {
 							"/service/auth/login" //로그인 페이지
 							,"/service/auth/logout" //로그아웃 페이지
 							,"/service/auth/refresh" //로그인 갱신페이지
+							,"/api/account/find-id" //아이디
+							,"/api/account/find-password" //비밀번호 찾기
 						).permitAll()
 						
 						//cert service
@@ -104,7 +108,7 @@ public class SecurityConfiguration {
 							"/api/student/**",
 							"/api/parent/**"
 						).permitAll() 
-						
+					
 						// 조건부 허용(내가 만든 요소들)
 						
 						// [1] 회원
@@ -134,6 +138,13 @@ public class SecurityConfiguration {
 						)
 						.hasAnyAuthority(
 								RoleType.TUTOR.getCode(), 
+								RoleType.DESK.getCode(),
+								RoleType.ADMIN.getCode()
+						)
+						.requestMatchers(
+								"/api/admin/employee/**"
+						)
+						.hasAnyAuthority(
 								RoleType.DESK.getCode(),
 								RoleType.ADMIN.getCode()
 						)
@@ -183,7 +194,7 @@ public class SecurityConfiguration {
 		//[1] 허용되는 접근 대상을 지정 (allow origins or pattern)
 		config.setAllowedOrigins(List.of(
 			// 여기에 운영주소 넣어주면됨
-			"http://localhost:5173" 
+			"http://localhost:5173"
 		));
 		//[2] 허용할 HTTP 메소드 설정
 		config.setAllowedMethods(List.of(

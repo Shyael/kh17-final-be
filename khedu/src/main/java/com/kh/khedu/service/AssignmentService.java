@@ -1,0 +1,53 @@
+package com.kh.khedu.service;
+
+import java.io.IOException;
+import java.util.List;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import com.kh.khedu.dto.AssignmentDto;
+import com.kh.khedu.vo.assignment.AssignmentDetailVO;
+import com.kh.khedu.vo.assignment.AssignmentListVO;
+import com.kh.khedu.vo.assignment.StudentAssignmentListVO;
+
+public interface AssignmentService {
+    // 과제 등록
+    int insert(
+		AssignmentDto assignmentDto,
+		List<MultipartFile> files
+    ) throws IllegalStateException, IOException;
+
+    // 과제 상세 조회
+    AssignmentDetailVO selectOne(int assignmentNo);
+
+    // 전체 과제 목록 조회
+    List<AssignmentListVO> selectList();
+
+    // 특정 강의의 과제 목록 조회
+    List<AssignmentListVO> selectListByCourse(int courseNo);
+
+    // 특정 강사가 등록한 과제 목록 조회
+    List<AssignmentListVO> selectListByEmployee(int employeeNo);
+
+    // 학생이 수강 중인 강의의 과제 목록 조회
+    List<StudentAssignmentListVO> selectListByStudent(int studentNo);
+
+    // 과제 수정
+    boolean update(
+    	AssignmentDto assignmentDto,
+    	List<MultipartFile> files,
+    	int employee, 
+    	boolean tutor
+    ) throws IllegalStateException, IOException;
+
+    // 과제 삭제
+    boolean delete(int assignmentNoint,int employee, boolean tutor);
+    
+    //파일 삭제
+    void deleteFile(int assignmentNo, int attachNo, int employee, boolean tutor);
+    
+    //학부모용 : 자녀 과제 목록 조회
+    List<StudentAssignmentListVO> selectListByParentStudent(int parentNo,int studentNo);
+    // 학부모용 : 자녀 과제 상세 조회
+    AssignmentDetailVO selectOneByParentStudent(int parentNo, int studentNo, int assignmentNo);
+}
