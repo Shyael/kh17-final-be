@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.questionOption">
+
+    <!-- 보기 번호 시퀀스 -->
+    <select id="sequence" resultType="int">
+        select question_option_seq.nextval
+        from dual
+    </select>
+
+
+    <!-- 보기 등록 -->
+    <insert id="insert">
+        insert into question_option (
+            option_no,
+            question_no,
+            option_content,
+            option_is_answer,
+            option_order
+        )
+        values (
+            #{optionNo},
+            #{questionNo},
+            #{optionContent},
+            #{optionIsAnswer},
+            #{optionOrder}
+        )
+    </insert>
+
+
+    <!-- 보기 단일 조회 -->
+    <select id="selectOne" resultType="QuestionOptionDto">
+        select *
+        from question_option
+        where option_no = #{optionNo}
+    </select>
+
+
+    <!-- 특정 문제의 보기 목록 조회 -->
+    <select id="selectListByQuestion" resultType="QuestionOptionDto">
+        select *
+        from question_option
+        where question_no = #{questionNo}
+        order by option_order asc
+    </select>
+
+
+    <!-- 보기 수정 -->
+    <update id="update">
+        update question_option
+        set
+            option_content = #{optionContent},
+            option_is_answer = #{optionIsAnswer},
+            option_order = #{optionOrder}
+        where option_no = #{optionNo}
+    </update>
+
+
+    <!-- 보기 삭제 -->
+    <delete id="delete">
+        delete from question_option
+        where option_no = #{optionNo}
+    </delete>
+
+
+    <!-- 특정 문제의 보기 전체 삭제 -->
+    <delete id="deleteByQuestion">
+        delete from question_option
+        where question_no = #{questionNo}
+    </delete>
+
+</mapper>
