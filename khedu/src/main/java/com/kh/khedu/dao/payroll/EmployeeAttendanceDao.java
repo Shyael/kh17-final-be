@@ -25,6 +25,10 @@ public interface EmployeeAttendanceDao {
     
     EmployeeDetailVO findByAccountNo(int accountNo);
     
+    EmployeeDetailVO findByEmployeeNo(int employeeNo);
+    
     EmployeeAttendanceDto findBySchedule(
             long workScheduleNo);
+    
+    
 }

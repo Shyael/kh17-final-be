@@ -4,8 +4,8 @@ package com.kh.khedu.controller;
 
 import java.util.List;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +23,7 @@ import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployeeSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployerSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractExtendRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 import com.kh.khedu.vo.payroll.response.ContractAddResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractChangeConditionResponseVO;
@@ -31,10 +32,12 @@ import com.kh.khedu.vo.payroll.response.ContractEmployeeDeskResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractEmployeeTeacherResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractExtendResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractHistoryResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractSearchResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractSignDetailResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractSignResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractUpdateDraftResponseVO;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -225,6 +228,27 @@ public class ContractController {
 	    request.setContractNo(contractNo);
 
 	    return contractService.extendContract(
+	            request,
+	            parseVO
+	    );
+	}
+	
+	
+	
+	// 관리자 계약 검색
+	@ApiResponse(
+	    responseCode = "200",
+	    description = "계약 검색 성공"
+	)
+	@GetMapping(
+	    value = "/search",
+	    produces = MediaType.APPLICATION_JSON_VALUE
+	)
+	public List<ContractSearchResponseVO> contractSearch(
+	        ContractSearchRequestVO request,
+	        @CurrentUser TokenParseResponseVO parseVO) {
+
+	    return contractService.contractSearch(
 	            request,
 	            parseVO
 	    );

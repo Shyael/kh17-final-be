@@ -11,8 +11,8 @@ public class WorkScheduleAddRequestVO {
 
 	@NotNull
 	@Positive
-    private Long contractNo;
-
+    private int employeeNo;
+	
     private Timestamp scheduledWorkDate;
 
     private Timestamp scheduledClockIn;
@@ -23,5 +23,9 @@ public class WorkScheduleAddRequestVO {
     
     @NotNull
     @Positive
-    private Long workScheduleNo;
+    private long contractNo;
+    
+    @NotNull
+    @Positive
+    private long workScheduleNo;
 }

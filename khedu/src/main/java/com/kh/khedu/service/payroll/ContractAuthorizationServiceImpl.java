@@ -21,9 +21,6 @@ public class ContractAuthorizationServiceImpl implements ContractAuthorizationSe
 	
 	public boolean checkAdmin(TokenParseResponseVO parseVO) {
 
-	    System.out.println("accountId = " + parseVO.getAccountId());
-	    System.out.println("accountType = " + parseVO.getAccountType());
-	    System.out.println("roleNames = " + parseVO.getRoleNames());
 
 	    return parseVO.getRoleNames() != null
 	            && parseVO.getRoleNames().contains("ADMIN");
@@ -39,16 +36,6 @@ public class ContractAuthorizationServiceImpl implements ContractAuthorizationSe
 
 	    EmployeeDetailVO employee =
 	            employeeDao.findMyInfo(accountId);
-
-	    System.out.println("====== checkPartyB ======");
-	    System.out.println("accountId = " + accountId);
-	    System.out.println("contractNo = " + contractNo);
-	    System.out.println("계약 employeeNo = " + contract.getEmployeeNo());
-	    System.out.println("로그인 employeeNo = " + employee.getEmployeeNo());
-	    System.out.println(
-	        "result = " +
-	        (contract.getEmployeeNo() == employee.getEmployeeNo())
-	    );
 
 	    return contract.getEmployeeNo()
 	            == employee.getEmployeeNo();

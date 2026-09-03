@@ -45,4 +45,10 @@ public class WorkScheduleResponseVO {
     
     private Timestamp clockOut;
     
+    private Long workScheduleNo;
+    private Long empAttendanceNo;
+    private Double breakMinutes;
+    
+    private Long contractNo;
+    
 }

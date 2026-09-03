@@ -37,4 +37,9 @@ public class ErrorRestController {
 		log.debug("e = {}", e.getMessage());
 		return ResponseEntity.status(400).body("requirement mismatch");
 	}
+	
+	@ExceptionHandler(value = {YouAreNotAdminException.class})
+	public ResponseEntity<String> areNotAdmin(){
+		return ResponseEntity.status(403).body("you are not admin");
+	}
 }

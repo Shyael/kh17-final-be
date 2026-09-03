@@ -1,10 +1,13 @@
 package com.kh.khedu.dao.payroll;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
+import com.kh.khedu.vo.payroll.response.ContractSearchResponseVO;
 
 public interface ContractDao {
 
@@ -69,5 +72,23 @@ public interface ContractDao {
 	boolean exitContracts(long contactNo);
 	
 	Integer findEmployeeNoByAccountNo(long accountNo);
+	
+	// 직원 + 날짜 기준 적용 계약번호 조회
+	Long findContractByPeriod(
+	        int employeeNo,
+	        Timestamp scheduledWorkDate
+	);
+	
+	// 직원의 진행중인 계약 조회
+	ContractDto findOpenContract(long employeeNo);
+
+	ContractDto findContractByEmployeeNo(long employeeNo);
+	
+	// 근로조건 변경으로 기존 계약 종료
+	boolean closeForConditionChange(
+	        ContractDto contractDto
+	);
+	
+	List<ContractSearchResponseVO> contractSearch(ContractSearchRequestVO request);
 	
 }

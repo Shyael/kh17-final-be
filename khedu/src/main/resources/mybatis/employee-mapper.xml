@@ -84,13 +84,91 @@
 	<select id="searchByName" resultType="EmployeeSearchByNameVO">
 	Select E.employee_no,
 			A.account_name,
-			A.account_id
+			A.account_id,
+			A.account_no
 		from employee E
 		join account A
 			on A.account_no = E.account_no
-		where A.account_name 
+		where A.account_name like #{accountName} || '%' 
 		order by A.account_name asc,
 			     E.employee_no asc	  
-	</select>			     			
+	</select>
+	
+	<!-- 재직 전환 시 계정 활성화 -->
+<update id="changeAccountStatusToY">
+
+    update account
+    set account_status = 'Y'
+    where account_no = (
+        select account_no
+        from employee
+        where employee_no = #{employeeNo}
+    )
+
+</update>			     	
+
+
+<!-- active 계약이 생긴 대기 직원 → 재직 -->
+<update id="activateWaitingEmployees">
+
+    update employee E
+
+    set E.employee_status = '재직'
+
+    where E.employee_status = '대기'
+
+      and exists (
+
+          select 1
+
+          from employment_contract C
+
+          where C.employee_no = E.employee_no
+            and C.contract_status = 'active'
+            and C.signed_time is not null
+      )
+
+</update>		
+
+
+
+<!-- active 계약이 있는 직원 계정 활성화 -->
+<update id="activateEmployeeAccounts">
+
+    update account A
+
+    set A.account_status = 'Y'
+
+    where A.account_status != 'Y'
+
+      and exists (
+
+          select 1
+
+          from employee E
+
+          join employment_contract C
+            on C.employee_no = E.employee_no
+
+          where E.account_no = A.account_no
+            and E.employee_status = '재직'
+            and C.contract_status = 'active'
+            and C.signed_time is not null
+      )
+
+</update>
+
+
+<!-- 최초 출근 시 고용일자 등록 -->
+<update id="updateEmploymentDateIfNull">
+
+    update employee
+
+    set employee_htime = #{clockIn}
+
+    where employee_no = #{employeeNo}
+      and employee_htime is null
+
+</update>
 	
 </mapper>

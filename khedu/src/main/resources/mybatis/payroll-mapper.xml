@@ -9,40 +9,41 @@
 
 	<!-- 근로계약 번호 생성 -->
 	<select id="contractSequence" resultType="long">
-		select employment_contract_seq.nextval from dual
+		select
+		employment_contract_seq.nextval from dual
 	</select>
 
 
 	<!-- 신규 근로계약 등록 -->
 	<insert id="contractAdd">
 		insert into employment_contract(
-    contract_no,
-    employee_no,
-    wage_type,
-    base_wage,
-    daily_work_hours,
-    weekly_work_hours,
-    written_break_minutes,
-    contract_start,
-    contract_end,
-    payday,
-    contract_status,
-    contract_content
-)
-values(
-    #{contractNo},
-    #{employeeNo},
-    #{wageType},
-    #{baseWage},
-    #{dailyWorkHours},
-    #{weeklyWorkHours},
-    #{writtenBreakMinutes},
-    #{contractStart},
-    #{contractEnd},
-    #{payday},
-    #{contractStatus},
-    #{contractContent}
-)
+		contract_no,
+		employee_no,
+		wage_type,
+		base_wage,
+		daily_work_hours,
+		weekly_work_hours,
+		written_break_minutes,
+		contract_start,
+		contract_end,
+		payday,
+		contract_status,
+		contract_content
+		)
+		values(
+		#{contractNo},
+		#{employeeNo},
+		#{wageType},
+		#{baseWage},
+		#{dailyWorkHours},
+		#{weeklyWorkHours},
+		#{writtenBreakMinutes},
+		#{contractStart},
+		#{contractEnd},
+		#{payday},
+		#{contractStatus},
+		#{contractContent}
+		)
 	</insert>
 
 
@@ -59,12 +60,15 @@ values(
 		select *
 		from employment_contract
 		where employee_no = #{employeeNo}
-			and contract_status = 'active'
-			and contract_start <![CDATA[ <= ]]> systimestamp
-			and (
-				contract_end is null
-				or contract_end <![CDATA[ >= ]]> systimestamp
-			)
+		and
+		contract_status = 'active'
+		and contract_start <![CDATA[ <= ]]>
+		systimestamp
+		and (
+		contract_end is null
+		or contract_end <![CDATA[ >= ]]>
+		systimestamp
+		)
 		order by contract_start desc
 	</select>
 
@@ -74,10 +78,13 @@ values(
 		select *
 		from employment_contract
 		where employee_no = #{employeeNo}
-			and contract_status = 'ended'
-			and contract_end is not null
-			and contract_end <![CDATA[ <= ]]> systimestamp
-			and contract_start <![CDATA[ <= ]]> systimestamp
+		and
+		contract_status = 'ended'
+		and contract_end is not null
+		and contract_end <![CDATA[ <= ]]>
+		systimestamp
+		and contract_start <![CDATA[ <= ]]>
+		systimestamp
 		order by contract_start desc
 	</select>
 
@@ -85,29 +92,32 @@ values(
 	<!-- 직원의 전체 근로계약 조회 -->
 	<select id="findAllByEmployee" resultType="ContractDto">
 		select *
-		from employment_contract
+		from
+		employment_contract
 		where employee_no = #{employeeNo}
-		order by contract_start desc
+		order by
+		contract_start desc
 	</select>
 
 
 	<!-- 계약의 급여조건 조회 -->
 	<select id="findWageCondition" resultType="ContractDto">
 		select
-			contract_no,
-			wage_type,
-			base_wage
+		contract_no,
+		wage_type,
+		base_wage
 		from employment_contract
-		where contract_no = #{contractNo}
+		where contract_no =
+		#{contractNo}
 	</select>
 
 
 	<!-- 계약의 근로시간 조건 조회 -->
 	<select id="findWorkTimeCondition" resultType="ContractDto">
 		select
-			contract_no,
-			daily_work_hours,
-			weekly_work_hours
+		contract_no,
+		daily_work_hours,
+		weekly_work_hours
 		from employment_contract
 		where contract_no = #{contractNo}
 	</select>
@@ -116,10 +126,10 @@ values(
 	<!-- 계약기간 및 계약상태 조회 -->
 	<select id="findPeriodAndStatus" resultType="ContractDto">
 		select
-			contract_no,
-			contract_start,
-			contract_end,
-			contract_status
+		contract_no,
+		contract_start,
+		contract_end,
+		contract_status
 		from employment_contract
 		where contract_no = #{contractNo}
 	</select>
@@ -128,128 +138,111 @@ values(
 	<!-- 급여 지급예정일 조회 -->
 	<select id="findPayday" resultType="int">
 		select payday
-		from employment_contract
+		from
+		employment_contract
 		where contract_no = #{contractNo}
 	</select>
 
 
 	<!-- 계약 서명정보 조회 -->
-	<select id="findSignature" resultType="ContractDto">
-		select
-			contract_no,
-			employee_no,
-			employee_signature,
-			employer_signature,
-			signed_time,
-			contract_status
-		from employment_contract
-		where contract_no = #{contractNo}
-	</select>
+	<select id="findSignature"
+        resultType="ContractDto">
 
+    select
+        contract_no,
+        employee_no,
+        contract_start,
+        contract_end,
+        employee_signature,
+        employer_signature,
+        signed_time,
+        contract_status
+
+    from employment_contract
+
+    where contract_no = #{contractNo}
+
+</select>
 
 	<!-- 계약 도중 근로계약 내용 수정 -->
-<update id="update">
-    update employment_contract
+	<update id="update">
+		update employment_contract
 
-    <set>
-        <if test="wageType != null">
-            wage_type = #{wageType},
-        </if>
+		<set>
+			<if test="wageType != null">
+				wage_type = #{wageType},
+			</if>
 
-        <if test="baseWage != null">
-            base_wage = #{baseWage},
-        </if>
+			<if test="baseWage != null">
+				base_wage = #{baseWage},
+			</if>
 
-        <if test="dailyWorkHours != null">
-            daily_work_hours = #{dailyWorkHours},
-        </if>
+			<if test="dailyWorkHours != null">
+				daily_work_hours = #{dailyWorkHours},
+			</if>
 
-        <if test="weeklyWorkHours != null">
-            weekly_work_hours = #{weeklyWorkHours},
-        </if>
+			<if test="weeklyWorkHours != null">
+				weekly_work_hours = #{weeklyWorkHours},
+			</if>
 
-        <if test="contractStart != null">
-            contract_start = #{contractStart},
-        </if>
+			<if test="contractStart != null">
+				contract_start = #{contractStart},
+			</if>
 
-        <if test="contractEnd != null">
-            contract_end = #{contractEnd},
-        </if>
+			<if test="contractEnd != null">
+				contract_end = #{contractEnd},
+			</if>
 
-        <if test="payday != null">
-            payday = #{payday},
-        </if>
+			<if test="payday != null">
+				payday = #{payday},
+			</if>
 
-        <if test="contractContent != null">
-            contract_content = #{contractContent},
-        </if>
-        
-        <if test="writtenBreakMinutes != null">
-        	written_break_minutes = #{writtenBreakMinutes}
-        </if>
-    </set>
+			<if test="contractContent != null">
+				contract_content = #{contractContent},
+			</if>
 
-    where contract_no = #{contractNo}
-</update>
+			<if test="writtenBreakMinutes != null">
+				written_break_minutes = #{writtenBreakMinutes}
+			</if>
+		</set>
 
-	
+		where contract_no = #{contractNo}
+	</update>
+
+
 	<!-- 근로계약 기간 연장 -->
-<update id="extendContract">
+	<update id="extendContract">
+		update employment_contract
+		set contract_end =
+		#{contractEnd}
+		where contract_no = #{contractNo}
+		and contract_status !=
+		'ended'
+	</update>
+
+
+	<!-- 양측 서명 완료 전 근로계약 내용 수정 -->
+	<update id="updateDraft">
+
     update employment_contract
-    set contract_end = #{contractEnd}
-    where contract_no = #{contractNo}
-        and contract_status != 'ended'
-</update>
 
-
-<!-- 양측 서명 완료 전 근로계약 내용 수정 -->
-<update id="updateDraft">
-    update employment_contract
-
-    <set>
-        <if test="wageType != null">
-            wage_type = #{wageType},
-        </if>
-
-        <if test="baseWage != null">
-            base_wage = #{baseWage},
-        </if>
-
-        <if test="dailyWorkHours != null">
-            daily_work_hours = #{dailyWorkHours},
-        </if>
-
-        <if test="weeklyWorkHours != null">
-            weekly_work_hours = #{weeklyWorkHours},
-        </if>
-
-        <if test="contractStart != null">
-            contract_start = #{contractStart},
-        </if>
-
-        <if test="contractEnd != null">
-            contract_end = #{contractEnd},
-        </if>
-
-        <if test="payday != null">
-            payday = #{payday},
-        </if>
-
-        <if test="contractContent != null">
-            contract_content = #{contractContent},
-        </if>
-        
-        <if test="writtenBreakMinutes !=null">
-        	written_break_minutes =#{writtenBreakMinutes}
-        </if>
-    </set>
+    set wage_type = #{wageType},
+        base_wage = #{baseWage},
+        daily_work_hours = #{dailyWorkHours},
+        weekly_work_hours = #{weeklyWorkHours},
+        written_break_minutes = #{writtenBreakMinutes},
+        contract_start = #{contractStart},
+        contract_end = #{contractEnd},
+        payday = #{payday},
+        contract_content = #{contractContent}
 
     where contract_no = #{contractNo}
       and signed_time is null
       and (
             employee_signature is null
             or employer_signature is null
-      )
+          )
+
 </update>
 
 
@@ -257,9 +250,11 @@ values(
 	<!-- 양측 서명 완료 전에는 자신의 서명을 다시 작성할 수 있음 -->
 	<update id="employeeSign">
 		update employment_contract
-		set employee_signature = #{employeeSignature}
+		set employee_signature =
+		#{employeeSignature}
 		where contract_no = #{contractNo}
-			and signed_time is null
+		and signed_time
+		is null
 	</update>
 
 
@@ -267,21 +262,26 @@ values(
 	<!-- 양측 서명 완료 전에는 자신의 서명을 다시 작성할 수 있음 -->
 	<update id="employerSign">
 		update employment_contract
-		set employer_signature = #{employerSignature}
+		set employer_signature =
+		#{employerSignature}
 		where contract_no = #{contractNo}
-			and signed_time is null
+		and signed_time
+		is null
 	</update>
 
 
 	<!-- 양측 서명 완료 -->
 	<update id="completeSign">
 		update employment_contract
-		set signed_time = systimestamp,
-			contract_status = #{contractStatus}
-		where contract_no = #{contractNo}
-			and employee_signature is not null
-			and employer_signature is not null
-			and signed_time is null
+		set signed_time =
+		systimestamp,
+		contract_status = #{contractStatus}
+		where contract_no =
+		#{contractNo}
+		and employee_signature is not null
+		and employer_signature
+		is not null
+		and signed_time is null
 	</update>
 
 
@@ -289,14 +289,18 @@ values(
 	<update id="activateContracts">
 		update employment_contract
 		set contract_status = 'active'
-		where contract_status = 'scheduled'
-			and signed_time is not null
-			and contract_start <![CDATA[ <= ]]> systimestamp
-			and (
-				contract_end is null
-				or contract_end <![CDATA[ > ]]> systimestamp
-			)
-			
+		where
+		contract_status = 'scheduled'
+		and signed_time is not null
+		and
+		contract_start <![CDATA[ <= ]]>
+		systimestamp
+		and (
+		contract_end is null
+		or contract_end <![CDATA[ > ]]>
+		systimestamp
+		)
+
 	</update>
 
 
@@ -304,60 +308,193 @@ values(
 	<update id="endContracts">
 		update employment_contract
 		set contract_status = 'ended'
-		where contract_status = 'active'
-			and contract_end is not null
-			and contract_end <![CDATA[ <= ]]> systimestamp
-			
+		where
+		contract_status = 'active'
+		and contract_end is not null
+		and contract_end <![CDATA[ <= ]]>
+		systimestamp
+
 	</update>
 
-<!--도중 종료 하는 경우  -->
-<update id="exitContracts">
-	update employment_contract
-	set contract_status='ended'
-	where contract_status = 'active'
-	and contract_no=#{contractNo}
+	<!--도중 종료 하는 경우 -->
+	<update id="exitContracts">
+
+		update employment_contract
+
+		set contract_status = 'ended',
+		contract_end = systimestamp
+
+		where contract_status = 'active'
+		and contract_no = #{contractNo}
+
+	</update>
+
+	<!-- 계약 대상 직원 정보 조회 -->
+	<select id="findContractEmployeeInfo"
+		resultType="ContractEmployeeInfoVO">
+		select employee_status,
+		employee_type,
+		account_no
+		from
+		employee
+		where employee_no = #{employeeNo}
+	</select>
+
+	<!-- 계약 대상 직원 인적사항 조회 -->
+	<select id="findContractPersonInformation"
+		resultType="ContractEmployeeInfoResponseVO">
+		select account_name,
+		account_phone
+		from account
+		where
+		account_no = #{accountNo}
+	</select>
+
+	<!-- 계약 대상 강사 정보 조회 -->
+	<select id="findContractTeacher" resultType="ContractTeacherVO">
+		select tutor_no
+		from
+		tutor
+		where employee_no = #{employeeNo}
+	</select>
+
+	<!-- 계약 대상 강사 과목 조회 -->
+	<select id="findContractTeacherSubject" resultType="int">
+		select
+		tutor_subject_no
+		from tutor_subject
+		where tutor_no = #{tutorNo}
+		order by
+		tutor_subject_no
+	</select>
+
+	<!-- 로그인 계정번호로 직원번호 조회 -->
+	<select id="findEmployeeNoByAccountNo" resultType="Integer">
+		select
+		employee_no
+		from employee
+		where account_no = #{accountNo}
+	</select>
+
+
+	<!-- 스케줄 날짜로 계약 번호 조회 -->
+	<!-- 해당 직원의 스케줄 날짜 기준 계약 번호 조회 -->
+	<select id="findContractByPeriod" resultType="Long">
+
+		select contract_no
+		from (
+		select contract_no
+		from employment_contract
+		where employee_no = #{employeeNo}
+		and contract_start <![CDATA[<=]]>
+		#{scheduledWorkDate}
+		and (
+		contract_end is null
+		or contract_end >=
+		#{scheduledWorkDate}
+		)
+		order by contract_start desc
+		)
+		where rownum = 1
+
+	</select>
+
+	<select id="findContractByEmployeeNo" resultType="ContractDto">
+
+		select * from
+		employment_contract where employee_no = #{employee_no}
+
+	</select>
+
+
+	<!-- 직원의 진행중인 근로계약 조회 -->
+	<select id="findOpenContract" resultType="ContractDto">
+
+		select *
+		from (
+
+		select *
+		from employment_contract
+
+		where employee_no = #{employeeNo}
+
+		and contract_status in (
+		'pending',
+		'scheduled',
+		'active'
+		)
+
+		order by contract_start desc
+
+		)
+
+		where rownum = 1
+
+	</select>
+	
+	
+<!-- 근로조건 변경으로 기존 계약 종료일 설정 -->
+<update id="closeForConditionChange">
+
+    update employment_contract
+
+    set contract_end = #{contractEnd}
+
+    where contract_no = #{contractNo}
+      and contract_status = 'active'
+      and signed_time is not null
+
 </update>
 
-<!-- 계약 대상 직원 정보 조회 -->
-<select id="findContractEmployeeInfo"
-        resultType="ContractEmployeeInfoVO">
-    select employee_status,
-           employee_type,
-           account_no
-    from employee
-    where employee_no = #{employeeNo}
+<!-- 계약 검색 -->
+<select id="contractSearch"
+        resultType="ContractSearchResponseVO">
+
+    select
+        C.*,
+        A.account_id,
+        A.account_name,
+        A.account_phone
+
+    from employment_contract C
+
+    join employee E
+        on E.employee_no = C.employee_no
+
+    join account A
+        on A.account_no = E.account_no
+
+
+    <where>
+
+        <if test="employeeNo != null">
+            and E.employee_no = #{employeeNo}
+        </if>
+
+        <if test="accountId != null and accountId != ''">
+            and A.account_id like #{accountId} || '%'
+        </if>
+
+        <if test="accountName != null and accountName != ''">
+            and A.account_name like #{accountName} || '%'
+        </if>
+
+        <if test="accountPhone != null and accountPhone != ''">
+            and A.account_phone
+                like '%' || #{accountPhone} || '%'
+        </if>
+
+    </where>
+
+    order by
+        A.account_name asc,
+        E.employee_no asc,
+        C.contract_start desc
+
 </select>
 
-<!-- 계약 대상 직원 인적사항 조회 -->
-<select id="findContractPersonInformation"
-        resultType="ContractEmployeeInfoResponseVO">
-    select account_name,
-           account_phone
-    from account
-    where account_no = #{accountNo}
-</select>
 
-<!-- 계약 대상 강사 정보 조회 -->
-<select id="findContractTeacher"
-        resultType="ContractTeacherVO">
-    select tutor_no
-    from tutor
-    where employee_no = #{employeeNo}
-</select>
 
-<!-- 계약 대상 강사 과목 조회 -->
-<select id="findContractTeacherSubject"
-        resultType="int">
-    select tutor_subject_no
-    from tutor_subject
-    where tutor_no = #{tutorNo}
-    order by tutor_subject_no
-</select>
 
-<!-- 로그인 계정번호로 직원번호 조회 -->
-<select id="findEmployeeNoByAccountNo" resultType="Integer">
-    select employee_no
-    from employee
-    where account_no = #{accountNo}
-</select>
+
 </mapper>

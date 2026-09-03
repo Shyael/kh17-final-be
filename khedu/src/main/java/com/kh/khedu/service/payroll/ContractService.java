@@ -8,6 +8,7 @@ import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployeeSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployerSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractExtendRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 import com.kh.khedu.vo.payroll.response.ContractAddResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractChangeConditionResponseVO;
@@ -16,6 +17,7 @@ import com.kh.khedu.vo.payroll.response.ContractEmployeeDeskResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractEmployeeTeacherResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractExtendResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractHistoryResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractSearchResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractSignDetailResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractSignResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractUpdateDraftResponseVO;
@@ -108,5 +110,9 @@ public interface ContractService {
 	
 	void exitContract(long contractNo, TokenParseResponseVO parseVO);
 	
+	List<ContractSearchResponseVO> contractSearch(
+	        ContractSearchRequestVO request,
+	        TokenParseResponseVO parseVO
+	);
 	
 }

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dao.payroll.EmployeeAttendanceDao;
 import com.kh.khedu.dao.payroll.EmployeeWorkScheduleDao;
@@ -32,7 +33,6 @@ import com.kh.khedu.vo.payroll.response.AttendanceClockInResponseVO;
 import com.kh.khedu.vo.payroll.response.AttendanceClockOutResponseVO;
 import com.kh.khedu.vo.payroll.response.AttendanceFindVO;
 
-
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
@@ -48,6 +48,9 @@ public class EmployeeAttendanceServiceImpl
     
     @Autowired
     private EmployeeWorkScheduleDao employeeWorkScheduleDao;
+    
+    @Autowired
+    private EmployeeDao employeeDao;
     
 
     @Override
@@ -207,6 +210,13 @@ public class EmployeeAttendanceServiceImpl
       if (!result) {
           throw new GetOutException();
       }
+      
+
+   // 최초 출근이면 고용일자 설정
+   employeeDao.updateEmploymentDateIfNull(
+           employeeNo,
+           attendanceDto.getClockIn()
+   );
 
    // 출근 결과 반환
       return AttendanceClockInResponseVO.builder()

@@ -82,6 +82,12 @@ public class EmployeeAttendanceDaoMybatis implements EmployeeAttendanceDao{
 	}
 
 
+	@Override
+	public EmployeeDetailVO findByEmployeeNo(int employeeNo) {
+		return sqlSession.selectOne("mapper.attendance.findByEmployeeNo",employeeNo);
+	}
+
+
 	
 
 }

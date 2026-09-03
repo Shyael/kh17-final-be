@@ -11,4 +11,5 @@ public class EmployeeSearchByNameVO {
     private int employeeNo;
     private String accountName;
     private String accountId;
+    private int accountNo;
 }

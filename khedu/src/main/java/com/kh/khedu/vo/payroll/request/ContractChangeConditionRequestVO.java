@@ -42,7 +42,7 @@ public class ContractChangeConditionRequestVO {
 	@NotBlank
 	private String contractContent;
 	
-	private long contractNo;
+	
 	
 	@PositiveOrZero
 	private double writtenBreakMinutes;

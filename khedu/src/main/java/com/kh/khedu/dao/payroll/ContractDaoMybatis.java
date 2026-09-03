@@ -1,6 +1,8 @@
 package com.kh.khedu.dao.payroll;
 
+import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +11,9 @@ import org.springframework.stereotype.Repository;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.util.SignatureEncryptor;
 import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
+import com.kh.khedu.vo.payroll.response.ContractSearchResponseVO;
 
 @Repository
 public class ContractDaoMybatis implements ContractDao {
@@ -226,10 +230,13 @@ public class ContractDaoMybatis implements ContractDao {
 		;
 	}
 
-	//도중 퇴사
 	@Override
 	public boolean exitContracts(long contractNo) {
-		return sqlSession.update("mapper.payroll.exitContracts")>0;
+
+	    return sqlSession.update(
+	            "mapper.payroll.exitContracts",
+	            contractNo
+	    ) > 0;
 	}
 
 	@Override
@@ -238,5 +245,57 @@ public class ContractDaoMybatis implements ContractDao {
 	            "mapper.payroll.findEmployeeNoByAccountNo",
 	            accountNo
 	    );
+	}
+
+
+	@Override
+	public Long findContractByPeriod(
+	        int employeeNo,
+	        Timestamp scheduledWorkDate) {
+
+	    Map<String, Object> params =
+	            Map.of(
+	                    "employeeNo",
+	                    employeeNo,
+	                    "scheduledWorkDate",
+	                    scheduledWorkDate
+	            );
+
+	    return sqlSession.selectOne(
+	            "mapper.payroll.findContractByPeriod",
+	            params
+	    );
+	}
+
+
+	@Override
+	public ContractDto findContractByEmployeeNo(long employeeNo) {
+		return sqlSession.selectOne("mapper.payroll.findContractByEmployeeNo",employeeNo);
+	}
+	
+	@Override
+	public ContractDto findOpenContract(
+	        long employeeNo) {
+
+	    return sqlSession.selectOne(
+	            "mapper.payroll.findOpenContract",
+	            employeeNo
+	    );
+	}
+	
+	@Override
+	public boolean closeForConditionChange(
+	        ContractDto contractDto) {
+
+	    return sqlSession.update(
+	            "mapper.payroll.closeForConditionChange",
+	            contractDto
+	    ) > 0;
+	}
+
+
+	@Override
+	public List<ContractSearchResponseVO> contractSearch(ContractSearchRequestVO request) {
+		return sqlSession.selectOne("mapper.payroll.contractSearch",request);
 	}
 }

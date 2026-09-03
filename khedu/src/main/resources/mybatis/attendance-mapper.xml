@@ -190,6 +190,7 @@
 			A.clock_out,
 			A.break_minutes,
 			A.attendance_type,
+			S.work_schedule_no,
 
 			S.scheduled_day_type
 				as scheduled_work_day_type,
@@ -243,6 +244,28 @@
 
 		where A.account_no
 				= #{accountNo}
+
+	</select>
+	
+	
+	<!-- 로그인 계정번호 기준 직원정보 조회 -->
+	<select id="findByEmployeeNo"
+			resultType="EmployeeDetailVO">
+
+		select
+			E.employee_no,
+			E.account_no,
+			A.account_id,
+			A.account_name
+
+		from employee E
+
+			inner join account A
+				on A.account_no
+					= E.account_no
+
+		where E.employee_no
+				= #{employeeNo}
 
 	</select>
 	

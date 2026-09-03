@@ -37,32 +37,10 @@ public class EmployeeWorkScheduleRestController {
     @Autowired
     private EmployeeAttendanceDao employeeAttendanceDao;
 
-    // 근무 일정 등록
-    @ApiResponse(
-            responseCode = "200",
-            description = "직원 근무 일정 등록 성공"
-    )
-    @PostMapping("/add")
-    public WorkScheduleAddResponseVO add(
-            @RequestBody WorkScheduleAddRequestVO requestVO) {
-
-        return employeeWorkScheduleService.add(
-                requestVO);
-    }
+   
 
 
-    // 근무 일정 수정
-    @ApiResponse(
-            responseCode = "200",
-            description = "직원 근무 일정 수정 성공"
-    )
-    @PatchMapping("/edit")
-    public void update(
-            @RequestBody WorkScheduleUpdateRequestVO requestVO) {
-
-        employeeWorkScheduleService.update(
-                requestVO);
-    }
+   
 
 
     // 특정 날짜 근무 일정 조회

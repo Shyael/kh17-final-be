@@ -23,4 +23,7 @@ public class WorkScheduleAddResponseVO {
     // 예정 근무일 구분
     // workday / holiday / dayOff
     private String scheduledDayType;
+    
+    private long contractNo;
+    
 }

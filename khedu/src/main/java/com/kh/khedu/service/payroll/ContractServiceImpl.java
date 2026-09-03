@@ -1,6 +1,7 @@
 package com.kh.khedu.service.payroll;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployeeSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployerSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractExtendRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 import com.kh.khedu.vo.payroll.response.ContractAddResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractChangeConditionResponseVO;
@@ -29,6 +31,7 @@ import com.kh.khedu.vo.payroll.response.ContractEmployeeDeskResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractEmployeeTeacherResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractExtendResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractHistoryResponseVO;
+import com.kh.khedu.vo.payroll.response.ContractSearchResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractSignDetailResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractSignResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractUpdateDraftResponseVO;
@@ -154,30 +157,38 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public ContractAddResponseVO add(ContractAddRequestVO request, TokenParseResponseVO parseVO) {
 
-		String employeeStatus =
-		        employeeDao.findEmployeeStatus(
-		                request.getEmployeeNo()
-		        );
+		// 직원 상태 조회
+	    String employeeStatus =
+	            employeeDao.findEmployeeStatus(
+	                    request.getEmployeeNo()
+	            );
 
-		if (employeeStatus == null) {
-		    throw new TargetNotfoundException();
-		}
+	    if (employeeStatus == null)
+	        throw new TargetNotfoundException();
 
-		if (!"대기".equals(employeeStatus)) {
-		    throw new GetOutException();
-		}
-		
-		// 권한은 원장만
-		if (!contractAuthorizationService.checkAdmin(parseVO))
-			throw new GetOutException();
 
-		// [1] 계약 대상 직원의 현재 계약 확인
-		ContractDto currentContract = contractDao.findCurrent(request.getEmployeeNo());
+	    // 최초 계약 대상은 대기 직원
+	    if (!"대기".equals(employeeStatus))
+	        throw new GetOutException();
 
-		// [2] 현재 계약이 있으면 신규 계약 작성 불가
-		// 기존 계약 조건 변경은 changeWorkCondition에서 처리
-		if (currentContract != null)
-			throw new GetOutException();
+
+	    // 권한은 원장만
+	    if (!contractAuthorizationService
+	            .checkAdmin(parseVO))
+	        throw new GetOutException();
+
+
+	    // 진행중인 계약 확인
+	    ContractDto openContract =
+	            contractDao.findOpenContract(
+	                    request.getEmployeeNo()
+	            );
+
+
+	    // pending / scheduled / active 중
+	    // 하나라도 있으면 신규 작성 불가
+	    if (openContract != null)
+	        throw new GetOutException();
 		
 		
 
@@ -275,7 +286,9 @@ public class ContractServiceImpl implements ContractService {
 		}
 		
 		validateWrittenBreakTimes(currentContract.getDailyWorkHours(), currentContract.getWrittenBreakMinutes());
-
+		
+		request.setContractNo(contractNo);
+		
 		// [6] 계약내용 수정
 		contractDao.updateDraft(request);
 
@@ -347,6 +360,10 @@ public class ContractServiceImpl implements ContractService {
 		if (currentContract.getSignedTime() != null)
 			throw new GetOutException();
 
+		if (currentContract.getEmployeeSignature() != null)
+			throw new GetOutException();
+
+
 		// [3] 직원 서명 설정
 		currentContract.setEmployeeSignature(request.getEmployeeSignature());
 
@@ -359,20 +376,68 @@ public class ContractServiceImpl implements ContractService {
 
 		// [5] 원장 서명이 이미 존재하면
 		// 이번 직원 서명으로 양측 서명 완료
-		if (currentContract.getEmployerSignature() != null) {
+		if (
+			    currentContract.getEmployeeSignature() != null
+			    &&
+			    currentContract.getEmployerSignature() != null
+			) {
 
-			currentContract.setSignedTime(Timestamp.valueOf(LocalDateTime.now()));
+		    Timestamp now =
+		            Timestamp.valueOf(
+		                    LocalDateTime.now()
+		            );
 
-			currentContract.setContractStatus("scheduled");
+		    currentContract.setSignedTime(now);
 
-			boolean completeResult = contractDao.completeSign(currentContract);
 
-			if (completeResult == false)
-				throw new GetOutException();
-			
-			employeeDao.changeUnassignedToWorking(
-		            currentContract.getEmployeeNo()
-		    );
+		    LocalDate today =
+		            now.toLocalDateTime()
+		                    .toLocalDate();
+
+		    LocalDate contractStart =
+		            currentContract
+		                    .getContractStart()
+		                    .toLocalDateTime()
+		                    .toLocalDate();
+
+
+		    // 계약 시작일이 미래면 예약 상태
+		    if (contractStart.isAfter(today)) {
+
+		        currentContract.setContractStatus(
+		                "scheduled"
+		        );
+
+		    }
+		    // 당일 또는 이미 시작된 계약
+		    else {
+
+		        currentContract.setContractStatus(
+		                "active"
+		        );
+		    }
+
+
+		    boolean completeResult =
+		            contractDao.completeSign(
+		                    currentContract
+		            );
+
+		    if (!completeResult)
+		        throw new GetOutException();
+
+
+		 // 실제 활성 계약일 때만 직원/계정 활성화
+		    if ("active".equals(currentContract.getContractStatus())) {
+
+		        employeeDao.changeUnassignedToWorking(
+		                currentContract.getEmployeeNo()
+		        );
+
+		        employeeDao.changeAccountStatusToY(
+		                currentContract.getEmployeeNo()
+		        );
+		    }
 		}
 	}
 
@@ -392,6 +457,10 @@ public class ContractServiceImpl implements ContractService {
 		if (currentContract == null)
 			throw new TargetNotfoundException();
 
+		if (currentContract.getEmployeeSignature() != null)
+			throw new GetOutException();
+
+
 		// [2] 이미 양측 서명이 완료된 계약이면 수정 불가
 		if (currentContract.getSignedTime() != null)
 			throw new GetOutException();
@@ -409,22 +478,71 @@ public class ContractServiceImpl implements ContractService {
 
 		// [5] 직원 서명이 이미 존재하면
 		// 이번 원장 서명으로 양측 서명 완료
-		if (currentContract.getEmployeeSignature() != null) {
+		if (
+			    currentContract.getEmployeeSignature() != null
+			    &&
+			    currentContract.getEmployerSignature() != null
+			) {
 
-			currentContract.setSignedTime(Timestamp.valueOf(LocalDateTime.now()));
+		    Timestamp now =
+		            Timestamp.valueOf(
+		                    LocalDateTime.now()
+		            );
 
-			currentContract.setContractStatus("scheduled");
+		    currentContract.setSignedTime(now);
 
-			boolean completeResult = contractDao.completeSign(currentContract);
 
-			if (completeResult == false)
-				throw new GetOutException();
-			
-			employeeDao.changeUnassignedToWorking(
-		            currentContract.getEmployeeNo()
-		    );
+		    LocalDate today =
+		            now.toLocalDateTime()
+		                    .toLocalDate();
+
+		    LocalDate contractStart =
+		            currentContract
+		                    .getContractStart()
+		                    .toLocalDateTime()
+		                    .toLocalDate();
+
+
+		    // 미래 시작 계약
+		    if (contractStart.isAfter(today)) {
+
+		        currentContract.setContractStatus(
+		                "scheduled"
+		        );
+
+		    }
+		    // 당일 또는 이미 시작
+		    else {
+
+		        currentContract.setContractStatus(
+		                "active"
+		        );
+		    }
+
+
+		    boolean completeResult =
+		            contractDao.completeSign(
+		                    currentContract
+		            );
+
+		    if (!completeResult)
+		        throw new GetOutException();
+
+
+		 // 실제 활성 계약일 때만 직원/계정 활성화
+		    if ("active".equals(currentContract.getContractStatus())) {
+
+		        employeeDao.changeUnassignedToWorking(
+		                currentContract.getEmployeeNo()
+		        );
+
+		        employeeDao.changeAccountStatusToY(
+		                currentContract.getEmployeeNo()
+		        );
+		    }
 		}
 	}
+	
 
 	// 현재 근로계약 조회
 	@Override
@@ -498,32 +616,54 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public List<ContractHistoryResponseVO> findAllByEmployee(int employeeNo, TokenParseResponseVO parseVO) {
 
-		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDeskByContract(parseVO, employeeNo);
+		boolean hasPermission =
+		        contractAuthorizationService
+		                .checkAdminOrPartyBOrDeskByEmployee(
+		                        parseVO,
+		                        employeeNo
+		                );
 		if(!hasPermission) throw new GetOutException();
 		
-		List<ContractDto> history = contractDao.findPast(employeeNo);
+		List<ContractDto> history =
+		        contractDao.findAllByEmployee(employeeNo);
 
 		if (history.size() == 0)
 			throw new TargetNotfoundException();
 		
-		List<ContractHistoryResponseVO> response =
-		        history.stream()
-		                .map(contractDto ->
-		                        ContractHistoryResponseVO.builder()
-		                                .contractNo(contractDto.getContractNo())
-		                                .employeeNo(contractDto.getEmployeeNo())
-		                                .wageType(contractDto.getWageType())
-		                                .baseWage(contractDto.getBaseWage())
-		                                .contractStart(contractDto.getContractStart())
-		                                .contractEnd(contractDto.getContractEnd())
-		                                .contractStatus(contractDto.getContractStatus())
-		                                .signedTime(contractDto.getSignedTime())
-		                                .build()
-		                )
-		                .toList();
-		
-		
-		return response;
+		 List<ContractHistoryResponseVO> response =
+		            history.stream()
+		                    .map(contractDto ->
+		                            ContractHistoryResponseVO.builder()
+		                                    .contractNo(
+		                                            contractDto.getContractNo()
+		                                    )
+		                                    .employeeNo(
+		                                            contractDto.getEmployeeNo()
+		                                    )
+		                                    .wageType(
+		                                            contractDto.getWageType()
+		                                    )
+		                                    .baseWage(
+		                                            contractDto.getBaseWage()
+		                                    )
+		                                    .contractStart(
+		                                            contractDto.getContractStart()
+		                                    )
+		                                    .contractEnd(
+		                                            contractDto.getContractEnd()
+		                                    )
+		                                    .contractStatus(
+		                                            contractDto.getContractStatus()
+		                                    )
+		                                    .signedTime(
+		                                            contractDto.getSignedTime()
+		                                    )
+		                                    .build()
+		                    )
+		                    .toList();
+
+
+		    return response;
 	}
 
 	// 근로계약 연장(기간만) //검수 필
@@ -604,99 +744,237 @@ public class ContractServiceImpl implements ContractService {
 	// 체결 후 근로조건 변경
 	@Transactional
 	@Override
-	public ContractChangeConditionResponseVO changeWorkCondition(long contractNo, ContractChangeConditionRequestVO request,
-			TokenParseResponseVO parseVO) {
+	public ContractChangeConditionResponseVO changeWorkCondition(
+	        long contractNo,
+	        ContractChangeConditionRequestVO request,
+	        TokenParseResponseVO parseVO) {
 
-		// 원장 확인
-		boolean isAdmin = contractAuthorizationService.checkAdmin(parseVO);
 
-		if(!isAdmin) throw new GetOutException();
-		// [1] 기존 계약 전체 조회
-		ContractDto originDto = contractDao.find(contractNo);
+	    // [1] 권한은 원장만
+	    boolean isAdmin =
+	            contractAuthorizationService
+	                    .checkAdmin(parseVO);
 
-		if (originDto == null)
-			throw new TargetNotfoundException();
+	    if (!isAdmin)
+	        throw new GetOutException();
 
-		// [2] 체결 완료된 계약인지 확인
-		if (originDto.getSignedTime() == null)
-			throw new GetOutException();
 
-		// [3] 이미 종료된 계약은 변경 불가
-		if ("ended".equals(originDto.getContractStatus()))
-			throw new GetOutException();
+	    // [2] 기존 계약 조회
+	    ContractDto originDto =
+	            contractDao.find(contractNo);
 
-		
-		
-		// [4] 새로운 근로조건 DTO 생성
-		ContractDto newContractDto = new ContractDto();
+	    if (originDto == null)
+	        throw new TargetNotfoundException();
 
-		BeanUtils.copyProperties(request, newContractDto);
 
-		
+	    // [3] 체결 완료 계약인지 확인
+	    if (originDto.getSignedTime() == null)
+	        throw new GetOutException();
 
-		// [6] 새 계약기간 확인
-		if (newContractDto.getContractEnd() != null
-				&& newContractDto.getContractEnd().before(newContractDto.getContractStart())) {
-			throw new GetOutException();
-		}
 
-		// [7] 새 소정근로시간 확인
-		if (newContractDto.getDailyWorkHours() > newContractDto.getWeeklyWorkHours()) {
-			throw new GetOutException();
-		}
+	    // [4] 이미 종료된 계약은 변경 불가
+	    if ("ended".equals(
+	            originDto.getContractStatus()
+	    ))
+	        throw new GetOutException();
 
-		validateWrittenBreakTimes(newContractDto.getDailyWorkHours(), newContractDto.getWrittenBreakMinutes());
-		
-		
-		// [7] 변경 계약은 미래 시점부터 적용
-		Timestamp current = Timestamp.valueOf(LocalDateTime.now());
+	    
+	 // 이미 다른 진행중 계약이 있는지 확인
+	    ContractDto openContract =
+	            contractDao.findOpenContract(
+	                    originDto.getEmployeeNo()
+	            );
 
-		if (!newContractDto.getContractStart().after(current))
-			throw new GetOutException();
 
-		// [8] 기존 계약은 새 계약 시작일까지 유지
-		originDto.setContractEnd(newContractDto.getContractStart());
-		
+	    // 현재 변경 대상 계약이 아닌
+	    // pending / scheduled / active 계약이 존재하면
+	    // 추가 근로조건 변경 불가
+	    if (
+	        openContract != null
+	        &&
+	        openContract.getContractNo()
+	            != originDto.getContractNo()
+	    ) {
+	        throw new GetOutException();
+	    }
 
-		// [9] 새 계약은 다시 서명대기 상태로 생성
-		newContractDto.setContractStatus("pending");
 
-		// [10] 새 계약번호 생성
-		long newContractNo = contractDao.contractSequence();
+	    // [5] 새 계약 생성
+	    ContractDto newContractDto =
+	            new ContractDto();
 
-		newContractDto.setContractNo(newContractNo);
-		
-		//+근무조건 업데이트
-		contractDao.changeContractCondition(request);
+	    BeanUtils.copyProperties(
+	            request,
+	            newContractDto
+	    );
 
-		// [11] 새 계약 서명 초기화
-		newContractDto.setEmployeeSignature(null);
-		newContractDto.setEmployerSignature(null);
-		newContractDto.setSignedTime(null);
 
-		
-		// [12] 변경된 근로조건으로 새 계약 등록
-		contractDao.contractAdd(newContractDto);
+	    // 직원은 기존 계약의 직원 그대로
+	    newContractDto.setEmployeeNo(
+	            originDto.getEmployeeNo()
+	    );
 
-		ContractChangeConditionResponseVO response =
-				  ContractChangeConditionResponseVO.builder()
-	                .contractNo(newContractDto.getContractNo())
-	                .employeeNo(newContractDto.getEmployeeNo())
-	                .wageType(newContractDto.getWageType())
-	                .baseWage(newContractDto.getBaseWage())
-	                .dailyWorkHours(newContractDto.getDailyWorkHours())
-	                .weeklyWorkHours(newContractDto.getWeeklyWorkHours())
-	                .contractStart(newContractDto.getContractStart())
-	                .contractEnd(newContractDto.getContractEnd())
-	                .payday(newContractDto.getPayday())
-	                .contractContent(newContractDto.getContractContent())
-	                .contractStatus(newContractDto.getContractStatus())
-	                .writtenBreakMinutes(newContractDto.getWrittenBreakMinutes())
-	                
-	                .build();
-		
-		return response;
-		
+
+
+	    // [6] 새 계약기간 확인
+	    if (
+	        newContractDto.getContractEnd() != null
+	        &&
+	        newContractDto
+	                .getContractEnd()
+	                .before(
+	                    newContractDto.getContractStart()
+	                )
+	    ) {
+
+	        throw new GetOutException();
+	    }
+
+
+
+	    // [7] 소정근로시간 확인
+	    if (
+	        newContractDto.getDailyWorkHours()
+	        >
+	        newContractDto.getWeeklyWorkHours()
+	    ) {
+
+	        throw new GetOutException();
+	    }
+
+
+	    validateWrittenBreakTimes(
+	            newContractDto.getDailyWorkHours(),
+	            newContractDto.getWrittenBreakMinutes()
+	    );
+
+
+
+	    // [8] 근로조건 변경은 미래부터 적용
+	    Timestamp current =
+	            Timestamp.valueOf(
+	                    LocalDateTime.now()
+	            );
+
+	    if (
+	        !newContractDto
+	                .getContractStart()
+	                .after(current)
+	    ) {
+
+	        throw new GetOutException();
+	    }
+
+
+
+	    // [9] 기존 계약은 새 계약 시작 시점에 종료
+	    originDto.setContractEnd(
+	    	    newContractDto.getContractStart()
+	    	);
+
+	    	boolean closeResult =
+	    	        contractDao.closeForConditionChange(
+	    	                originDto
+	    	        );
+
+	    	if (!closeResult)
+	    	    throw new GetOutException();
+
+
+	    // [10] 새 계약은 다시 서명대기
+	    newContractDto.setContractStatus(
+	            "pending"
+	    );
+
+
+	    // [11] 새 계약번호 생성
+	    long newContractNo =
+	            contractDao.contractSequence();
+
+	    newContractDto.setContractNo(
+	            newContractNo
+	    );
+
+
+	    // [12] 서명 초기화
+	    newContractDto.setEmployeeSignature(
+	            null
+	    );
+
+	    newContractDto.setEmployerSignature(
+	            null
+	    );
+
+	    newContractDto.setSignedTime(
+	            null
+	    );
+
+
+	    // [13] 새 계약 등록
+	    contractDao.contractAdd(
+	            newContractDto
+	    );
+
+
+
+	    // [14] 응답
+	    ContractChangeConditionResponseVO response =
+	            ContractChangeConditionResponseVO
+	                    .builder()
+
+	                    .contractNo(
+	                        newContractDto.getContractNo()
+	                    )
+
+	                    .employeeNo(
+	                        newContractDto.getEmployeeNo()
+	                    )
+
+	                    .wageType(
+	                        newContractDto.getWageType()
+	                    )
+
+	                    .baseWage(
+	                        newContractDto.getBaseWage()
+	                    )
+
+	                    .dailyWorkHours(
+	                        newContractDto.getDailyWorkHours()
+	                    )
+
+	                    .weeklyWorkHours(
+	                        newContractDto.getWeeklyWorkHours()
+	                    )
+
+	                    .contractStart(
+	                        newContractDto.getContractStart()
+	                    )
+
+	                    .contractEnd(
+	                        newContractDto.getContractEnd()
+	                    )
+
+	                    .payday(
+	                        newContractDto.getPayday()
+	                    )
+
+	                    .contractContent(
+	                        newContractDto.getContractContent()
+	                    )
+
+	                    .contractStatus(
+	                        newContractDto.getContractStatus()
+	                    )
+
+	                    .writtenBreakMinutes(
+	                        newContractDto
+	                            .getWrittenBreakMinutes()
+	                    )
+
+	                    .build();
+
+
+	    return response;
 	}
 
 	// 서명정보 조회
@@ -732,29 +1010,84 @@ public class ContractServiceImpl implements ContractService {
 	@Override
 	public void refreshContractStatus() {
 
-		// [1] 종료일이 도래한 기존 계약 종료
-		contractDao.endContracts();
+	    // 종료일 도래 계약 종료
+	    contractDao.endContracts();
 
-		// [2] 시작일이 도래한 체결완료 계약 활성화
-		contractDao.activateContracts();
+	    // 시작일 도래 + 서명완료 계약 활성화
+	    contractDao.activateContracts();
 
+	    // active 계약을 가진 대기 직원 재직 처리
+	    employeeDao.activateWaitingEmployees();
+
+	    // 재직 + active 계약 직원 계정 활성화
+	    employeeDao.activateEmployeeAccounts();
 	}
 
 	@Transactional
 	@Override
-	public void exitContract(long contractNo, TokenParseResponseVO parseVO) {
+	public void exitContract(
+	        long contractNo,
+	        TokenParseResponseVO parseVO) {
 
-		// 권한은 원장만
-		 boolean isAdmin = contractAuthorizationService.checkAdmin(parseVO);
+	    boolean isAdmin =
+	            contractAuthorizationService.checkAdmin(
+	                    parseVO
+	            );
 
-		 if(!isAdmin) throw new GetOutException();
-		 
-		ContractDto find = contractDao.find(contractNo);
-		if(find.getContractStatus().equals("ended")) throw new GetOutException();
-		
-		contractDao.exitContracts(contractNo);
+	    if (!isAdmin)
+	        throw new GetOutException();
+
+
+	    ContractDto find =
+	            contractDao.find(
+	                    contractNo
+	            );
+
+	    if (find == null)
+	        throw new TargetNotfoundException();
+
+
+	    if ("ended".equals(
+	            find.getContractStatus()
+	    ))
+	        throw new GetOutException();
+
+
+	    boolean result =
+	            contractDao.exitContracts(
+	                    contractNo
+	            );
+
+	    if (!result)
+	        throw new GetOutException();
 	}
 
 
+	
+	@Override
+	public List<ContractSearchResponseVO> contractSearch(
+	        ContractSearchRequestVO request,
+	        TokenParseResponseVO parseVO) {
+
+	    boolean isAdmin =
+	            contractAuthorizationService
+	                    .checkAdmin(parseVO);
+
+	    if (!isAdmin)
+	        throw new GetOutException();
+
+
+	    List<ContractSearchResponseVO> result =
+	            contractDao.contractSearch(
+	                    request
+	            );
+
+
+	    if (result.size() == 0)
+	        throw new TargetNotfoundException();
+
+
+	    return result;
+	}
 	
 }

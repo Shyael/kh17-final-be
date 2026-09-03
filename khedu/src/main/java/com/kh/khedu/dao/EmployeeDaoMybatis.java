@@ -1,6 +1,9 @@
 package com.kh.khedu.dao;
 
+import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,4 +51,49 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 		return sqlSession.selectList("mapper.employee.searchByName",accountName);
 	}
 	
+	
+	@Override
+	public boolean changeAccountStatusToY(int employeeNo) {
+
+	    return sqlSession.update(
+	            "mapper.employee.changeAccountStatusToY",
+	            employeeNo
+	    ) > 0;
+	}
+	
+	
+	@Override
+	public int activateWaitingEmployees() {
+
+	    return sqlSession.update(
+	            "mapper.employee.activateWaitingEmployees"
+	    );
+	}
+
+
+	@Override
+	public int activateEmployeeAccounts() {
+
+	    return sqlSession.update(
+	            "mapper.employee.activateEmployeeAccounts"
+	    );
+	}
+	
+	//첫 출근시에 고용일자 업데이트
+	@Override
+	public void updateEmploymentDateIfNull(
+	        int employeeNo,
+	        Timestamp clockIn) {
+
+	    Map<String, Object> params =
+	            new HashMap<>();
+
+	    params.put("employeeNo", employeeNo);
+	    params.put("clockIn", clockIn);
+
+	    sqlSession.update(
+	            "mapper.employee.updateEmploymentDateIfNull",
+	            params
+	    );
+	}
 }

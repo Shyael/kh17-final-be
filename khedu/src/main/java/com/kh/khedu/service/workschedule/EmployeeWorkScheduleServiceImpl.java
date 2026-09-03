@@ -46,8 +46,29 @@ public class EmployeeWorkScheduleServiceImpl
     public WorkScheduleAddResponseVO add(
             WorkScheduleAddRequestVO requestVO) {
     	
-    	ContractDto existContract = contractDao.find(requestVO.getContractNo());
-    	if(existContract==null) throw new TargetNotfoundException();
+    	Long contractNo =
+    	        contractDao.findContractByPeriod(
+    	                requestVO.getEmployeeNo(),
+    	                requestVO.getScheduledWorkDate()
+    	        );
+
+    	if (contractNo == null)
+    	    throw new TargetNotfoundException();
+
+
+    	ContractDto existContract =
+    	        contractDao.find(contractNo);
+
+    	if (existContract == null)
+    	    throw new TargetNotfoundException();
+
+
+    	requestVO.setContractNo(
+    	        contractNo
+    	);
+       
+        
+        requestVO.setContractNo(existContract.getContractNo());
     	
     	if(requestVO.getScheduledWorkDate()==null||requestVO.getScheduledDayType()==null)
     		throw new GetOutException();
@@ -93,8 +114,8 @@ public class EmployeeWorkScheduleServiceImpl
     long	workScheduleNo =	employeeWorkScheduleDao.sequence();
     	
 
-requestVO.setWorkScheduleNo(
-        workScheduleNo);
+    	requestVO.setWorkScheduleNo(
+    			workScheduleNo);
     	
     	
     	boolean success = employeeWorkScheduleDao.add(requestVO);
@@ -104,6 +125,7 @@ requestVO.setWorkScheduleNo(
     		.scheduledClockOut(requestVO.getScheduledClockOut())
     		.scheduledDayType(requestVO.getScheduledDayType())
     		.scheduledWorkDate(requestVO.getScheduledWorkDate())
+    		.contractNo(requestVO.getContractNo())
     		.build();
     	
     	return newSchedule;

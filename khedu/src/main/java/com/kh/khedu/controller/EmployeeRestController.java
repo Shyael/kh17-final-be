@@ -1,5 +1,7 @@
 package com.kh.khedu.controller;
 
+import java.util.List;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -7,27 +9,25 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.AccountDao;
+import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.service.EmployeeService;
 import com.kh.khedu.vo.account.AccountFindResponseVO;
-import com.kh.khedu.vo.employee.ChangeEmployeeRequestVO;
-import com.kh.khedu.vo.employee.ChangeEmployeeResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeRegisterRequestVO;
+import com.kh.khedu.vo.employee.EmployeeSearchByNameVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 
 @Tag(name = "직원 정보 관리 서비스")
 @RestController
@@ -36,6 +36,8 @@ public class EmployeeRestController {
 	
 	@Autowired
 	private AccountDao accountDao;
+	@Autowired
+	private EmployeeDao employeeDao;
 	@Autowired
 	private EmployeeService employeeService;
 	@Autowired
@@ -85,4 +87,10 @@ public class EmployeeRestController {
 //		
 //	}
 	
+	@ApiResponse(responseCode= "200", description = "이름 검색 성공")
+	@GetMapping(value="/searchName", produces="application/json")
+	public List<EmployeeSearchByNameVO> searchName(String accountName){
+		List<EmployeeSearchByNameVO> result = employeeDao.searchByName(accountName);
+		return result;
+	}
 }
