@@ -72,7 +72,6 @@ public class SecurityConfiguration {
 					.requestMatchers(
 						// 무조건 허용
 							"/active"  //체크용 페이지 허용
-							
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
 						).permitAll()
@@ -96,6 +95,8 @@ public class SecurityConfiguration {
 							"/service/auth/login" //로그인 페이지
 							,"/service/auth/logout" //로그아웃 페이지
 							,"/service/auth/refresh" //로그인 갱신페이지
+							,"/api/account/find-id" //아이디
+							,"/api/account/find-password" //비밀번호 찾기
 						).permitAll()
 						
 						//cert service
@@ -112,22 +113,22 @@ public class SecurityConfiguration {
 						
 						// [1] 회원
 						.requestMatchers(
-							"/api/account/password"
+							"/api/account/**"
 						)
 						//.authenticated()//인증필요
 						.hasAnyAuthority(
-								RoleType.STUDENT.getDescription(),
-								RoleType.PARENT.getDescription(),
-								RoleType.TUTOR.getDescription(), 
-								RoleType.DESK.getDescription(),
-								RoleType.ADMIN.getDescription()
+								RoleType.STUDENT.getCode(),
+								RoleType.PARENT.getCode(),
+								RoleType.TUTOR.getCode(), 
+								RoleType.DESK.getCode(),
+								RoleType.ADMIN.getCode()
 						)
 						// [2] 강사
 						.requestMatchers(
 								"/api/employee/me" // 직원 내정보
 								)
 						.hasAnyAuthority(
-								RoleType.TUTOR.getDescription() 
+								RoleType.TUTOR.getCode() 
 								)
 						// [3] 데스크
 						// [4] 원장
@@ -136,9 +137,16 @@ public class SecurityConfiguration {
 								"/api/employee/**"
 						)
 						.hasAnyAuthority(
-								RoleType.TUTOR.getDescription(), 
-								RoleType.DESK.getDescription(),
-								RoleType.ADMIN.getDescription()
+								RoleType.TUTOR.getCode(), 
+								RoleType.DESK.getCode(),
+								RoleType.ADMIN.getCode()
+						)
+						.requestMatchers(
+								"/api/admin/employee/**"
+						)
+						.hasAnyAuthority(
+								RoleType.DESK.getCode(),
+								RoleType.ADMIN.getCode()
 						)
 						//나머지 모두 허용
 						.anyRequest().permitAll()
@@ -186,7 +194,7 @@ public class SecurityConfiguration {
 		//[1] 허용되는 접근 대상을 지정 (allow origins or pattern)
 		config.setAllowedOrigins(List.of(
 			// 여기에 운영주소 넣어주면됨
-			"http://localhost:5173" 
+			"http://localhost:5173"
 		));
 		//[2] 허용할 HTTP 메소드 설정
 		config.setAllowedMethods(List.of(

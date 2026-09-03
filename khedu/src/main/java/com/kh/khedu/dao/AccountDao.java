@@ -26,5 +26,10 @@ public interface AccountDao {
 	AccountDto findAccountId(FindAccountIdRequestVO request);
 	AccountDto findAccountPassword(FindAccountPasswordRequestVO request);
 	
+	//accountNo로 찾기
+	AccountDto selectOneByAccountNo(int accountNo);
+	boolean updateAll(AccountDto accountDto);
+	String selectOneByStudentNo(int studentNo);
+	
 	
 }
