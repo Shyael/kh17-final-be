@@ -1,6 +1,7 @@
 package com.kh.khedu.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,5 +56,27 @@ public class QuestionOptionDaoMybatis implements QuestionOptionDao {
     @Override
     public boolean deleteByQuestion(int questionNo) {
         return sqlSession.delete("mapper.questionOption.deleteByQuestion", questionNo) > 0;
+    }
+
+    @Override
+    public int countByQuestionOrder(int questionNo, int optionOrder) {
+        Map<String, Object> params = Map.of(
+                "questionNo", questionNo,
+                "optionOrder", optionOrder
+        );
+
+        return sqlSession.selectOne("mapper.questionOption.countByQuestionOrder",params);
+    }
+
+    @Override
+    public int countByQuestionOrderExcludeSelf(int questionNo, int optionOrder, int optionNo) {
+
+        Map<String, Object> params = Map.of(
+                "questionNo", questionNo,
+                "optionOrder", optionOrder,
+                "optionNo", optionNo
+        );
+
+        return sqlSession.selectOne("mapper.questionOption.countByQuestionOrderExcludeSelf",params);
     }
 }

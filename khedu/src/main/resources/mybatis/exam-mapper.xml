@@ -48,32 +48,186 @@
         from exam
         where exam_no = #{examNo}
     </select>
+    
+    <!-- 시험 상세 조회 -->
+	<select id="selectDetail" resultType="ExamDetailVO">
+	    select
+	        e.exam_no,
+	        e.course_no,
+	        c.course_title,
+	        e.employee_no,
+	        a.account_name,
+	        e.exam_title,
+	        e.exam_info,
+	        e.exam_start,
+	        e.exam_end,
+	        e.exam_limit,
+	        e.exam_status,
+	        e.exam_wtime
+	    from exam e
+	    join course c
+	        on e.course_no = c.course_no
+	    join employee emp
+	        on e.employee_no = emp.employee_no
+	    join account a
+	        on emp.account_no = a.account_no
+	    where e.exam_no = #{examNo}
+	</select>
+	
+	<!-- 학생용 시험 상세 조회 -->
+	<select id="selectDetailByStudent" resultType="StudentExamDetailVO">
+	    select
+	        e.exam_no,
+	        e.course_no,
+	        c.course_title,
+	        e.exam_title,
+	        e.exam_info,
+	        e.exam_start,
+	        e.exam_end,
+	        e.exam_limit,
+	        e.exam_status,
+	        (
+	            select count(*)
+	            from question q
+	            where q.exam_no = e.exam_no
+	        ) as question_count,
+	        (
+	            select nvl(sum(q.question_score), 0)
+	            from question q
+	            where q.exam_no = e.exam_no
+	        ) as total_score,
+	        at.attempt_no,
+	        at.attempt_status,
+	        at.attempt_start,
+	        at.attempt_submit,
+	        at.attempt_score
+	    from exam e
+	    join course c
+	        on e.course_no = c.course_no
+	    left join attempt at
+	        on e.exam_no = at.exam_no
+	        and at.student_no = #{studentNo}
+	    where e.exam_no = #{examNo}
+	        and e.exam_status in ('공개', '마감')
+	        and exists (
+	            select 1
+	            from student_course sc
+	            where sc.course_no = e.course_no
+	                and sc.student_no = #{studentNo}
+	        )
+	</select>
 
 
     <!-- 전체 시험 목록 조회 -->
-    <select id="selectList" resultType="ExamDto">
-        select *
-        from exam
-        order by exam_wtime desc
-    </select>
+	<select id="selectList" resultType="ExamListVO">
+	    select
+	        e.exam_no,
+	        e.course_no,
+	        c.course_title,
+	        e.employee_no,
+	        a.account_name,
+	        e.exam_title,
+	        e.exam_start,
+	        e.exam_end,
+	        e.exam_limit,
+	        e.exam_status,
+	        e.exam_wtime
+	    from exam e
+	    join course c
+	        on e.course_no = c.course_no
+	    join employee emp
+	        on e.employee_no = emp.employee_no
+	    join account a
+	        on emp.account_no = a.account_no
+	    order by e.exam_wtime desc
+	</select>
 
 
-    <!-- 특정 강의의 시험 목록 조회 -->
-    <select id="selectListByCourse" resultType="ExamDto">
-        select *
-        from exam
-        where course_no = #{courseNo}
-        order by exam_wtime desc
-    </select>
+    <select id="selectListByCourse" resultType="ExamListVO">
+	    select
+	        e.exam_no,
+	        e.course_no,
+	        c.course_title,
+	        e.employee_no,
+	        a.account_name,
+	        e.exam_title,
+	        e.exam_start,
+	        e.exam_end,
+	        e.exam_limit,
+	        e.exam_status,
+	        e.exam_wtime
+	    from exam e
+	    join course c
+	        on e.course_no = c.course_no
+	    join employee emp
+	        on e.employee_no = emp.employee_no
+	    join account a
+	        on emp.account_no = a.account_no
+	    where e.course_no = #{courseNo}
+	    order by e.exam_wtime desc
+	</select>
 
 
     <!-- 특정 강사가 등록한 시험 목록 조회 -->
-    <select id="selectListByEmployee" resultType="ExamDto">
-        select *
-        from exam
-        where employee_no = #{employeeNo}
-        order by exam_wtime desc
-    </select>
+   <select id="selectListByEmployee" resultType="ExamListVO">
+	    select
+	        e.exam_no,
+	        e.course_no,
+	        c.course_title,
+	        e.employee_no,
+	        a.account_name,
+	        e.exam_title,
+	        e.exam_start,
+	        e.exam_end,
+	        e.exam_limit,
+	        e.exam_status,
+	        e.exam_wtime
+	    from exam e
+	    join course c
+	        on e.course_no = c.course_no
+	    join employee emp
+	        on e.employee_no = emp.employee_no
+	    join account a
+	        on emp.account_no = a.account_no
+	    where e.employee_no = #{employeeNo}
+	    order by e.exam_wtime desc
+	</select>
+	
+	<!-- 학생 시험 목록 조회 -->
+	<select id="selectListByStudent" resultType="StudentExamListVO">
+	    select
+	        e.exam_no,
+	        e.course_no,
+	        c.course_title,
+	        e.exam_title,
+	        e.exam_start,
+	        e.exam_end,
+	        e.exam_limit,
+	        e.exam_status,
+	
+	        at.attempt_no,
+	        at.attempt_status,
+	        at.attempt_submit,
+	        at.attempt_score
+	
+	    from exam e
+	
+	    join course c
+	        on e.course_no = c.course_no
+	
+	    join student_course cs
+	        on e.course_no = cs.course_no
+	
+	    left join attempt at
+	        on e.exam_no = at.exam_no
+	        and at.student_no = cs.student_no
+	
+	    where cs.student_no = #{studentNo}
+	        and cs.course_status = '수강중'
+	        and e.exam_status in ('공개', '마감')
+	
+	    order by e.exam_start desc
+	</select>
 
 
     <!-- 시험 수정 -->

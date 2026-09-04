@@ -86,5 +86,22 @@
         where question_no = #{questionNo}
         order by attach_no asc
     </select>
+    
+    <!-- 같은 시험 내 문제 순서 중복 확인 -->
+    <select id="countByExamOrder" resultType="int">
+    	select count(*)
+    	from question
+    	where exam_no = #{examNo}
+    		and question_order = #{questionOrder}
+    </select>
+    
+    <!-- 수정 시 자기 자신 제외하고 문제 순서 중복 확인 -->
+    <select id="countByExamOrderExcludeSelf" resultType="int">
+	    select count(*)
+	    from question
+	    where exam_no = #{examNo}
+	      and question_order = #{questionOrder}
+	      and question_no != #{questionNo}
+</select>
 
 </mapper>
