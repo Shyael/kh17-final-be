@@ -15,6 +15,7 @@ import com.kh.khedu.dto.PaymentDetailDto;
 import com.kh.khedu.dto.PaymentDiscountDto;
 import com.kh.khedu.dto.PaymentDto;
 import com.kh.khedu.vo.payment.DiscountVO;
+import com.kh.khedu.vo.payment.PaymentComprehensiveVO;
 import com.kh.khedu.vo.payment.PaymentDetailVO;
 import com.kh.khedu.vo.payment.PaymentDiscountVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
@@ -172,5 +173,26 @@ public class PaymentService {
             // (선택) 6. DB에 어떤 할인이 들어갔는지 기록(payment_discount) INSERT
             // 이 테이블이 있다면 반복문 돌려서 기록해 주면 나중에 영수증 볼 때 아주 좋습니다.
         }
+    }
+    
+    // 수납 상세 정보 종합 세트 조립 로직
+    public PaymentComprehensiveVO getPaymentDetail(int paymentNo) {
+        
+        // 1. 마스터 정보 가져오기 (없으면 에러 처리)
+        PaymentDto master = paymentDao.selectPaymentMaster(paymentNo);
+        if(master == null) {
+            throw new RuntimeException("존재하지 않는 수납 번호입니다.");
+        }
+        
+        // 2. 상세 및 할인 내역 리스트 가져오기
+        List<PaymentDetailDto> details = paymentDao.selectPaymentDetails(paymentNo);
+        List<PaymentDiscountDto> discounts = paymentDao.selectPaymentDiscounts(paymentNo);
+
+        // 3. 하나의 VO로 조립해서 반환
+        return PaymentComprehensiveVO.builder()
+                .payment(master)
+                .details(details)
+                .discounts(discounts)
+                .build();
     }
 }

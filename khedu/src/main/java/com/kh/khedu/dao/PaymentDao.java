@@ -7,6 +7,7 @@ import com.kh.khedu.dto.PaymentDetailDto;
 import com.kh.khedu.dto.PaymentDiscountDto;
 import com.kh.khedu.dto.PaymentDto;
 import com.kh.khedu.vo.payment.DiscountVO;
+import com.kh.khedu.vo.payment.PaymentComprehensiveVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
 import com.kh.khedu.vo.student.StudentCourseVO;
 
@@ -30,4 +31,12 @@ public interface PaymentDao {
     List<Integer> selectAllActiveStudents(); // 전체 재원생 번호 조회
     int checkDuplicateBilling(int studentNo, String currentMonth); // 중복 청구 검사
     List<StudentCourseVO> selectStudentCourses(int studentNo); // 학생의 수강 강좌 및 금액 조회
+    
+    //수납 상세목록 조회
+    // 1. 수납 마스터 조회 (단건)
+    PaymentDto selectPaymentMaster(int paymentNo);
+    // 2. 수납 상세 목록 조회 (다건)
+    List<PaymentDetailDto> selectPaymentDetails(int paymentNo);
+    // 3. 수납 할인 목록 조회 (다건)
+    List<PaymentDiscountDto> selectPaymentDiscounts(int paymentNo);
 }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.service.PaymentService;
 import com.kh.khedu.vo.payment.DiscountVO;
+import com.kh.khedu.vo.payment.PaymentComprehensiveVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
 import com.kh.khedu.vo.payment.PaymentRequestVO;
 
@@ -71,5 +72,16 @@ public class PaymentRestController {
     @GetMapping("/student/{studentNo}")
     public List<PaymentListResponseVO> getStudentPayments(@PathVariable int studentNo) {
         return paymentService.getStudentPayments(studentNo);
+    }
+    
+    // 수납 상세 내역 조회 API
+    @GetMapping("/detail/{paymentNo}")
+    public ResponseEntity<?> getPaymentDetail(@PathVariable int paymentNo) {
+        try {
+            PaymentComprehensiveVO response = paymentService.getPaymentDetail(paymentNo);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

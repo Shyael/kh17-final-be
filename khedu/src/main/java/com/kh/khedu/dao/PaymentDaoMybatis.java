@@ -12,6 +12,7 @@ import com.kh.khedu.dto.PaymentDetailDto;
 import com.kh.khedu.dto.PaymentDiscountDto;
 import com.kh.khedu.dto.PaymentDto;
 import com.kh.khedu.vo.payment.DiscountVO;
+import com.kh.khedu.vo.payment.PaymentComprehensiveVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
 import com.kh.khedu.vo.student.StudentCourseVO;
 
@@ -85,5 +86,20 @@ public class PaymentDaoMybatis implements PaymentDao {
     @Override
     public List<StudentCourseVO> selectStudentCourses(int studentNo) {
         return sqlSession.selectList("mapper.payment.selectStudentCourses", studentNo);
+    }
+    
+    @Override
+    public PaymentDto selectPaymentMaster(int paymentNo) {
+        return sqlSession.selectOne("mapper.payment.selectPaymentMaster", paymentNo);
+    }
+    
+    @Override
+    public List<PaymentDetailDto> selectPaymentDetails(int paymentNo) {
+        return sqlSession.selectList("mapper.payment.selectPaymentDetails", paymentNo);
+    }
+    
+    @Override
+    public List<PaymentDiscountDto> selectPaymentDiscounts(int paymentNo) {
+        return sqlSession.selectList("mapper.payment.selectPaymentDiscounts", paymentNo);
     }
 }

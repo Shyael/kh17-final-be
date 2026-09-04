@@ -14,7 +14,7 @@ public interface ParentDao {
 	ParentDto selectOneByAccountNo(int accountNo);
 	
 	//studentNo로 학부모 계정 정보 조회
-	ParentDetailVO findParentDetailByStudentNo(int studentNo);
+	List<ParentDetailVO> findParentDetailByStudentNo(int studentNo);
 	//검색으로 학부모 계정정보 조회
 	List<ParentDetailVO> searchParents(String keyword);
 

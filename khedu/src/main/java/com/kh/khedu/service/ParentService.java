@@ -296,10 +296,10 @@ public class ParentService {
 	    }
 	}
 	
-	//학생 번호로 학부모 상세 정보 조회 로직 추가
-    public ParentDetailVO findParentDetailByStudentNo(int studentNo) {
-        return parentDao.findParentDetailByStudentNo(studentNo);
-    }
+	public List<ParentDetailVO> findParentDetailByStudentNo(int studentNo) {
+	    // DAO에서도 selectList()를 사용하도록 수정되어야 합니다!
+	    return parentDao.findParentDetailByStudentNo(studentNo);
+	}
     
     //검색으로 학부모 정보 조회 로직 추가
     public List<ParentDetailVO> searchParents(String keyword) {

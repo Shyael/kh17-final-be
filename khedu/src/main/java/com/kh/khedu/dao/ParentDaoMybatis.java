@@ -37,8 +37,8 @@ public class ParentDaoMybatis implements ParentDao {
 	}
 	
 	@Override
-	public ParentDetailVO findParentDetailByStudentNo(int studentNo) {
-		return sqlSession.selectOne("mapper.parent.findParentDetailByStudentNo", studentNo);
+	public List<ParentDetailVO> findParentDetailByStudentNo(int studentNo) {
+		return sqlSession.selectList("mapper.parent.findParentDetailByStudentNo", studentNo);
 	}
 	
 	@Override

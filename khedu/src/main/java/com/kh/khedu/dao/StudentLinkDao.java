@@ -15,4 +15,4 @@ public interface StudentLinkDao {
 	
 	// 사용된 연동코드 Y처리
 	boolean usedLinkCode(int studentLinkNo);
-}	
+}

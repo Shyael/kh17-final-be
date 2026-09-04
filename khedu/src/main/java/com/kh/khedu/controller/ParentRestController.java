@@ -97,12 +97,10 @@ public class ParentRestController {
 		parentService.updateRelationship(parseVO, request);
 	}
 	
-	@GetMapping("/api/parent/student/{studentNo}")
-    public ResponseEntity<ParentDetailVO> getParentInfoByStudent(@PathVariable int studentNo) {
-        // Service -> DAO를 거쳐 방금 만든 쿼리를 실행합니다.
-        ParentDetailVO parentInfo = parentService.findParentDetailByStudentNo(studentNo);
-        
-        return ResponseEntity.ok(parentInfo);
+	@GetMapping("/student/{studentNo}")
+    public ResponseEntity<List<ParentDetailVO>> getParentInfoByStudent(@PathVariable int studentNo) {
+        List<ParentDetailVO> parentInfoList = parentService.findParentDetailByStudentNo(studentNo);
+        return ResponseEntity.ok(parentInfoList);
     }
 	
 	// 관리자용 학부모 검색 API

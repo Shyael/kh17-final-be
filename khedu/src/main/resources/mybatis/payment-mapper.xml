@@ -129,5 +129,20 @@
         from student_course 
         where student_no = #{studentNo}
     </select> -->
+    
+    <!-- 1. 수납 마스터 단건 조회 -->
+    <select id="selectPaymentMaster" resultType="PaymentDto">
+        select * from payment where payment_no = #{paymentNo}
+    </select>
+
+    <!-- 2. 해당 수납의 상세 항목 목록 조회 -->
+    <select id="selectPaymentDetails" resultType="PaymentDetailDto">
+        select * from payment_detail where payment_no = #{paymentNo}
+    </select>
+
+    <!-- 3. 해당 수납의 할인 적용 목록 조회 -->
+    <select id="selectPaymentDiscounts" resultType="PaymentDiscountDto">
+        select * from payment_discount where payment_no = #{paymentNo}
+    </select>
   
 </mapper>
