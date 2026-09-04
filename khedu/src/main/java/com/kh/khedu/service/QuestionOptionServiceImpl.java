@@ -19,8 +19,7 @@ import com.kh.khedu.error.TargetNotfoundException;
 
 @Service
 @Transactional
-public class QuestionOptionServiceImpl
-        implements QuestionOptionService {
+public class QuestionOptionServiceImpl implements QuestionOptionService {
 
     @Autowired
     private QuestionOptionDao questionOptionDao;
@@ -89,6 +88,28 @@ public class QuestionOptionServiceImpl
         }
     }
     
+    //정답개수 검증(정답 하나만 가능)
+    private void checkCorrectAnswerDuplicate(int questionNo, Integer excludeOptionNo) {
+        List<QuestionOptionDto> optionList =questionOptionDao.selectListByQuestion(questionNo);
+
+        boolean existsCorrectAnswer =
+                optionList.stream()
+                        .filter(option ->
+                                excludeOptionNo == null|| option.getOptionNo() != excludeOptionNo)
+                        .anyMatch(option ->
+                                "Y".equals(
+                                        option.getOptionIsAnswer()
+                                )
+                        );
+
+        if (existsCorrectAnswer) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "단일선택 문제는 정답을 하나만 설정할 수 있습니다."
+            );
+        }
+    }
+    
     // 보기 등록
     @Override
     public int insert(
@@ -99,6 +120,11 @@ public class QuestionOptionServiceImpl
     	checkEditableQuestion(questionOptionDto.getQuestionNo(), employeeNo, tutor);
     	//지문 순서 중복 검사
     	checkOptionOrderDuplicate(questionOptionDto.getQuestionNo(), questionOptionDto.getOptionOrder());
+    	// 정답으로 등록하려는 경우
+        if ("Y".equals(questionOptionDto.getOptionIsAnswer())) {
+
+            checkCorrectAnswerDuplicate(questionOptionDto.getQuestionNo(),null);
+        }
         // 보기 번호 생성
         int optionNo = questionOptionDao.sequence();
         
@@ -147,7 +173,12 @@ public class QuestionOptionServiceImpl
         checkEditableQuestion(before.getQuestionNo(),employeeNo,tutor);
 
         checkOptionOrderDuplicate(before.getQuestionNo(), questionOptionDto.getOptionOrder(), questionOptionDto.getOptionNo());
-
+        
+        // 수정 결과가 정답 Y라면
+        if ("Y".equals(questionOptionDto.getOptionIsAnswer())) {
+            checkCorrectAnswerDuplicate(before.getQuestionNo(),questionOptionDto.getOptionNo());
+        }
+        
         return questionOptionDao.update(questionOptionDto);
     }
 
