@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CommonsApiResponse;
 import com.kh.khedu.annotation.CurrentUser;
-import com.kh.khedu.dao.EmployeeDao;
+
 import com.kh.khedu.dao.payroll.EmployeeAttendanceDao;
-import com.kh.khedu.dao.payroll.EmployeeWorkScheduleDao;
-import com.kh.khedu.dto.payroll.EmployeeWorkScheduleDto;
+
+
 import com.kh.khedu.error.AdminChecker;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.service.attendance.EmployeeAttendanceService;
@@ -32,7 +32,7 @@ import com.kh.khedu.vo.payroll.request.AttendanceNormalToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToNormalRequestVO;
 import com.kh.khedu.vo.payroll.request.WorkScheduleAddRequestVO;
 import com.kh.khedu.vo.payroll.request.WorkScheduleUpdateRequestVO;
-import com.kh.khedu.vo.payroll.response.AttendanceFindVO;
+
 import com.kh.khedu.vo.payroll.response.WorkScheduleAddResponseVO;
 import com.kh.khedu.vo.payroll.response.WorkScheduleSearchResponseVO;
 
@@ -50,10 +50,7 @@ public class AdminAttendanceRestController {
  private EmployeeWorkScheduleService employeeWorkScheduleService;
 @Autowired
 private AdminChecker adminChecker;
-@Autowired
-private EmployeeDao employeeDao;
-@Autowired
-private EmployeeWorkScheduleDao employeeWorkScheduleDao;
+
 @Autowired
 private EmployeeAttendanceDao employeeAttendanceDao;
  

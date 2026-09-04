@@ -8,7 +8,7 @@ import lombok.Data;
 public class AttendanceAbsentToAbsentRequestVO {
 
     @Positive
-    private long empAttendanceNo;
+    private Long empAttendanceNo;
 
     @NotBlank
     private String attendanceType;

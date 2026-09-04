@@ -1,7 +1,6 @@
 package com.kh.khedu.service.attendance;
 
-import java.sql.Timestamp;
-import java.util.List;
+
 
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentRequestVO;
@@ -13,7 +12,7 @@ import com.kh.khedu.vo.payroll.request.AttendanceNormalToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToNormalRequestVO;
 import com.kh.khedu.vo.payroll.response.AttendanceClockInResponseVO;
 import com.kh.khedu.vo.payroll.response.AttendanceClockOutResponseVO;
-import com.kh.khedu.vo.payroll.response.AttendanceSearchResponseVO;
+
 
 public interface EmployeeAttendanceService {
 	

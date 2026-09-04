@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class EmployeeAttendanceDto {
-    private long empAttendanceNo;
+    private Long empAttendanceNo;
     private long contractNo;
     private Timestamp workDate;
     private Timestamp clockIn;

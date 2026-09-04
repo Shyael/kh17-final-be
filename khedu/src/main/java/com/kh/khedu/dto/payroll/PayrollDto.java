@@ -1,28 +1,41 @@
 package com.kh.khedu.dto.payroll;
-
-
+import java.sql.Timestamp;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data @Builder @NoArgsConstructor @AllArgsConstructor
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PayrollDto {
 
-    // 급여 번호
-    private long payrollNo;
+	private Long payrollNo;
+	private Integer employeeNo;
 
-    // 근로계약 번호
-    private long contractNo;
+	private Integer payrollYear;
+	private Integer payrollMonth;
 
-    // 급여 대상 연도
-    private int payrollYear;
+	private Double totalWorkHours;
+	private Double totalOvertimeHours;
+	private Double totalNightHours;
+	private Double totalHolidayHours;
 
-    // 급여 대상 월
-    private int payrollMonth;
+	private Long basePay;
+	private Long weekHolidayPay;
+	private Long overtimePay;
+	private Long nightPay;
+	private Long holidayPay;
 
-    // 급여 상태
-    // calculating / confirmed / paid
-    private String payrollStatus;
+	private Long grossPay;
+	private Long totalDeduction;
+	private Long netPay;
+
+	private String payrollStatus;
+
+	private Timestamp calculatedAt;
+	private Timestamp confirmedAt;
+
 }
