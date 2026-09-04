@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.academy">
+
+	<!-- 학원 번호 생성 -->
+	<select id="sequence" resultType="int">
+		select academy_seq.nextval from dual
+	</select>
+
+	<!-- 학원 등록 -->
+	<insert id="insert">
+		insert into academy(
+			academy_no,
+			academy_name,
+			academy_tagline,
+			academy_intro,
+			academy_phone,
+			academy_address,
+			academy_wtime
+		)
+		values(
+			#{academyNo},
+			#{academyName},
+			#{academyTagline},
+			#{academyIntro},
+			#{academyPhone},
+			#{academyAddress},
+			systimestamp
+		)
+	</insert>
+
+	<!-- 학원정보 조회 -->
+	<select id="selectOne" resultType="AcademyDto">
+		select *
+		from academy
+		where rownum = 1
+	</select>
+
+	<!-- 학원 수정 -->
+	<update id="update">
+		update academy
+		set
+			academy_name = #{academyName},
+			academy_tagline = #{academyTagline},
+			academy_intro = #{academyIntro},
+			academy_phone = #{academyPhone},
+			academy_address = #{academyAddress},
+			academy_etime = systimestamp
+		where academy_no = #{academyNo}
+	</update>
+
+	<!-- 학원 삭제 -->
+	<delete id="delete">
+		delete from academy
+		where academy_no = #{academyNo}
+	</delete>
+	
+	<!-- 이미지 연결 -->
+	<insert id="connect">
+		insert into academy_file (academy_no, attach_no)
+		values( #{academyNo}, #{attachNo})
+	</insert>
+	
+	<!-- 이미지찾기 -->
+	<select id="selectDetailImages" resultType="Integer">
+		select attach_no
+		from academy_file
+		where academy_no = #{academyNo}
+		order by attach_no asc
+	</select>
+
+</mapper>

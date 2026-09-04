@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.tutorCareer">
+
+	<!-- 강사 학력/경력 번호 생성 -->
+	<select id="sequence" resultType="int">
+		select tutor_career_seq.nextval from dual
+	</select>
+
+	<!-- 강사 학력/경력 등록 -->
+	<insert id="insert">
+		insert into tutor_career(
+			tutor_career_no,
+			tutor_no,
+			tutor_career_type,
+			tutor_career_content
+		)
+		values(
+			#{tutorCareerNo},
+			#{tutorNo},
+			#{tutorCareerType},
+			#{tutorCareerContent}
+		)
+	</insert>
+
+	<!-- 강사별 학력/경력 목록 -->
+	<select id="selectList" resultType="TutorCareerDto">
+		select *
+		from tutor_career
+		where tutor_no = #{tutorNo}
+		order by tutor_career_no asc
+	</select>
+
+	<!-- 학력/경력 상세 -->
+	<select id="selectOne" resultType="TutorCareerDto">
+		select *
+		from tutor_career
+		where tutor_career_no = #{tutorCareerNo}
+	</select>
+
+	<!-- 학력/경력 수정 -->
+	<update id="update">
+		update tutor_career
+		set
+			tutor_career_type = #{tutorCareerType},
+			tutor_career_content = #{tutorCareerContent}
+		where tutor_career_no = #{tutorCareerNo}
+	</update>
+
+	<!-- 학력/경력 삭제 -->
+	<delete id="delete">
+		delete from tutor_career
+		where tutor_career_no = #{tutorCareerNo}
+	</delete>
+
+</mapper>

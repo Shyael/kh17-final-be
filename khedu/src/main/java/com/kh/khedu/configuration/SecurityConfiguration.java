@@ -74,9 +74,13 @@ public class SecurityConfiguration {
 							"/active"  //체크용 페이지 허용
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
+							,"/api/admin/employee/**"
 						).permitAll()
 						
-						
+						//직원(학원 정보 수정)
+						.requestMatchers("/api/academy/**").permitAll() 
+						//직원(강사 정보 수정)
+						.requestMatchers("/api/tutor/**").permitAll() 
 						//메소드(crud) 중 일부 메소드만 허용하고 싶은경우 아래와 같이 추가
 						//예시
 						//.requestMatchers(HttpMethod.POST, "/api/lecture").authenticated()
@@ -84,7 +88,7 @@ public class SecurityConfiguration {
 						
 						//임시 전부 공개화면 
 //						.requestMatchers(
-//								
+//							
 //						).permitAll()
 					
 						//auth service
@@ -105,7 +109,7 @@ public class SecurityConfiguration {
 							"/api/student/**",
 							"/api/parent/**"
 						).permitAll() 
-						
+					
 						// 조건부 허용(내가 만든 요소들)
 						
 						// [1] 회원
@@ -120,13 +124,6 @@ public class SecurityConfiguration {
 								RoleType.DESK.getCode(),
 								RoleType.ADMIN.getCode()
 						)
-						// [2] 강사
-						.requestMatchers(
-								"/api/employee/me" // 직원 내정보
-								)
-						.hasAnyAuthority(
-								RoleType.TUTOR.getCode() 
-								)
 						// [3] 데스크
 						// [4] 원장
 						// [5] 직원
@@ -135,6 +132,13 @@ public class SecurityConfiguration {
 						)
 						.hasAnyAuthority(
 								RoleType.TUTOR.getCode(), 
+								RoleType.DESK.getCode(),
+								RoleType.ADMIN.getCode()
+						)
+						.requestMatchers(
+								"/api/admin/employee/**"
+						)
+						.hasAnyAuthority(
 								RoleType.DESK.getCode(),
 								RoleType.ADMIN.getCode()
 						)
