@@ -21,4 +21,15 @@ public interface QuestionDao {
     void connect(int questionNo, int attachNo);
     // 특정 문제의 첨부파일 번호 목록 조회
     List<Integer> selectFiles(int questionNo);
+    // 문제 순서 중복 확인
+    int countByExamOrder(
+            int examNo,
+            int questionOrder
+    );
+    
+    int countByExamOrderExcludeSelf(
+            int examNo,
+            int questionOrder,
+            int questionNo
+    );
 }

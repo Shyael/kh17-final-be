@@ -19,4 +19,15 @@ public interface QuestionOptionDao {
     boolean delete(int optionNo);
     // 특정 문제의 보기 전체 삭제
     boolean deleteByQuestion(int questionNo);
+    //보기 순서 확인
+    int countByQuestionOrder(
+            int questionNo,
+            int optionOrder
+    );
+    //본인 제외 보기 순서 확인
+    int countByQuestionOrderExcludeSelf(
+            int questionNo,
+            int optionOrder,
+            int optionNo
+    );
 }

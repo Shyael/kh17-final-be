@@ -68,4 +68,26 @@ public class QuestionDaoMybatis implements QuestionDao {
     public List<Integer> selectFiles(int questionNo) {
         return sqlSession.selectList("mapper.question.selectFiles",questionNo);
     }
+
+    @Override
+    public int countByExamOrder(int examNo, int questionOrder) {
+        Map<String, Object> params = Map.of(
+                "examNo", examNo,
+                "questionOrder", questionOrder
+        );
+        
+        return sqlSession.selectOne("mapper.question.countByExamOrder", params);
+    }
+
+    @Override
+    public int countByExamOrderExcludeSelf(int examNo, int questionOrder, int questionNo) {
+
+        Map<String, Object> params = Map.of(
+                "examNo", examNo,
+                "questionOrder", questionOrder,
+                "questionNo", questionNo
+        );
+
+        return sqlSession.selectOne("mapper.question.countByExamOrderExcludeSelf",params);
+    }
 }

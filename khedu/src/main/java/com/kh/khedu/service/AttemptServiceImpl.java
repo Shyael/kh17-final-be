@@ -1,15 +1,20 @@
 package com.kh.khedu.service;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.khedu.dao.AttemptDao;
+import com.kh.khedu.dao.ExamDao;
 import com.kh.khedu.dto.AttemptDto;
 import com.kh.khedu.error.AlreadyExistsException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.vo.exam.StudentExamDetailVO;
 
 @Service
 @Transactional
@@ -17,24 +22,55 @@ public class AttemptServiceImpl implements AttemptService {
 
     @Autowired
     private AttemptDao attemptDao;
+    @Autowired
+    private ExamDao examDao;
 
     // 시험 응시 시작
     @Override
     public int insert(AttemptDto attemptDto) {
+    	int examNo = attemptDto.getExamNo();
+    	int studentNo = attemptDto.getStudentNo();
+    	
+    	//학생이 접근 가능한 시험인지 확인
+    	StudentExamDetailVO exam = 
+    			examDao.selectDetailByStudent(examNo, studentNo);
+    	
+    	if(exam == null) {
+    		throw new TargetNotfoundException();
+    	}
+    	
+    	//공개된 시험인지 확인
+    	if(!"공개".equals(exam.getExamStatus())) {
+    		throw new ResponseStatusException(
+    				HttpStatus.BAD_REQUEST,
+    				"응시할 수 없는 시험입니다."
+    		);
+    	}
+    	
+    	Timestamp now = new Timestamp(System.currentTimeMillis());
 
-        // 동일한 시험에 이미 응시한 기록이 있는지 확인
-        AttemptDto findAttempt =
-                attemptDao.selectOneByExamStudent(
-                        attemptDto.getExamNo(),
-                        attemptDto.getStudentNo()
-                );
+    	//시험 시작 전
+    	if (now.before(exam.getExamStart())) {
+    		throw new ResponseStatusException(
+    				HttpStatus.BAD_REQUEST,
+    				"아직 시험 응시 시간이 아닙니다."
+    		);
+    	}
+    	
+    	//시험 종료
+    	if(!now.before(exam.getExamEnd())) {
+    		throw new ResponseStatusException(
+    				HttpStatus.BAD_REQUEST,
+    				"시험 응시 시간이 종료되었습니다."
+    		);
+    	}
+    	
+    	//이미 응시한 시험인지 확인
+    	AttemptDto findDto = attemptDao.selectOneByExamStudent(examNo, studentNo);
 
-        if (findAttempt != null) {
-            throw new AlreadyExistsException(
-                    "이미 응시한 시험입니다."
-            );
-        }
-
+    	if(findDto != null) {
+    		throw new AlreadyExistsException();
+    	}
         // 응시 번호 생성
         int attemptNo = attemptDao.sequence();
         attemptDto.setAttemptNo(attemptNo);
