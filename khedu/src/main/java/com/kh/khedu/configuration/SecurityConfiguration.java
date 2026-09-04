@@ -97,12 +97,20 @@ public class SecurityConfiguration {
 							,"/service/auth/logout" //로그아웃 페이지
 							,"/service/auth/refresh" //로그인 갱신페이지
 							,"/api/account/find-id" //아이디
-							,"/api/account/find-password" //비밀번호 찾기
+							,"/api/account/find-password"//비밀번호 찾기
 						).permitAll()
 						
+
+						//임시 전부 공개화면 
+						.requestMatchers(
+								"/api/employee/**" // 원장, 데스크만 접근 가능하게
+						).permitAll()
+
 						//cert service
 						.requestMatchers("/service/cert/**").permitAll()
 						
+						//계약 관련(임시)
+						.requestMatchers("/api/contract/**").permitAll()
 						//공개 화면
 						.requestMatchers(
 							"/academy/**",
@@ -129,6 +137,7 @@ public class SecurityConfiguration {
 						// [5] 직원
 						.requestMatchers(
 								"/api/employee/**"
+								,"/api/attendance/**"//근태관련
 						)
 						.hasAnyAuthority(
 								RoleType.TUTOR.getCode(), 

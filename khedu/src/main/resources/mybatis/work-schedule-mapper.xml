@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.workSchedule">
+	<select id="workScheduleSequence" resultType="long">
+		select
+		work_schedule_seq.nextval from dual
+	</select>
+
+	<insert id="workScheduleAdd">
+
+		insert into employee_work_schedule(
+		work_schedule_no,
+		contract_no,
+		scheduled_work_date,
+		scheduled_clock_in,
+		scheduled_clock_out,
+		scheduled_day_type,
+		actual_work_hours,
+		actual_overtime_hours,
+		actual_night_hours,
+		actual_holiday_hours
+		)
+		values(
+		#{workScheduleNo},
+		#{contractNo},
+		#{scheduledWorkDate},
+		#{scheduledClockIn},
+		#{scheduledClockOut},
+		#{scheduledDayType},
+		0,
+		0,
+		0,
+		0
+		)
+
+	</insert>
+
+
+	<update id="workScheduleUpdate">
+		update employee_work_schedule
+
+		<set>
+
+			<if test="scheduledWorkDate != null">
+				scheduled_work_date = #{scheduledWorkDate},
+			</if>
+
+			<choose>
+
+				<!-- 휴무일로 변경 -->
+				<when
+					test='scheduledDayType != null and scheduledDayType == "dayOff"'>
+
+					scheduled_day_type = #{scheduledDayType},
+					scheduled_clock_in = null,
+					scheduled_clock_out = null,
+
+				</when>
+
+				<!-- 근무일 / 휴일 -->
+				<otherwise>
+
+					<if test="scheduledClockIn != null">
+						scheduled_clock_in = #{scheduledClockIn},
+					</if>
+
+					<if test="scheduledClockOut != null">
+						scheduled_clock_out = #{scheduledClockOut},
+					</if>
+
+					<if test="scheduledDayType != null">
+						scheduled_day_type = #{scheduledDayType},
+					</if>
+
+				</otherwise>
+
+			</choose>
+
+			<if test="actualWorkHours != null">
+				actual_work_hours = #{actualWorkHours},
+			</if>
+
+			<if test="actualOvertimeHours != null">
+				actual_overtime_hours = #{actualOvertimeHours},
+			</if>
+
+			<if test="actualNightHours != null">
+				actual_night_hours = #{actualNightHours},
+			</if>
+
+			<if test="actualHolidayHours != null">
+				actual_holiday_hours = #{actualHolidayHours},
+			</if>
+
+		</set>
+
+		where work_schedule_no = #{workScheduleNo}
+
+	</update>
+
+	<!-- 직원의 특정 날짜 근무 일정 조회 -->
+	<select id="findTheWorkDay" resultType="EmployeeWorkScheduleDto">
+
+		select
+		S.*
+
+		from employee_work_schedule S
+
+		inner join employment_contract C
+		on S.contract_no
+		= C.contract_no
+
+		where C.employee_no
+		= #{employeeNo}
+
+		and S.scheduled_work_date
+		= #{scheduledWorkDate}
+
+	</select>
+
+	<!-- 직원 기간별 근무 일정 조회 -->
+	<select id="workScheduleSearch"
+		resultType="WorkScheduleResponseVO">
+
+		select
+		S.scheduled_work_date,
+		S.scheduled_clock_in,
+		S.scheduled_clock_out,
+		S.scheduled_day_type,
+
+		A.attendance_type,
+		A.clock_in,
+		A.clock_out,
+		S.actual_work_hours,
+		S.actual_overtime_hours,
+		S.actual_night_hours,
+		S.actual_holiday_hours
+
+		from employee_work_schedule S
+
+		inner join employment_contract C
+		on S.contract_no = C.contract_no
+
+		left join employee_attendance A
+		on S.contract_no = A.contract_no
+		and S.scheduled_work_date = A.work_date
+
+		where C.employee_no = #{employeeNo}
+
+		and S.scheduled_work_date
+            <![CDATA[ >= ]]>
+		#{startDate}
+
+		and S.scheduled_work_date
+            <![CDATA[ < ]]>
+		#{endDate}
+
+		order by S.scheduled_work_date asc
+
+	</select>
+
+
+	<!-- 근무 일정 번호 기준 조회 -->
+	<select id="findWorkScheduleByNo"
+		resultType="EmployeeWorkScheduleDto">
+
+		select *
+		from employee_work_schedule
+		where work_schedule_no = #{workScheduleNo}
+
+	</select>
+
+
+	<!-- 예정 퇴근시간이 지났지만 근태가 없는 근무일 조회 -->
+	<select id="findAutoAbsentTarget"
+        resultType="EmployeeWorkScheduleDto">
+
+    select
+        S.work_schedule_no,
+        S.contract_no,
+        S.scheduled_work_date,
+        S.scheduled_clock_in,
+        S.scheduled_clock_out,
+        S.scheduled_day_type,
+        S.actual_work_hours,
+        S.actual_overtime_hours,
+        S.actual_night_hours,
+        S.actual_holiday_hours
+
+    from employee_work_schedule S
+
+    left join employee_attendance A
+        on A.contract_no = S.contract_no
+        and A.work_date = S.scheduled_work_date
+
+    where S.scheduled_day_type = 'workday'
+
+        and S.scheduled_clock_out is not null
+
+        and S.scheduled_clock_out
+            <![CDATA[ < ]]>
+            #{now}
+
+        and A.emp_attendance_no is null
+
+    order by S.scheduled_work_date asc
+
+</select>
+
+	<select id="isExist" resultType="EmployeeWorkScheduleDto">
+
+		select S.*
+		from employee_work_schedule S
+		inner join employment_contract C
+		on S.contract_no = C.contract_no
+
+		where C.employee_no = #{employeeNo}
+		and S.scheduled_work_date =#{scheduledWorkDate}
+
+	</select>
+
+	<select id="findByContract" resultType="EmployeeWorkScheduleDto">
+
+		select *
+		from employee_work_schedule
+		where contract_no = #{contractNo}
+		and scheduled_work_date = #{scheduledWorkDate}
+
+	</select>
+
+
+</mapper>
