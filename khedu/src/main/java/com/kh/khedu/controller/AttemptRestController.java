@@ -74,13 +74,14 @@ public class AttemptRestController {
     }
 
 
-    // 시험 제출
-    @Operation(summary = "시험 제출")
-    @ApiResponse(responseCode = "200", description = "시험 제출 성공")
+ // 시험 최종 제출
+    @Operation(summary = "시험 최종 제출")
     @PutMapping("/{attemptNo}/submit")
-    public boolean submit(@PathVariable int attemptNo, @RequestBody AttemptDto attemptDto) {
-        attemptDto.setAttemptNo(attemptNo);
-        return attemptService.submit(attemptDto);
+    public boolean submit(
+            @PathVariable int attemptNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+
+        return attemptService.submit(attemptNo,parseVO.getNoType());
     }
 
 

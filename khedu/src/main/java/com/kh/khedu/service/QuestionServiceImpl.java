@@ -48,6 +48,9 @@ public class QuestionServiceImpl implements QuestionService {
     @Autowired
     private ExamDao examDao;
     
+    @Autowired
+    private AttemptService attemptService;
+    
     //공통 메서드
     private ExamDto checkEditableExam(int examNo, int employeeNo, boolean tutor) {
         ExamDto exam = examDao.selectOne(examNo);
@@ -158,23 +161,13 @@ public class QuestionServiceImpl implements QuestionService {
     //학생용 문제 조회 구현
     @Override
 	public List<StudentQuestionVO> selectListByAttempt(int attemptNo, int studentNo) {
-    	// 1. 응시정보 확인
-        AttemptDto attempt = attemptDao.selectOne(attemptNo);
+    	
+    	AttemptDto attempt = attemptService.checkAvailableAttempt(attemptNo, studentNo);
 
         if (attempt == null) {
             throw new TargetNotfoundException();
         }
-
-        // 2. 본인 응시인지 확인
-        if (attempt.getStudentNo() != studentNo) {
-            throw new GetOutException();
-        }
-
-        // 3. 이미 제출한 시험이면 응시화면 접근 금지
-        if ("제출완료".equals(attempt.getAttemptStatus())) {
-            throw new GetOutException();
-        }
-
+        
         // 4. 해당 시험 문제 목록
         List<QuestionDto> questionList = questionDao.selectListByExam(attempt.getExamNo());
 

@@ -1,6 +1,7 @@
 package com.kh.khedu.dto;
 
-import java.security.Timestamp;
+
+import java.sql.Timestamp;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

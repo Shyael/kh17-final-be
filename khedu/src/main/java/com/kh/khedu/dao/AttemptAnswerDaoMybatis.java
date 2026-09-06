@@ -53,4 +53,17 @@ public class AttemptAnswerDaoMybatis
     public boolean deleteByAttempt(int attemptNo) {
         return sqlSession.delete("mapper.attemptAnswer.deleteByAttempt", attemptNo) > 0;
     }
+    
+    @Override
+    public boolean updateCorrect(
+            int attemptNo,
+            int questionNo,
+            String isCorrect) {
+        Map<String, Object> params = Map.of(
+                "attemptNo", attemptNo,
+                "questionNo", questionNo,
+                "isCorrect", isCorrect
+        );
+        return sqlSession.update("mapper.attemptAnswer.updateCorrect",params) > 0;
+        }
 }

@@ -17,4 +17,10 @@ public interface AttemptAnswerDao {
     boolean delete(int attemptNo,int questionNo);
     // 특정 응시의 전체 답안 삭제
     boolean deleteByAttempt(int attemptNo);
+    //답안 채점 결과 저장
+    boolean updateCorrect(
+            int attemptNo,
+            int questionNo,
+            String isCorrect
+    );
 }

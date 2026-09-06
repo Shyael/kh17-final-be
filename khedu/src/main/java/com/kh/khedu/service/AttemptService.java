@@ -19,9 +19,17 @@ public interface AttemptService {
     // 특정 학생의 전체 응시 목록 조회
     List<AttemptDto> selectListByStudent(int studentNo);
     // 시험 제출
-    boolean submit(AttemptDto attemptDto);
+    boolean submit(
+            int attemptNo,
+            int studentNo
+    );
     // 응시 상태 수정
     boolean updateStatus(AttemptDto attemptDto);
     // 응시 삭제
     boolean delete(int attemptNo);
+    //응시 가능 시간 + 개인 제한시간 검사
+    AttemptDto checkAvailableAttempt(
+            int attemptNo,
+            int studentNo
+    );
 }
