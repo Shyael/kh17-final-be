@@ -2,10 +2,14 @@ package com.kh.khedu.service;
 
 import java.util.List;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kh.khedu.dao.CourseDao;
+import com.kh.khedu.dto.CourseDto;
+import com.kh.khedu.enums.AccountType;
+import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
 import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseListVO;
@@ -24,10 +28,18 @@ public class CourseServiceImpl implements CourseService {
 			CourseCreateRequestVO request) {
 		
 		//(+추가) 해당 권한자 인지 조회 : 강사, 데스크, 원장
+		if(parseVO.getAccountType() != AccountType.EMPLOYEE.getDescription()) {
+			throw new WhoAreYouException();
+		}
 		
+		//[1] 강의 정보 등록
+		CourseDto courseDto = new CourseDto();
+		BeanUtils.copyProperties(request, courseDto);
 		int courseNo = courseDao.sequence();
-		request.setCourseNo(courseNo);
-		courseDao.insertCourse(request);
+		
+		courseDto.setCourseNo(courseNo);
+		
+		courseDao.insertCourse(courseDto);
 	}
 
 	//강좌 목록

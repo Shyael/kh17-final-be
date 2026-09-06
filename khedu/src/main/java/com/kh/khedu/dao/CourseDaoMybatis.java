@@ -29,8 +29,8 @@ public class CourseDaoMybatis implements CourseDao {
 	}
 	
 	@Override
-	public void insertCourse(CourseCreateRequestVO request) {
-		sqlSession.insert("mapper.course.add", request);
+	public void insertCourse(CourseDto courseDto) {
+		sqlSession.insert("mapper.course.add", courseDto);
 	}
 	
 	//강좌 목록
