@@ -9,17 +9,17 @@ public interface PayrollService {
 
 	// 직원 + 연월 급여 최초 계산
 	void calculate(
-			long employeeNo,
+			int employeeNo,
 			int payrollYear,
 			int payrollMonth
 	);
 
-//	// 직원 + 연월 급여 재계산
-//	void recalculate(
-//			long employeeNo,
-//			int payrollYear,
-//			int payrollMonth
-//	);
+	// 직원 + 연월 급여 재계산
+	void recalculate(
+			long employeeNo,
+			int payrollYear,
+			int payrollMonth
+);
 //
 //	// 직원 + 연월 급여 상세 조회
 //	PayrollDto findByEmployeeAndPeriod(

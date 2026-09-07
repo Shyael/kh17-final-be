@@ -671,6 +671,18 @@
 </select>
 
 
+<!-- 급여 공제 수정 -->
+<update id="deductionUpdate">
+	update payroll_deduction
+	set base_amount = #{baseAmount},
+		deduction_rate = #{deductionRate},
+		fixed_deduction_amount = #{fixedDeductionAmount},
+		deduction_amount = #{deductionAmount},
+		deduction_basis_year = #{deductionBasisYear},
+		deduction_note = #{deductionNote}
+	where deduction_no = #{deductionNo}
+</update>
+
 <!-- ======================== 급여 지급 ======================== -->
 
 <!-- 지급내역번호 생성 -->
