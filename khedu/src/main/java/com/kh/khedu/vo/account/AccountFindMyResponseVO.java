@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 @Schema(name= "계정 조회 응답용 데이터")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class AccountFindResponseVO {
+public class AccountFindMyResponseVO {
 	private int accountNo;
 	private String accountId; //이메일
 	private String accountName;

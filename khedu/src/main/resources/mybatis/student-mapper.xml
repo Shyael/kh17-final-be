@@ -29,5 +29,96 @@
 			#{studentEtc}
 		)
 	</insert>
+	<!-- no로 학생정보 조회 -->
+	<select id="findByAccountNo" resultType="StudentDto">
+		select * from student where account_no = #{accountNo}
+	</select>
+	<!-- 수정 -->
+	<update id="updateAll">
+		update student
+		set student_school = #{studentSchool},
+			student_grade = #{studentGrade},
+			student_utime = systimestamp
+		where account_no = #{accountNo}
+	</update>
+	
+	<!-- 학생 목록 전체 조회 (Account 테이블과 JOIN) -->
+	<select id="list" resultType="com.kh.khedu.vo.student.StudentListResponseVO">
+	    select 
+	        S.student_no as studentNo,
+	        A.account_name as studentName,       <!-- 계정 테이블의 이름을 가져와서 VO의 studentName에 매핑 -->
+	        S.student_school as studentSchool,
+	        S.student_grade as studentGrade,
+	        S.student_academic_status as studentAcademicStatus,
+	        
+	        <!-- 통계 및 집계 데이터는 테이블이 완성되기 전까지 임시(더미) 데이터로 채워둡니다 -->
+	        100 as attendanceRate, 
+	        0 as unpaidAmount,
+	        '안전' as riskLevel
+	    from 
+	        student S
+	    inner join 
+	        account A ON S.account_no = A.account_no
+	    order by 
+	        S.student_no desc <!-- 최신 등록된 학생이 먼저 보이도록 내림차순 정렬 -->
+	</select>
+	
+	<!-- 학생 상세 정보 조회 -->
+    <select id="detail" resultType="com.kh.khedu.vo.student.StudentDetailResponseVO">
+        select 
+            S.student_no as studentNo,
+            S.account_no as accountNo, 
+            A.account_name as studentName,
+            A.account_phone as studentPhone,
+            A.account_id as studentEmail,
+            S.student_school as studentSchool,
+            S.student_grade as studentGrade,
+            S.student_gender as studentGender,
+            S.student_etc as studentEtc,
+            S.student_academic_status as studentAcademicStatus,
+            
+            -- DB에 아직 없는 테이블의 정보는 임시 가짜 데이터로 채웁니다.
+            '김보호' as guardianName,
+            '010-9999-8888' as guardianPhone,
+            'parent@test.com' as guardianEmail,
+            '서울시 마포구 백범로 23' as address,
+            350000 as tuition,
+            1 as isPaid
+        from 
+            student S
+        inner join 
+            account A on S.account_no = A.account_no
+        where 
+            S.student_no = #{studentNo} <!-- 전달받은 학생 번호로 1명만 검색 -->
+    </select>
+    
+    <!-- account 테이블 정보 수정 -->
+    <update id="updateAccountInfo">
+        update account 
+        set 
+            account_phone = #{studentPhone},
+            account_id = #{studentEmail}
+        where 
+            account_no = #{accountNo}
+    </update>
+
+    <!-- student 테이블 정보 수정 -->
+    <update id="updateStudentInfo">
+        update student
+        set 
+            student_school = #{studentSchool},
+            student_grade = #{studentGrade},
+            student_gender = #{studentGender},
+            student_etc = #{studentEtc}
+        where 
+            student_no = #{studentNo}
+    </update>
+    
+    <!-- 학생 재원 승인 (대기 -> 재원) -->
+    <update id="approveStudent">
+        update student 
+        set student_academic_status = '재원' 
+        where student_no = #{studentNo}
+    </update>
 	
 </mapper>

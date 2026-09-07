@@ -11,9 +11,5 @@ import lombok.Data;
 public class ChangeEmployeeRequestVO {
 	private String accountName;
 	private String accountPhone;
-	private String accountStatus; //Y,N
-	private String acocuntType; //학생/학부모/관리자
-   
-	// role
-    private String roleName;
+	private String accountBirth;
 }

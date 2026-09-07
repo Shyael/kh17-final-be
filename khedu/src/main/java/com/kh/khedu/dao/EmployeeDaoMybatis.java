@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.EmployeeDto;
+import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
+import com.kh.khedu.vo.admin.employee.AdminEmployeeListVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeSearchByNameVO;
 import com.kh.khedu.vo.employee.EmployeeVO;
@@ -49,6 +51,14 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 	@Override
 	public List<EmployeeSearchByNameVO> searchByName(String accountName){
 		return sqlSession.selectList("mapper.employee.searchByName",accountName);
+	}
+	@Override
+	public List<AdminEmployeeListVO> selectAdminEmployeeList() {
+		return sqlSession.selectList("mapper.employee.selectAdminEmployeeList");
+	}
+	@Override
+	public AdminEmployeeDetailVO selectAdminEmployeeDetailByEmployeeNo(int employeeNo) {
+		return sqlSession.selectOne("mapper.employee.selectAdminEmployeeDetailByEmployeeNo", employeeNo);
 	}
 	
 	

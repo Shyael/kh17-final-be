@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.academySubject">
+
+	<!-- 학원 과목 번호 생성 -->
+	<select id="sequence" resultType="int">
+		select academy_subject_seq.nextval from dual
+	</select>
+
+	<!-- 학원 과목 등록 -->
+	<insert id="insert">
+		insert into academy_subject(
+			academy_subject_no,
+			academy_no,
+			academy_subject_name
+		)
+		values(
+			#{academySubjectNo},
+			#{academyNo},
+			#{academySubjectName}
+		)
+	</insert>
+
+	<!-- 학원별 과목 목록 -->
+	<select id="selectList" resultType="AcademySubjectDto">
+		select *
+		from academy_subject
+		where academy_no = #{academyNo}
+		order by academy_subject_no asc
+	</select>
+
+	<!-- 과목 상세 -->
+	<select id="selectOne" resultType="AcademySubjectDto">
+		select *
+		from academy_subject
+		where academy_subject_no = #{academySubjectNo}
+	</select>
+
+	<!-- 과목 수정 -->
+	<update id="update">
+		update academy_subject
+		set
+			academy_subject_name = #{academySubjectName}
+		where academy_subject_no = #{academySubjectNo}
+	</update>
+
+	<!-- 과목 삭제 -->
+	<delete id="delete">
+		delete from academy_subject
+		where academy_subject_no = #{academySubjectNo}
+	</delete>
+
+</mapper>

@@ -70,4 +70,16 @@ public class AccountDaoMybatis implements AccountDao {
 	public AccountDto selectOneByAccountNo(int accountNo) {
 		return sqlSession.selectOne("mapper.account.findFromNo", accountNo);
 	}
+	
+	
+	//수정
+	@Override
+	public boolean updateAll(AccountDto accountDto) {
+		return sqlSession.update("mapper.account.updateAll", accountDto) > 0;
+	}
+
+	@Override
+	public String selectOneByStudentNo(int studentNo) {
+		return sqlSession.selectOne("mapper.account.findAccountNameByStudentNo", studentNo);
+	}
 }

@@ -8,13 +8,14 @@ import org.springframework.stereotype.Service;
 
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.AccountRolesDao;
+import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dto.AccountDto;
-import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.account.AccountTypeNoVO;
 import com.kh.khedu.vo.auth.AuthLoginRequestVO;
 import com.kh.khedu.vo.auth.AuthLoginResponseVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentDetailVO;
 
 //인증과 관련된 복잡한 작업들을 모듈화 하여 처리하기 위한 서비스
 @Service
@@ -25,6 +26,8 @@ public class AuthService {
 	private AccountRolesDao accountRolesDao;
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+	@Autowired
+	private ParentStudentDao parentStudentDao;
 	
 	//로그인 처리
 	public AuthLoginResponseVO login(AuthLoginRequestVO request) {
@@ -74,7 +77,8 @@ public class AuthService {
 		//accountNo를 토대로 typeNo가져오기
 		AccountTypeNoVO accountTypeNoVO = accountDao.selectTypeNo(accountDto.getAccountNo());
 		Integer typeNo = null;
-
+		List<ParentStudentDetailVO> children = null;
+		
 		if ("직원".equals(accountTypeNoVO.getAccountType())) {
 		    typeNo = accountTypeNoVO.getEmployeeNo();
 		}
@@ -83,7 +87,10 @@ public class AuthService {
 		}
 		else if ("학부모".equals(accountTypeNoVO.getAccountType())) {
 		    typeNo = accountTypeNoVO.getParentNo();
+		    //학부모일 경우 자녀 목록까지 넘기기
+		    children = parentStudentDao.selectStudentListByParentNo(typeNo);
 		}
+		
 		
 		//로그인 성공
 		return AuthLoginResponseVO.builder()
@@ -93,6 +100,7 @@ public class AuthService {
 				.accountType(accountDto.getAccountType())
 				.typeNo(typeNo)
 				.roleNames(roleNames)
+				.children(children)
 			.build();
 	}
 }

@@ -1,5 +1,6 @@
 package com.kh.khedu.service;
 
+import java.security.SecureRandom;
 import java.util.Random;
 
 import org.springframework.stereotype.Service;
@@ -98,5 +99,20 @@ public class RandomService {
 	    }
 
 	    return buffer.toString();
+	}
+	
+	// 연동 코드 생성
+	public String generateLinkCode() {
+		String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+		SecureRandom RANDOM = new SecureRandom();
+
+		StringBuilder code = new StringBuilder();
+		
+		for(int i = 0; i < 6; i++) {
+	        int index = RANDOM.nextInt(chars.length());
+	        code.append(chars.charAt(index));
+	    }
+		
+		return code.toString();
 	}
 }

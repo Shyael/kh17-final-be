@@ -72,12 +72,16 @@ public class SecurityConfiguration {
 					.requestMatchers(
 						// 무조건 허용
 							"/active"  //체크용 페이지 허용
-							,"/swagger-ui.html"
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
+							,"/api/admin/employee/**"
 						).permitAll()
 						
-						
+						//직원(학원 정보 수정)
+						.requestMatchers("/api/academy/**").permitAll()
+						.requestMatchers("/api/employe/**").permitAll()
+						//직원(강사 정보 수정)
+						.requestMatchers("/api/tutor/**").permitAll() 
 						//메소드(crud) 중 일부 메소드만 허용하고 싶은경우 아래와 같이 추가
 						//예시
 						//.requestMatchers(HttpMethod.POST, "/api/lecture").authenticated()
@@ -85,7 +89,7 @@ public class SecurityConfiguration {
 						
 						//임시 전부 공개화면 
 //						.requestMatchers(
-//								
+//							
 //						).permitAll()
 					
 						//auth service
@@ -114,7 +118,7 @@ public class SecurityConfiguration {
 							"/api/student/**",
 							"/api/parent/**"
 						).permitAll() 
-						
+					
 						// 조건부 허용(내가 만든 요소들)
 						
 						// [1] 회원
@@ -129,13 +133,6 @@ public class SecurityConfiguration {
 								RoleType.DESK.getCode(),
 								RoleType.ADMIN.getCode()
 						)
-						// [2] 강사
-						.requestMatchers(
-								"/api/employee/me" // 직원 내정보
-								)
-						.hasAnyAuthority(
-								RoleType.TUTOR.getCode() 
-								)
 						// [3] 데스크
 						// [4] 원장
 						// [5] 직원
@@ -145,6 +142,13 @@ public class SecurityConfiguration {
 						)
 						.hasAnyAuthority(
 								RoleType.TUTOR.getCode(), 
+								RoleType.DESK.getCode(),
+								RoleType.ADMIN.getCode()
+						)
+						.requestMatchers(
+								"/api/admin/employee/**"
+						)
+						.hasAnyAuthority(
 								RoleType.DESK.getCode(),
 								RoleType.ADMIN.getCode()
 						)
@@ -194,7 +198,7 @@ public class SecurityConfiguration {
 		//[1] 허용되는 접근 대상을 지정 (allow origins or pattern)
 		config.setAllowedOrigins(List.of(
 			// 여기에 운영주소 넣어주면됨
-			"http://localhost:5173" 
+			"http://localhost:5173"
 		));
 		//[2] 허용할 HTTP 메소드 설정
 		config.setAllowedMethods(List.of(

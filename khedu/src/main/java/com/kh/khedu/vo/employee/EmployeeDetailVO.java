@@ -9,7 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Schema(name="직원 정보 조회용")
+@Schema(name="직원 개인정보 조회용")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class EmployeeDetailVO {
 	// employee
@@ -20,11 +20,9 @@ public class EmployeeDetailVO {
     private Timestamp accountUtime;
     private int accountNo;
     private String accountId;
+    private String accountBirth;
     private String accountName;
     private String accountPhone;
     private String accountStatus;
     private String accountType;
-    
-    // role
-    private List<String> roleName;
 }
