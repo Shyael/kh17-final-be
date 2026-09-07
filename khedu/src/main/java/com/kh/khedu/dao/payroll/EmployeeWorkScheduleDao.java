@@ -37,5 +37,11 @@ public interface EmployeeWorkScheduleDao {
 	EmployeeWorkScheduleDto findByContract(
 	        long contractNo,
 	        Timestamp scheduledWorkDate);
+	
+	List<EmployeeWorkScheduleDto> findByPeriod(
+	        long employeeNo,
+	        Timestamp startDate,
+	        Timestamp endDate
+	);
 
 }

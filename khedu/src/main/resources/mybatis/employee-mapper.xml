@@ -170,5 +170,12 @@
       and employee_htime is null
 
 </update>
+
+<!-- 직원 고용일자 조회 -->
+<select id="findEmploymentDate" resultType="timestamp">
+	select employee_htime
+	from employee
+	where employee_no = #{employeeNo}
+</select>
 	
 </mapper>

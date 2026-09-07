@@ -29,6 +29,7 @@
 		payday,
 		contract_status,
 		contract_content
+		weekly_holilday_day
 		)
 		values(
 		#{contractNo},
@@ -42,7 +43,8 @@
 		#{contractEnd},
 		#{payday},
 		#{contractStatus},
-		#{contractContent}
+		#{contractContent},
+		#{weekly_holiday_day}
 		)
 	</insert>
 
@@ -204,6 +206,10 @@
 			<if test="writtenBreakMinutes != null">
 				written_break_minutes = #{writtenBreakMinutes}
 			</if>
+			
+			<if test="weeklyHolidayDay != null">
+				weekly_holiday_day = #{weeklyHolidayDay}
+			</if>
 		</set>
 
 		where contract_no = #{contractNo}
@@ -235,6 +241,7 @@
         contract_end = #{contractEnd},
         payday = #{payday},
         contract_content = #{contractContent}
+        weekly_holiday_day=#{weeklyHolidayDay}
 
     where contract_no = #{contractNo}
       and signed_time is null
@@ -398,6 +405,21 @@
 		where rownum = 1
 
 	</select>
+	
+	
+	<select id="findContractListByEmployeeAndPeriod" resultType = "ContractDto">
+	
+	select *
+	from employement_contract
+	and employee_no = #{employeeNo}
+	and contract_start <![CDATA[<]]>#{endDate}
+
+  	and (
+        contract_end is null
+        or contract_end >= #{startDate}
+      )
+	
+	</select>
 
 	<select id="findContractByEmployeeNo" resultType="ContractDto">
 
@@ -494,6 +516,240 @@
 </select>
 
 
+
+
+
+
+<!-- ======================== 급여 ======================== -->
+
+<!-- 급여번호 생성 -->
+<select id="payrollSequence" resultType="long">
+	select payroll_seq.nextval from dual
+</select>
+
+<!-- 직원 + 연도 + 월을 이용해 급여 조회 -->
+<select id="payrollFindByEmployeeAndPeriod"
+		resultType="PayrollDto">
+	select *
+	from payroll
+	where employee_no = #{employeeNo}
+		and payroll_year = #{payrollYear}
+		and payroll_month = #{payrollMonth}
+</select>
+
+<!-- 급여 등록 -->
+<insert id="payrollAdd">
+	insert into payroll (
+		payroll_no,
+		employee_no,
+		payroll_year,
+		payroll_month,
+		total_work_hours,
+		total_overtime_hours,
+		total_night_hours,
+		total_holiday_hours,
+		base_pay,
+		week_holiday_pay,
+		overtime_pay,
+		night_pay,
+		holiday_pay,
+		gross_pay,
+		total_deduction,
+		net_pay,
+		payroll_status,
+		calculated_at,
+		confirmed_at
+	)
+	values (
+		#{payrollNo},
+		#{employeeNo},
+		#{payrollYear},
+		#{payrollMonth},
+		#{totalWorkHours},
+		#{totalOvertimeHours},
+		#{totalNightHours},
+		#{totalHolidayHours},
+		#{basePay},
+		#{weekHolidayPay},
+		#{overtimePay},
+		#{nightPay},
+		#{holidayPay},
+		#{grossPay},
+		#{totalDeduction},
+		#{netPay},
+		#{payrollStatus},
+		#{calculatedAt},
+		#{confirmedAt}
+	)
+</insert>
+
+<!-- 급여번호를 이용해 급여 조회 -->
+<select id="payrollFind"
+		resultType="PayrollDto">
+	select *
+	from payroll
+	where payroll_no = #{payrollNo}
+</select>
+
+<!-- 계산된 급여결과 수정 -->
+<update id="payrollUpdateCalculation">
+	update payroll
+	set total_work_hours = #{totalWorkHours},
+		total_overtime_hours = #{totalOvertimeHours},
+		total_night_hours = #{totalNightHours},
+		total_holiday_hours = #{totalHolidayHours},
+		base_pay = #{basePay},
+		week_holiday_pay = #{weekHolidayPay},
+		overtime_pay = #{overtimePay},
+		night_pay = #{nightPay},
+		holiday_pay = #{holidayPay},
+		gross_pay = #{grossPay},
+		total_deduction = #{totalDeduction},
+		net_pay = #{netPay},
+		calculated_at = #{calculatedAt}
+	where payroll_no = #{payrollNo}
+</update>
+
+<!-- 급여상태 변경 -->
+<update id="payrollChangeStatus">
+	update payroll
+	set payroll_status = #{payrollStatus},
+		confirmed_at = #{confirmedAt}
+	where payroll_no = #{payrollNo}
+</update>
+
+<!-- 직원번호를 이용해 급여목록 조회 -->
+<select id="payrollFindAllByEmployee"
+		resultType="PayrollDto">
+	select *
+	from payroll
+	where employee_no = #{employeeNo}
+	order by payroll_year desc, payroll_month desc
+</select>
+
+
+<!-- ======================== 급여 공제 ======================== -->
+
+<!-- 공제번호 생성 -->
+<select id="deductionSequence" resultType="long">
+	select payroll_deduction_seq.nextval from dual
+</select>
+
+<!-- 공제항목 등록 -->
+<insert id="deductionAdd">
+	insert into payroll_deduction (
+		deduction_no,
+		payroll_no,
+		deduction_type,
+		base_amount,
+		deduction_rate,
+		fixed_deduction_amount,
+		deduction_amount,
+		deduction_basis_year,
+		deduction_note
+	)
+	values (
+		#{deductionNo},
+		#{payrollNo},
+		#{deductionType},
+		#{baseAmount},
+		#{deductionRate},
+		#{fixedDeductionAmount},
+		#{deductionAmount},
+		#{deductionBasisYear},
+		#{deductionNote}
+	)
+</insert>
+
+<!-- 급여번호를 이용해 공제목록 조회 -->
+<select id="deductionFindAllByPayroll"
+		resultType="PayrollDeductionDto">
+	select *
+	from payroll_deduction
+	where payroll_no = #{payrollNo}
+	order by deduction_no
+</select>
+
+
+<!-- ======================== 급여 지급 ======================== -->
+
+<!-- 지급내역번호 생성 -->
+<select id="paymentSequence" resultType="long">
+	select payroll_payment_seq.nextval from dual
+</select>
+
+<!-- 지급 / 취소 이력 등록 -->
+<insert id="paymentAdd">
+	insert into payroll_payment (
+		payroll_payment_no,
+		payroll_no,
+		payment_amount,
+		payment_at,
+		payment_method,
+		payment_note,
+		payment_status,
+		cancel_target_payment_no
+	)
+	values (
+		#{payrollPaymentNo},
+		#{payrollNo},
+		#{paymentAmount},
+		#{paymentAt},
+		#{paymentMethod},
+		#{paymentNote},
+		#{paymentStatus},
+		#{cancelTargetPaymentNo}
+	)
+</insert>
+
+<!-- 지급내역번호를 이용해 지급내역 조회 -->
+<select id="paymentFind"
+		resultType="PayrollPaymentDto">
+	select *
+	from payroll_payment
+	where payroll_payment_no = #{payrollPaymentNo}
+</select>
+
+<!-- 급여번호를 이용해 전체 지급이력 조회 -->
+<select id="paymentFindAllByPayroll"
+		resultType="PayrollPaymentDto">
+	select *
+	from payroll_payment
+	where payroll_no = #{payrollNo}
+	order by payment_at desc, payroll_payment_no desc
+</select>
+
+<!-- 급여번호를 이용해 취소된 지급내역 조회 -->
+<select id="paymentFindCancelledByPayroll"
+		resultType="PayrollPaymentDto">
+	select p.*
+	from payroll_payment p
+	where p.payroll_no = #{payrollNo}
+		and p.payment_status = 'paid'
+		and exists (
+			select 1
+			from payroll_payment c
+			where c.cancel_target_payment_no = p.payroll_payment_no
+				and c.payment_status = 'cancelled'
+		)
+	order by p.payment_at desc, p.payroll_payment_no desc
+</select>
+
+<!-- 급여번호를 이용해 취소되지 않은 지급내역 조회 -->
+<select id="paymentFindNotCancelledByPayroll"
+		resultType="PayrollPaymentDto">
+	select p.*
+	from payroll_payment p
+	where p.payroll_no = #{payrollNo}
+		and p.payment_status = 'paid'
+		and not exists (
+			select 1
+			from payroll_payment c
+			where c.cancel_target_payment_no = p.payroll_payment_no
+				and c.payment_status = 'cancelled'
+		)
+	order by p.payment_at desc, p.payroll_payment_no desc
+</select>
 
 
 

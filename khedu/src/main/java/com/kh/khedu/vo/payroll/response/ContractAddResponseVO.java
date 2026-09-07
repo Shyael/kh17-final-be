@@ -30,4 +30,6 @@ public class ContractAddResponseVO {
     private String contractContent;
 
     private String contractStatus;
+    
+    private String weelkyHolidayDay;
 }

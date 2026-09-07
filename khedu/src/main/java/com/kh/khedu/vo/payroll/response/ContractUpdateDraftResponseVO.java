@@ -26,7 +26,7 @@ public class ContractUpdateDraftResponseVO {
 	
 	private Timestamp contractEnd;
 	
-	
+	private String weeklyHolidayDay;
 	private int payday;
 	
 

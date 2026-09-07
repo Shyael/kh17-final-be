@@ -40,5 +40,7 @@ public interface EmployeeDao {
 	        int employeeNo,
 	        Timestamp clockIn
 	);
+	//고용일자 조회
+	Timestamp findEmploymentDate(long employeeNo);
 	
 }
