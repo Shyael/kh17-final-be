@@ -49,7 +49,7 @@ import jakarta.validation.Valid;
 
 @CommonsApiResponse
 @RestController
-@RequestMapping("/api/contract")
+@RequestMapping("/api/employee/contract")
 public class ContractController {
 
 	@Autowired

@@ -21,6 +21,8 @@ public class ContractHistoryResponseVO {
 
     private Timestamp contractStart;
     private Timestamp contractEnd;
+    
+    private String weeklyHolidayDay;
 
     private String contractStatus;
 

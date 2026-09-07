@@ -17,6 +17,8 @@ public class ContractSignDetailResponseVO {
 
     private long baseWage;
 
+    private String weeklyHolidayDay;
+    
     private double dailyWorkHours;
 
     private double weeklyWorkHours;

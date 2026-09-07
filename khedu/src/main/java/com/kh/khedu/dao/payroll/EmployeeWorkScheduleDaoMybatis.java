@@ -132,4 +132,15 @@ public class EmployeeWorkScheduleDaoMybatis implements EmployeeWorkScheduleDao {
 			return sqlSession.selectOne("mapper.workSchedule.findByContract", params);
 		}
 
+		@Override
+		public List<EmployeeWorkScheduleDto> findByPeriod(long employeeNo, Timestamp startDate, Timestamp endDate) {
+			Map<String,Object>params = new HashMap<>();
+			
+			params.put("employeeNo", employeeNo);
+			params.put("startDate", startDate);
+			params.put("endDate", endDate);
+			
+			return sqlSession.selectList("mapper.workSchedule.findByPeriod", params);
+		}
+
 }

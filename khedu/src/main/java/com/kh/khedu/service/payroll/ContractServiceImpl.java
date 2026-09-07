@@ -147,6 +147,7 @@ public class ContractServiceImpl implements ContractService {
 		            .employerSigned(find.getEmployerSignature() != null)
 		            .signedTime(find.getSignedTime())
 		            .writtenBreakMinutes(find.getWrittenBreakMinutes())
+		            .weeklyWorkHours(find.getWeeklyWorkHours())
 		            .build();
 			return response;}
 
@@ -240,6 +241,7 @@ public class ContractServiceImpl implements ContractService {
                 .payday(contractDto.getPayday())
                 .contractContent(contractDto.getContractContent())
                 .contractStatus(contractDto.getContractStatus())
+                .weelkyHolidayDay(contractDto.getWeeklyHolidayDay())
                 .build();
 		
 		return response;
@@ -304,6 +306,7 @@ public class ContractServiceImpl implements ContractService {
                 .payday(currentContract.getPayday())
                 .contractContent(currentContract.getContractContent())
                 .contractStatus(currentContract.getContractStatus())
+                .weeklyHolidayDay(currentContract.getWeeklyHolidayDay())
                 .build();
 		return response;
 	}
@@ -328,7 +331,9 @@ public class ContractServiceImpl implements ContractService {
 				.contractStart(contract.getContractStart()).contractEnd(contract.getContractEnd())
 				.payday(contract.getPayday()).writtenBreakMinutes(contract.getWrittenBreakMinutes())
 				.contractContent(contract.getContractContent())
-				.contractStatus(contract.getContractStatus()).signedTime(contract.getSignedTime()).build();
+				.contractStatus(contract.getContractStatus()).signedTime(contract.getSignedTime())
+				.weeklyHolidayDay(contract.getWeeklyHolidayDay())
+				.build();
 		 		
 		return response;
 	}
@@ -574,6 +579,7 @@ public class ContractServiceImpl implements ContractService {
 	            .employerSigned(contractDto.getEmployerSignature() != null)
 	            .signedTime(contractDto.getSignedTime())
 	            .writtenBreakMinutes(contractDto.getWrittenBreakMinutes())
+	            .weeklyHolidayDay(contractDto.getWeeklyHolidayDay())
 	            .build();
 		return response;
 	}
@@ -604,6 +610,7 @@ public class ContractServiceImpl implements ContractService {
 		                                .contractEnd(contractDto.getContractEnd())
 		                                .contractStatus(contractDto.getContractStatus())
 		                                .signedTime(contractDto.getSignedTime())
+		                                .weeklyHolidayDay(contractDto.getWeeklyHolidayDay())
 		                                .build()
 		                )
 		                .toList();
@@ -658,6 +665,7 @@ public class ContractServiceImpl implements ContractService {
 		                                    .signedTime(
 		                                            contractDto.getSignedTime()
 		                                    )
+		                                    .weeklyHolidayDay(contractDto.getWeeklyHolidayDay())
 		                                    .build()
 		                    )
 		                    .toList();
@@ -970,7 +978,9 @@ public class ContractServiceImpl implements ContractService {
 	                        newContractDto
 	                            .getWrittenBreakMinutes()
 	                    )
-
+	                    
+	                    .weeklyHolidayDay(newContractDto.getWeeklyHolidayDay())
+	                    
 	                    .build();
 
 

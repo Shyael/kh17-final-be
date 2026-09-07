@@ -14,10 +14,10 @@ import lombok.NoArgsConstructor;
 public class EmployeeWorkScheduleDto {
 
     // 근무 일정 번호
-    private long workScheduleNo;
+    private Long workScheduleNo;
 
     // 적용 근로계약 번호
-    private long contractNo;
+    private Long contractNo;
 
     // 예정 근무 날짜
     private Timestamp scheduledWorkDate;
@@ -33,14 +33,14 @@ public class EmployeeWorkScheduleDto {
     private String scheduledDayType;
 
     // 실제 근무 시간
-    private double actualWorkHours;
+    private Double actualWorkHours;
 
     // 실제 연장 근무 시간
-    private double actualOvertimeHours;
+    private Double actualOvertimeHours;
 
     // 실제 야간 근무 시간
-    private double actualNightHours;
+    private Double actualNightHours;
 
     // 실제 휴일 근무 시간
-    private double actualHolidayHours;
+    private Double actualHolidayHours;
 }

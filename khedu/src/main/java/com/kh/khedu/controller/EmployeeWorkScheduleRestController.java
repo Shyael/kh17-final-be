@@ -4,9 +4,7 @@ import java.sql.Timestamp;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,9 +16,7 @@ import com.kh.khedu.service.workschedule.EmployeeWorkScheduleService;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeSearchByNameVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
-import com.kh.khedu.vo.payroll.request.WorkScheduleAddRequestVO;
-import com.kh.khedu.vo.payroll.request.WorkScheduleUpdateRequestVO;
-import com.kh.khedu.vo.payroll.response.WorkScheduleAddResponseVO;
+
 import com.kh.khedu.vo.payroll.response.WorkScheduleResponseVO;
 import com.kh.khedu.vo.payroll.response.WorkScheduleSearchResponseVO;
 
@@ -29,7 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "직원 근무 일정 관련 컨트롤러")
 @RestController
-@RequestMapping("/api/workSchedule")
+@RequestMapping("/api/employee/workSchedule")
 public class EmployeeWorkScheduleRestController {
 
     @Autowired

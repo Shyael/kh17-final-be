@@ -91,4 +91,10 @@ public interface ContractDao {
 	
 	List<ContractSearchResponseVO> contractSearch(ContractSearchRequestVO request);
 	
+	
+	List<ContractDto> findListByEmployeeAndPeriod(
+	        long employeeNo,
+	        Timestamp startDate,
+	        Timestamp endDate
+	);
 }

@@ -46,4 +46,6 @@ public class ContractUpdateDraftRequestVO {
 	
 	@PositiveOrZero
 	private double writtenBreakMinutes;
+	
+	private String weeklyHolidayDay;
 }

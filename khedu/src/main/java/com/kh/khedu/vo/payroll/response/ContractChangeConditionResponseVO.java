@@ -35,4 +35,6 @@ private String wageType;
 	
 	private long contractNo;
 	private int employeeNo;
+	
+	private String weeklyHolidayDay;
 }

@@ -106,4 +106,8 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 	            params
 	    );
 	}
+	@Override
+	public Timestamp findEmploymentDate(long employeeNo) {
+		return sqlSession.selectOne("mapper.employee.findEmploymentDate",employeeNo);
+	}
 }

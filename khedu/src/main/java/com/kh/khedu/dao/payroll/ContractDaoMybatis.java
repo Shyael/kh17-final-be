@@ -1,6 +1,7 @@
 package com.kh.khedu.dao.payroll;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -297,5 +298,16 @@ public class ContractDaoMybatis implements ContractDao {
 	@Override
 	public List<ContractSearchResponseVO> contractSearch(ContractSearchRequestVO request) {
 		return sqlSession.selectOne("mapper.payroll.contractSearch",request);
+	}
+
+
+	@Override
+	public List<ContractDto> findListByEmployeeAndPeriod(long employeeNo, Timestamp startDate, Timestamp endDate) {
+		Map<String,Object> params = new HashMap<>();
+		params.put("employeeNo", employeeNo);
+		params.put("startDate", startDate);
+		params.put("endDate", endDate);
+			
+		return sqlSession.selectList("mapper.payroll.findContractListByEmployeeAndPeriod",params);
 	}
 }

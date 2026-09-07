@@ -232,5 +232,23 @@
 
 	</select>
 
+	<select id="findByPeriod" resultType="EmployeeWorkScheduleDto">
+	
+			select S.* 
+			from employee_work_schedule S
+			left outer join employment_contract C
+			on S.contract_no = C.contract_no
+			where C.employee_no = #{employeeNo}
+			and S.scheduled_work_date
+            <![CDATA[ >= ]]>
+			#{startDate}
+
+			and S.scheduled_work_date
+            <![CDATA[ < ]]>
+			#{endDate}
+			
+		
+	
+	</select>
 
 </mapper>

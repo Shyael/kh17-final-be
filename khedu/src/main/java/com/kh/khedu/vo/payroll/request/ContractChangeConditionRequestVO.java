@@ -46,4 +46,6 @@ public class ContractChangeConditionRequestVO {
 	
 	@PositiveOrZero
 	private double writtenBreakMinutes;
+	
+	private String weeklyHolidayDay;
 }
