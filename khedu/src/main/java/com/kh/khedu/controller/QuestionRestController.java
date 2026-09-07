@@ -57,20 +57,6 @@ public class QuestionRestController {
                 tutor
         );
     }
-
-    // 문제 단일 조회
-    @Operation(summary = "문제 상세 조회")
-    @GetMapping("/{questionNo}")
-    public QuestionDto selectOne(@PathVariable int questionNo) {
-        return questionService.selectOne(questionNo);
-    }
-
-    // 특정 시험의 문제 목록 조회
-    @Operation(summary = "특정 시험 문제 목록 조회")
-    @GetMapping("/exam/{examNo}")
-    public List<QuestionDto> selectListByExam(@PathVariable int examNo) {
-        return questionService.selectListByExam(examNo);
-    }
     
     //학생용 시험 문제 목록 조회
     @Operation(summary = "학생 시험 문제 목록 조회")

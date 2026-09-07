@@ -12,11 +12,11 @@ public interface AttemptAnswerService {
 	        int studentNo
 	);
     
-    // 특정 응시의 특정 문제 답안 조회
-    AttemptAnswerDto selectOne(int attemptNo,int questionNo);
-    
     // 특정 응시의 전체 답안 목록 조회
-    List<AttemptAnswerDto> selectListByAttempt(int attemptNo);
+	List<AttemptAnswerDto> selectListByAttempt(
+	        int attemptNo,
+	        int studentNo
+	);
     
     // 답안 수정
     boolean update(
@@ -27,12 +27,6 @@ public interface AttemptAnswerService {
     boolean delete(
             int attemptNo,
             int questionNo,
-            int studentNo
-    );
-
-    // 특정 응시의 전체 답안 삭제
-    boolean deleteByAttempt(
-            int attemptNo,
             int studentNo
     );
 }

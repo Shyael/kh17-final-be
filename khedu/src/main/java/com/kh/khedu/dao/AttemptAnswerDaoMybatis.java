@@ -48,12 +48,6 @@ public class AttemptAnswerDaoMybatis
         return sqlSession.delete("mapper.attemptAnswer.delete", params) > 0;
     }
 
-    // 특정 응시의 전체 답안 삭제
-    @Override
-    public boolean deleteByAttempt(int attemptNo) {
-        return sqlSession.delete("mapper.attemptAnswer.deleteByAttempt", attemptNo) > 0;
-    }
-    
     @Override
     public boolean updateCorrect(
             int attemptNo,

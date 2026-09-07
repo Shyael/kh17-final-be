@@ -2,6 +2,7 @@ package com.kh.khedu.service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.kh.khedu.dao.AttachDao;
 import com.kh.khedu.dao.AttemptAnswerDao;
 import com.kh.khedu.dao.AttemptDao;
 import com.kh.khedu.dao.ExamDao;
 import com.kh.khedu.dao.QuestionDao;
 import com.kh.khedu.dao.QuestionOptionDao;
+import com.kh.khedu.dto.AttachDto;
 import com.kh.khedu.dto.AttemptAnswerDto;
 import com.kh.khedu.dto.AttemptDto;
 import com.kh.khedu.dto.ExamDto;
@@ -23,6 +26,10 @@ import com.kh.khedu.dto.QuestionOptionDto;
 import com.kh.khedu.error.AlreadyExistsException;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.vo.exam.ExamDetailVO;
+import com.kh.khedu.vo.exam.ExamResultVO;
+import com.kh.khedu.vo.exam.QuestionResultOptionVO;
+import com.kh.khedu.vo.exam.QuestionResultVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
 
 @Service
@@ -43,6 +50,205 @@ public class AttemptServiceImpl implements AttemptService {
 
     @Autowired
     private QuestionOptionDao questionOptionDao;
+    
+    @Autowired
+    private AttachDao attachDao;
+    
+    //공통메서드
+    private AttemptDto checkSubmittableAttempt(
+    		int attemptNo,
+    		int studentNo) {
+    	AttemptDto attempt = attemptDao.selectOne(attemptNo);
+    	
+    	if(attempt == null) {
+    		throw new TargetNotfoundException();
+    	}
+    	
+    	//본인 응시인지
+    	if(attempt.getStudentNo() != studentNo) {
+    		throw new GetOutException();
+    	}
+    	
+    	//이미 제출 완료 
+    	if("제출완료".equals(attempt.getAttemptStatus())) {
+    		throw new ResponseStatusException(
+    				HttpStatus.BAD_REQUEST,
+    				"이미 제출한 시험입니다.");
+    	}
+    	
+    	ExamDto exam = examDao.selectOne(attempt.getExamNo());
+    	
+    	if(exam == null) {
+    		throw new TargetNotfoundException();
+    	}
+    	
+    	//시험 시작 전에 제출하는 것을 막음
+    	long now = System.currentTimeMillis();
+    	
+    	if(now < exam.getExamStart().getTime()) {
+    		throw new ResponseStatusException(
+    				HttpStatus.BAD_REQUEST,
+    				"아직 시험 응시 시간이 아닙니다.");
+    	}
+    	return attempt;
+    	
+    }
+    
+    // 제출 완료된 응시인지 확인
+    private AttemptDto checkSubmittedAttempt(int attemptNo) {
+        AttemptDto attempt = attemptDao.selectOne(attemptNo);
+        
+        if (attempt == null) {
+            throw new TargetNotfoundException();
+        }
+
+        if (!"제출완료".equals(attempt.getAttemptStatus()
+        )) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "제출 완료된 시험만 결과를 확인할 수 있습니다."
+            );
+        }
+
+        return attempt;
+    }
+    
+ // 시험 결과 VO 조립
+    private ExamResultVO buildResult(AttemptDto attempt) {
+        // =========================
+        // 시험 정보 조회
+        // =========================
+        ExamDetailVO exam = examDao.selectDetail(attempt.getExamNo());
+
+        if (exam == null) {
+            throw new TargetNotfoundException();
+        }
+
+        // =========================
+        // 학생 이름 조회
+        // =========================
+
+        String studentName = attemptDao.selectStudentName(attempt.getStudentNo());
+
+        // =========================
+        // 문제 / 답안 조회
+        // =========================
+
+        List<QuestionDto> questionList = questionDao.selectListByExam(attempt.getExamNo());
+
+        List<AttemptAnswerDto> answerList =attemptAnswerDao.selectListByAttempt(attempt.getAttemptNo());
+
+
+        List<QuestionResultVO> resultQuestionList = new ArrayList<>();
+
+        int totalScore = 0;
+
+        // =========================
+        // 문제별 결과 조립
+        // =========================
+
+        for (QuestionDto question : questionList) {
+            // 시험 총점 계산
+            totalScore += question.getQuestionScore();
+
+            // 현재 문제에 대한 학생 답안 조회
+            AttemptAnswerDto answer =
+                    answerList.stream()
+                            .filter(item ->
+                                    item.getQuestionNo()
+                                            == question.getQuestionNo()
+                            )
+                            .findFirst()
+                            .orElse(null);
+
+            // =========================
+            // 보기 조회
+            // =========================
+
+            List<QuestionOptionDto> optionList = questionOptionDao.selectListByQuestion(question.getQuestionNo());
+
+            List<QuestionResultOptionVO> resultOptionList =
+                    optionList.stream()
+                            .map(option -> {
+                                // 학생이 선택한 보기인지
+                                boolean selected =
+                                        answer != null
+                                        && answer.getOptionNo() != null
+                                        && answer.getOptionNo()
+                                        == option.getOptionNo();
+                                // 실제 정답 보기인지
+                                boolean correct =
+                                        "Y".equals(
+                                                option.getOptionIsAnswer()
+                                        );
+                                
+                                return QuestionResultOptionVO.builder()
+                                        .optionNo(option.getOptionNo())
+                                        .optionContent(option.getOptionContent())
+                                        .optionOrder(option.getOptionOrder())
+                                        .selected(selected)
+                                        .correct(correct)
+                                        .build();
+                            })
+                            .toList();
+
+            // =========================
+            // 첨부파일 조회
+            // =========================
+
+            List<Integer> fileNos = questionDao.selectFiles(question.getQuestionNo());
+
+            List<AttachDto> fileList;
+
+            if (fileNos == null || fileNos.isEmpty()) {
+                fileList = List.of();
+            }
+            else {
+                fileList = attachDao.selectList(fileNos);
+            }
+
+            // =========================
+            // 문제 결과 VO 조립
+            // =========================
+            QuestionResultVO questionResult =
+                    QuestionResultVO.builder()
+                            .questionNo(question.getQuestionNo())
+                            .questionContent(question.getQuestionContent())
+                            .questionScore(question.getQuestionScore())
+                            .questionOrder(question.getQuestionOrder())
+                            .questionComment(question.getQuestionComment())
+                            // 미응답이면 null
+                            .isCorrect(answer == null ? null : answer.getIsCorrect())
+                            .optionList(resultOptionList)
+                            .fileList(fileList)
+                            .build();
+
+            resultQuestionList.add(questionResult);
+        }
+
+        // =========================
+        // 시험 전체 결과 VO 조립
+        // =========================
+        return ExamResultVO.builder()
+                .attemptNo(attempt.getAttemptNo())
+                .examNo(exam.getExamNo())
+                // 학생 정보
+                .studentNo(attempt.getStudentNo())
+                .studentName(studentName)
+                // 강의 / 시험 정보
+                .courseNo(exam.getCourseNo())
+                .courseTitle(exam.getCourseTitle())
+                .examTitle(exam.getExamTitle())
+                // 점수
+                .attemptScore(attempt.getAttemptScore() == null ? 0 : attempt.getAttemptScore())
+                .totalScore(totalScore)
+                // 제출시간
+                .attemptSubmit(attempt.getAttemptSubmit())
+                // 문제별 결과
+                .questionList(resultQuestionList)
+                .build();
+    }
+    
     
     // 시험 응시 시작
     @Override
@@ -102,67 +308,12 @@ public class AttemptServiceImpl implements AttemptService {
         return attemptNo;
     }
 
-    // 응시 번호로 단일 응시 조회
-    @Override
-    public AttemptDto selectOne(int attemptNo) {
-
-        AttemptDto attempt = attemptDao.selectOne(attemptNo);
-
-        if (attempt == null) {
-            throw new TargetNotfoundException();
-        }
-
-        return attempt;
-    }
-
-    // 특정 학생의 특정 시험 응시 조회
-    @Override
-    public AttemptDto selectOneByExamStudent(
-            int examNo,
-            int studentNo) {
-
-        return attemptDao.selectOneByExamStudent(
-                examNo,
-                studentNo
-        );
-    }
-
-    // 특정 시험의 전체 응시 목록 조회
-    @Override
-    public List<AttemptDto> selectListByExam(int examNo) {
-
-        return attemptDao.selectListByExam(examNo);
-    }
-
-    // 특정 학생의 전체 응시 목록 조회
-    @Override
-    public List<AttemptDto> selectListByStudent(int studentNo) {
-
-        return attemptDao.selectListByStudent(studentNo);
-    }
-
     // 시험 제출
     @Override
     public boolean submit(int attemptNo, int studentNo) {
-        // 응시정보 확인
-        AttemptDto attempt = attemptDao.selectOne(attemptNo);
-
-        if (attempt == null) {
-            throw new TargetNotfoundException();
-        }
-
-        // 본인 시험인지
-        if (attempt.getStudentNo() != studentNo) {
-            throw new GetOutException();
-        }
-
-        // 이미 제출한 시험
-        if ("제출완료".equals(attempt.getAttemptStatus())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "이미 제출한 시험입니다."
-            );
-        }
+        // 본인 확인 + 재제출 방지
+    	// 시간 초과 상태여도 제출은 허용
+        AttemptDto attempt = checkSubmittableAttempt(attemptNo, studentNo);
 
         // 해당 시험의 전체 문제
         List<QuestionDto> questionList = questionDao.selectListByExam(attempt.getExamNo());
@@ -220,35 +371,6 @@ public class AttemptServiceImpl implements AttemptService {
         // 제출완료 + 제출시간 + 점수 저장
         return attemptDao.submit(submitDto);
     }
-
-    // 응시 상태 수정
-    @Override
-    public boolean updateStatus(AttemptDto attemptDto) {
-
-        // 응시 존재 확인
-        AttemptDto findAttempt =attemptDao.selectOne(attemptDto.getAttemptNo());
-
-        if (findAttempt == null) {
-            throw new TargetNotfoundException();
-        }
-
-        return attemptDao.updateStatus(attemptDto);
-    }
-
-    // 응시 삭제
-    @Override
-    public boolean delete(int attemptNo) {
-
-        // 응시 존재 확인
-        AttemptDto attempt =
-                attemptDao.selectOne(attemptNo);
-
-        if (attempt == null) {
-            throw new TargetNotfoundException();
-        }
-
-        return attemptDao.delete(attemptNo);
-    }
     
     //제한시간 검사 및 응시 가능 시간 검사
     @Override
@@ -282,11 +404,8 @@ public class AttemptServiceImpl implements AttemptService {
         if (exam == null) {
             throw new TargetNotfoundException();
         }
-
         LocalDateTime now = LocalDateTime.now();
-
         LocalDateTime examStart = exam.getExamStart().toLocalDateTime();
-
         LocalDateTime examEnd = exam.getExamEnd().toLocalDateTime();
 
         // 전체 시험 시작 전
@@ -325,4 +444,43 @@ public class AttemptServiceImpl implements AttemptService {
 
         return attempt;
     }
+
+ // 학생 시험 결과 조회
+    @Override
+    public ExamResultVO selectResult(
+            int attemptNo,
+            int studentNo) {
+
+        // 응시 존재 여부 + 제출완료 여부 확인
+        AttemptDto attempt = checkSubmittedAttempt(attemptNo);
+
+        // 본인의 응시인지 확인
+        if (attempt.getStudentNo() != studentNo) {
+            throw new GetOutException();
+        }
+
+        // 결과 VO 조립
+        return buildResult(attempt);
+    }
+
+	@Override
+	public ExamResultVO selectResultByManage(int attemptNo, int employeeNo, boolean tutor) {
+		// 응시 존재 여부 + 제출완료 여부 확인
+        AttemptDto attempt = checkSubmittedAttempt(attemptNo);
+        
+        //응시한 시험 조회
+        ExamDto exam = examDao.selectOne(attempt.getExamNo());
+        
+        if(exam == null) {
+        	throw new TargetNotfoundException();
+        }
+        
+        //강사라면 본인이 출제한 시험인지 확인
+        if(tutor && exam.getEmployeeNo() != employeeNo) {
+        	throw new GetOutException();
+        }
+        
+        //학생용과 동일한 결과VO 조립
+        return buildResult(attempt);
+	}
 }

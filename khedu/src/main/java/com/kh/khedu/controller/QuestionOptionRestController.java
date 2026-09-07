@@ -42,20 +42,6 @@ public class QuestionOptionRestController {
         return questionOptionService.insert(questionOptionDto, parseVO.getNoType(), tutor);
     }
 
-    // 보기 단일 조회
-    @Operation(summary = "보기 상세 조회")
-    @GetMapping("/{optionNo}")
-    public QuestionOptionDto selectOne(@PathVariable int optionNo) {
-        return questionOptionService.selectOne(optionNo);
-    }
-
-    // 특정 문제의 보기 목록 조회
-    @Operation(summary = "특정 문제 보기 목록 조회")
-    @GetMapping("/question/{questionNo}")
-    public List<QuestionOptionDto> selectListByQuestion(@PathVariable int questionNo) {
-        return questionOptionService.selectListByQuestion(questionNo);
-    }
-
     // 보기 수정
     @Operation(summary = "보기 수정")
     @ApiResponse(responseCode = "200", description = "보기 수정 성공")
@@ -83,7 +69,6 @@ public class QuestionOptionRestController {
 
         return questionOptionService.delete(optionNo, parseVO.getNoType(), tutor);
     }
-
 
     // 특정 문제의 보기 전체 삭제
     @Operation(summary = "특정 문제 보기 전체 삭제")

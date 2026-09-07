@@ -58,13 +58,6 @@
         where attempt_no = #{attemptNo}
           and question_no = #{questionNo}
     </delete>
-
-
-    <!-- 특정 응시의 전체 답안 삭제 -->
-    <delete id="deleteByAttempt">
-        delete from attempt_answer
-        where attempt_no = #{attemptNo}
-    </delete>
     
     <!-- 답안 채점 결과 저장 -->
 	<update id="updateCorrect">

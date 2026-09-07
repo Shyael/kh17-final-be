@@ -33,28 +33,15 @@ public class QuestionOptionServiceImpl implements QuestionOptionService {
     //공통 메서드
     //공개시 수정 불가
     private QuestionDto checkEditableQuestion(int questionNo, int employeeNo, boolean tutor) {
-        QuestionDto question = questionDao.selectOne(questionNo);
-
-        if (question == null) {
-            throw new TargetNotfoundException();
-        }
+    	QuestionDto question = checkQuestionAuthority(questionNo, employeeNo, tutor);
 
         ExamDto exam = examDao.selectOne(question.getExamNo());
-
-        if (exam == null) {
-            throw new TargetNotfoundException();
-        }
-
-        // 강사는 본인 시험만 관리
-        if (tutor && exam.getEmployeeNo() != employeeNo) {
-            throw new GetOutException();
-        }
 
         // 작성중 시험만 보기 편집 가능
         if (!"작성중".equals(exam.getExamStatus())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "공개된 시험의 보기는 수정할 수 없습니다."
+                    "작성중인 시험의 보기만 편집할 수 있습니다."
             );
         }
 
@@ -110,6 +97,31 @@ public class QuestionOptionServiceImpl implements QuestionOptionService {
         }
     }
     
+    private QuestionDto checkQuestionAuthority(
+            int questionNo,
+            int employeeNo,
+            boolean tutor) {
+
+        QuestionDto question = questionDao.selectOne(questionNo);
+
+        if (question == null) {
+            throw new TargetNotfoundException();
+        }
+
+        ExamDto exam = examDao.selectOne(question.getExamNo());
+
+        if (exam == null) {
+            throw new TargetNotfoundException();
+        }
+
+        // 강사는 본인 시험만 조회
+        if (tutor && exam.getEmployeeNo() != employeeNo) {
+            throw new GetOutException();
+        }
+
+        return question;
+    }
+    
     // 보기 등록
     @Override
     public int insert(
@@ -151,8 +163,13 @@ public class QuestionOptionServiceImpl implements QuestionOptionService {
 
     // 특정 문제의 보기 목록 조회
     @Override
-    public List<QuestionOptionDto> selectListByQuestion(int questionNo) {
+    public List<QuestionOptionDto> selectListByQuestion(
+            int questionNo,
+            int employeeNo,
+            boolean tutor) {
     
+    	checkQuestionAuthority(questionNo, employeeNo, tutor);
+    	
         return questionOptionDao.selectListByQuestion(questionNo);
     }
 

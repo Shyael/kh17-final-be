@@ -37,9 +37,6 @@ public class QuestionServiceImpl implements QuestionService {
     private AttachService attachService;
     
     @Autowired
-    private AttemptDao attemptDao;
-    
-    @Autowired
     private QuestionOptionDao questionOptionDao;
     
     @Autowired
@@ -68,7 +65,7 @@ public class QuestionServiceImpl implements QuestionService {
         if (!"작성중".equals(exam.getExamStatus())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "공개된 시험의 문제는 수정할 수 없습니다."
+                    "작성중인 시험의 문제만 수정할 수 있습니다."
             );
         }
 
@@ -163,10 +160,6 @@ public class QuestionServiceImpl implements QuestionService {
 	public List<StudentQuestionVO> selectListByAttempt(int attemptNo, int studentNo) {
     	
     	AttemptDto attempt = attemptService.checkAvailableAttempt(attemptNo, studentNo);
-
-        if (attempt == null) {
-            throw new TargetNotfoundException();
-        }
         
         // 4. 해당 시험 문제 목록
         List<QuestionDto> questionList = questionDao.selectListByExam(attempt.getExamNo());
@@ -287,8 +280,10 @@ public class QuestionServiceImpl implements QuestionService {
         boolean result = questionDao.delete(questionNo);
 
         // attach DB + 실제 파일 삭제
-        for (Integer attachNo : fileNos) {
-            attachService.delete(attachNo);
+        if (result && fileNos != null) {
+            for (Integer attachNo : fileNos) {
+                attachService.delete(attachNo);
+            }
         }
         
         return result;
