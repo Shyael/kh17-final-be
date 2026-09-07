@@ -99,20 +99,18 @@
         order by P.payment_no desc
     </select>
     
-    <!-- ============================================== -->
     <!-- [자동 청구 스케줄러 전용 쿼리] -->
-    <!-- ============================================== -->
 
     <!-- 1. 현재 학원에 다니는(퇴원하지 않은) 전체 학생 번호 조회 -->
     <!-- (결과값이 단일 숫자(int)이므로 resultType="int"를 씁니다) -->
-    <!-- <select id="selectAllActiveStudents" resultType="int">
+    <select id="selectAllActiveStudents" resultType="int">
         select student_no 
         from student
-         만약 퇴원 여부(상태)를 관리하는 컬럼이 있다면 아래 주석을 풀고 사용하세요!
-        where student_status = '재원' 
+        <!-- 학생상태 검사 조건을 활성화합니다 -->
+        where student_academic_status = '재원' 
     </select>
 
-    2. 중복 청구 검사 (이번 달에 이미 청구서가 발행되었는지 카운트)
+    <!-- 2. 중복 청구 검사 (이번 달에 이미 청구서가 발행되었는지 카운트) -->
     <select id="checkDuplicateBilling" resultType="int">
         select count(*) 
         from payment 
@@ -120,15 +118,17 @@
           and payment_month = #{currentMonth}
     </select>
 
-    3. 특정 학생이 수강 중인 강좌 번호와 복사된 강좌비 조회
-    (본인이 만드신 수강-복사 테이블 이름으로 바꿔주세요. 예: student_course)
-    <select id="selectStudentCourses" resultType="com.kh.khedu.vo.payment.StudentCourseVO">
+    <!-- 3. 특정 학생이 '현재 수강 중'인 강좌 번호와 해당 강좌의 수강료(course_fee) 조회 -->
+    <select id="selectStudentCourses" resultType="com.kh.khedu.vo.student.StudentCourseVO">
         select 
-            course_no as courseNo, 
-            course_fee as courseFee 
-        from student_course 
-        where student_no = #{studentNo}
-    </select> -->
+            c.course_no as courseNo, 
+            c.course_fee as courseFee 
+        from student_course sc
+        join course c on sc.course_no = c.course_no
+        where sc.student_no = #{studentNo}
+          <!-- 돈을 내야 하는 상태(예: 신청, 수강중)만 청구! -->
+          and sc.student_course_status in ('신청', '수강중') 
+    </select>
     
     <!-- 1. 수납 마스터 단건 조회 -->
     <select id="selectPaymentMaster" resultType="PaymentDto">
@@ -143,6 +143,11 @@
     <!-- 3. 해당 수납의 할인 적용 목록 조회 -->
     <select id="selectPaymentDiscounts" resultType="PaymentDiscountDto">
         select * from payment_discount where payment_no = #{paymentNo}
+    </select>
+    
+    <!-- 4. 해당 수납의 납부내역 조회 -->
+    <select id="selectPaymentHistorys" resultType="PaymentHistoryDto">
+        select * from payment_history where payment_no = #{paymentNo}
     </select>
   
 </mapper>

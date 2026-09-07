@@ -6,8 +6,8 @@ import java.util.Map;
 import com.kh.khedu.dto.PaymentDetailDto;
 import com.kh.khedu.dto.PaymentDiscountDto;
 import com.kh.khedu.dto.PaymentDto;
+import com.kh.khedu.dto.PaymentHistoryDto;
 import com.kh.khedu.vo.payment.DiscountVO;
-import com.kh.khedu.vo.payment.PaymentComprehensiveVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
 import com.kh.khedu.vo.student.StudentCourseVO;
 
@@ -39,4 +39,6 @@ public interface PaymentDao {
     List<PaymentDetailDto> selectPaymentDetails(int paymentNo);
     // 3. 수납 할인 목록 조회 (다건)
     List<PaymentDiscountDto> selectPaymentDiscounts(int paymentNo);
+    // 4. 수납 이력 목록 조회 (다건)
+    List<PaymentHistoryDto> selectPaymentHistorys(int paymentNo);
 }

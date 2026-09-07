@@ -1,9 +1,12 @@
 package com.kh.khedu.vo.payment;
 
 import java.util.List;
-import com.kh.khedu.dto.PaymentDto;
+
 import com.kh.khedu.dto.PaymentDetailDto;
 import com.kh.khedu.dto.PaymentDiscountDto;
+import com.kh.khedu.dto.PaymentDto;
+import com.kh.khedu.dto.PaymentHistoryDto;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -18,4 +21,7 @@ public class PaymentComprehensiveVO {
     
     // 3. 적용된 할인 내역 (어떤 할인이 마이너스 되었는지)
     private List<PaymentDiscountDto> discounts;
+    
+    // 4. 수납 이력 내역 (언제 얼마나 냈는지)
+    private List<PaymentHistoryDto> historys;
 }

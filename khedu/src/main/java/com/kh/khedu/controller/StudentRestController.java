@@ -7,23 +7,21 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.ParentStudentDao;
-import com.kh.khedu.dto.ParentStudentDto;
 import com.kh.khedu.service.ParentService;
 import com.kh.khedu.service.StudentService;
 import com.kh.khedu.vo.account.AccountJoinResponseVO;
 import com.kh.khedu.vo.account.CheckPasswordRequestVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
-import com.kh.khedu.vo.parent.ParentDetailVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.ChangeStudentRequestVO;
 import com.kh.khedu.vo.student.ChangeStudentResponseVO;
@@ -144,4 +142,16 @@ public class StudentRestController {
 	) {
 		return studentService.createStudentLink(parseVO);
 	}
+	
+	// 학생 재원 승인 API
+    @PatchMapping("/approve/{studentNo}")
+    public ResponseEntity<String> approveStudent(@PathVariable int studentNo) {
+        try {
+            studentService.approveStudent(studentNo);
+            return ResponseEntity.ok("재원 처리(승인)가 완료되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("승인 처리 실패");
+        }
+    }
 }

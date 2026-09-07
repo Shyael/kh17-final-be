@@ -13,6 +13,7 @@ public class StudentListResponseVO {
     //Student 테이블 정보
     private String studentSchool;
     private String studentGrade;
+    private String studentAcademicStatus;
     
     //통계 및 집계 데이터 (서브쿼리나 Service 단에서 계산)
     private int attendanceRate;
