@@ -74,6 +74,7 @@ public class SecurityConfiguration {
 							"/active"  //체크용 페이지 허용
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
+							,"/api/admin/employee/**"
 						).permitAll()
 						
 						//직원(학원 정보 수정)
@@ -87,7 +88,7 @@ public class SecurityConfiguration {
 						
 						//임시 전부 공개화면 
 //						.requestMatchers(
-//								
+//							
 //						).permitAll()
 					
 						//auth service
@@ -96,12 +97,20 @@ public class SecurityConfiguration {
 							,"/service/auth/logout" //로그아웃 페이지
 							,"/service/auth/refresh" //로그인 갱신페이지
 							,"/api/account/find-id" //아이디
-							,"/api/account/find-password" //비밀번호 찾기
+							,"/api/account/find-password"//비밀번호 찾기
 						).permitAll()
 						
+
+						//임시 전부 공개화면 
+						.requestMatchers(
+								"/api/employee/**" // 원장, 데스크만 접근 가능하게
+						).permitAll()
+
 						//cert service
 						.requestMatchers("/service/cert/**").permitAll()
 						
+						//계약 관련(임시)
+						.requestMatchers("/api/contract/**").permitAll()
 						//공개 화면
 						.requestMatchers(
 							"/academy/**",
@@ -123,18 +132,12 @@ public class SecurityConfiguration {
 								RoleType.DESK.getCode(),
 								RoleType.ADMIN.getCode()
 						)
-						// [2] 강사
-						.requestMatchers(
-								"/api/employee/me" // 직원 내정보
-								)
-						.hasAnyAuthority(
-								RoleType.TUTOR.getCode() 
-								)
 						// [3] 데스크
 						// [4] 원장
 						// [5] 직원
 						.requestMatchers(
 								"/api/employee/**"
+								,"/api/attendance/**"//근태관련
 						)
 						.hasAnyAuthority(
 								RoleType.TUTOR.getCode(), 

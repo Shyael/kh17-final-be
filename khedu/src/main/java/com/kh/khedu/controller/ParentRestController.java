@@ -1,13 +1,17 @@
 package com.kh.khedu.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CurrentUser;
@@ -92,5 +96,18 @@ public class ParentRestController {
 			@CurrentUser TokenParseResponseVO parseVO) {
 		parentService.updateRelationship(parseVO, request);
 	}
+	
+	@GetMapping("/student/{studentNo}")
+    public ResponseEntity<List<ParentDetailVO>> getParentInfoByStudent(@PathVariable int studentNo) {
+        List<ParentDetailVO> parentInfoList = parentService.findParentDetailByStudentNo(studentNo);
+        return ResponseEntity.ok(parentInfoList);
+    }
+	
+	// 관리자용 학부모 검색 API
+    @GetMapping("/search")
+    public ResponseEntity<List<ParentDetailVO>> searchParents(@RequestParam String keyword) {
+        List<ParentDetailVO> list = parentService.searchParents(keyword);
+        return ResponseEntity.ok(list);
+    }
 	
 }

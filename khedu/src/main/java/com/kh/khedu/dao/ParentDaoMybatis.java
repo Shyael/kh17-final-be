@@ -1,10 +1,13 @@
 package com.kh.khedu.dao;
 
+import java.util.List;
+
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.ParentDto;
+import com.kh.khedu.vo.parent.ParentDetailVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 @Repository
@@ -31,6 +34,16 @@ public class ParentDaoMybatis implements ParentDao {
 	@Override
 	public ParentDto selectOneByAccountNo(int accountNo) {
 		return sqlSession.selectOne("mapper.parent.findByAccountNo", accountNo);
+	}
+	
+	@Override
+	public List<ParentDetailVO> findParentDetailByStudentNo(int studentNo) {
+		return sqlSession.selectList("mapper.parent.findParentDetailByStudentNo", studentNo);
+	}
+	
+	@Override
+	public List<ParentDetailVO> searchParents(String keyword) {
+	    return sqlSession.selectList("mapper.parent.searchParents", keyword);
 	}
 
 }

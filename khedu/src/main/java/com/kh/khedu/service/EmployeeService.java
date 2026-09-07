@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dao.EmployeeDao;
+import com.kh.khedu.dao.RoleDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.dto.AccountRolesDto;
 import com.kh.khedu.dto.EmployeeDto;
@@ -20,12 +21,15 @@ import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.account.CheckPasswordRequestVO;
+import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
+import com.kh.khedu.vo.admin.employee.AdminEmployeeListVO;
 import com.kh.khedu.vo.employee.ChangeEmployeeRequestVO;
 import com.kh.khedu.vo.employee.ChangeEmployeeResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeRegisterRequestVO;
 import com.kh.khedu.vo.employee.EmployeeVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.vo.roles.RoleVO;
 
 @Service
 public class EmployeeService {
@@ -155,4 +159,37 @@ public class EmployeeService {
 				accountDto.getAccountPassword() //DB
 		);
 	}
+	
+	/*
+	  관리자 영역
+	*/
+	
+	// 관리자 직원 목록
+	public List<AdminEmployeeListVO> findEmployeeList() {
+		
+		return employeeDao.selectAdminEmployeeList();
+	}
+	
+	// 관리자 직원 상세 조회
+	public AdminEmployeeDetailVO findEmployeeInfo(int employeeNo) {
+		
+		//직원 상세정보 조회
+		AdminEmployeeDetailVO response = 
+				employeeDao.selectAdminEmployeeDetailByEmployeeNo(employeeNo);
+		
+		if(response == null) {
+			throw new TargetNotfoundException();
+		}
+		
+		//직원의 accountNo로 권한 조회
+		List<RoleVO> roles =
+				accountRolesDao.selectByAccountNo(response.getAccountNo());
+		
+		//권한 정보 추가
+		response.setRoles(roles);
+		
+		return response;
+	}
+	
+	
 }

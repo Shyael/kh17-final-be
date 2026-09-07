@@ -72,5 +72,22 @@
         delete from question_option
         where question_no = #{questionNo}
     </delete>
+    
+    <!-- 같은 문제 내 보기 순서 중복 확인 -->
+    <select id="countByQuestionOrder" resultType="int">
+    	select count(*)
+    	from question_option
+    	where question_no = #{questionNo}
+    		and option_order = #{optionOrder}
+    </select>
+    
+    <!-- 수정 시 자기 자신 제외하고 보기 순서 중복 확인 -->
+	<select id="countByQuestionOrderExcludeSelf" resultType="int">
+	    select count(*)
+	    from question_option
+	    where question_no = #{questionNo}
+	      and option_order = #{optionOrder}
+	      and option_no != #{optionNo}
+	</select>
 
 </mapper>

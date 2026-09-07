@@ -13,4 +13,33 @@
 	      and course_status = '진행중'
 	    order by course_no desc
 	</select>
+	
+	<!-- 강좌 등록 -->
+	<select id="sequence" resultType="int">
+		select course_seq.nextval from dual
+	</select>
+	<insert id="add">
+		insert into course(
+			course_no,
+			employee_no,
+			grade_no,
+			course_title,
+			course_subject,
+			course_limit,
+			course_fee,
+			course_info,
+			course_type			
+		) 
+		values(
+			#{courseNo},
+			#{employeeNo},
+			#{gradeNo},
+			#{courseTitle},
+			#{courseSubject},
+			#{courseLimit},
+			#{courseFee},
+			#{courseInfo},
+			#{courseType}
+		)
+	</insert>
 </mapper>

@@ -12,4 +12,6 @@ public class StudentParentDetailVO {
 	private int parentNo;
 	private String parentName;
 	private String relationship;
+	private String parentPhone; // 추가
+    private String parentId; // 추가
 }

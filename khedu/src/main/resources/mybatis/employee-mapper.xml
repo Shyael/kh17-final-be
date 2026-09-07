@@ -25,7 +25,7 @@
 		)
 	</insert>
 	
-	<!-- 직원정보 조회 -->
+	<!-- 직원 본인정보 조회 -->
 	<select id="findMyInfo" resultType="EmployeeDetailVO">
 		select
 			a.account_no,
@@ -45,6 +45,7 @@
 		and 
 			a.account_type = '직원'
 	</select>
+	
 	<!-- accountNo로 직원정보 조회 -->
 	<select id="findEmployeeByAccountNo" resultType="EmployeeDto">
 		select * from employee where account_no = #{accountNo}
@@ -58,4 +59,157 @@
 	        account_utime = systimestamp
 	    where account_no = #{accountNo} 
 	</update>
+	
+	<!-- 관리자 기능  -->
+	
+	<!-- 관리자 직원 목록 조회 -->
+	<select id="selectAdminEmployeeList" resultType="AdminEmployeeListVO">
+		select 
+			e.employee_no,
+			a.account_name,
+			a.account_id,
+			a.account_phone,
+			e.employee_type,
+			e.employee_htime,
+			e.employee_status,
+			a.account_status			
+		from employee e
+		join account a
+		on e.account_no = a.account_no
+		order by a.account_name asc
+	</select>
+	
+	<!-- 관리자 직원 상세 조회 -->
+	<select id="selectAdminEmployeeDetailByEmployeeNo" resultType="AdminEmployeeDetailVO">
+		select
+			e.employee_no,
+			e.employee_type,
+			e.employee_htime,
+			e.employee_status,
+			a.account_no,
+			a.account_id,
+			a.account_birth,
+			a.account_name,
+			a.account_phone,
+			a.account_status,
+			a.account_type,
+			a.account_utime
+		from employee e
+		join account a
+		on e.account_no = a.account_no
+		where e.employee_no = #{employeeNo}
+	</select>
+	
+	<!-- 직원 현재 상태 조회 -->
+	<select id="findEmployeeStatus"
+        resultType="String">
+
+    select employee_status
+    from employee
+    where employee_no = #{employeeNo}
+
+	</select>
+	
+	
+	<!-- 최초 근로계약 체결 시 대기 → 재직 -->
+	<update id="changeUnassignedToWorking">
+
+    update employee
+    set employee_status = '재직'
+    where employee_no = #{employeeNo}
+      and employee_status = '대기'
+
+	</update>
+	
+	<!--이름으로 직원 검색  -->
+	<select id="searchByName" resultType="EmployeeSearchByNameVO">
+	Select E.employee_no,
+			A.account_name,
+			A.account_id,
+			A.account_no
+		from employee E
+		join account A
+			on A.account_no = E.account_no
+		where A.account_name like #{accountName} || '%' 
+		order by A.account_name asc,
+			     E.employee_no asc	  
+	</select>
+	
+	<!-- 재직 전환 시 계정 활성화 -->
+<update id="changeAccountStatusToY">
+
+    update account
+    set account_status = 'Y'
+    where account_no = (
+        select account_no
+        from employee
+        where employee_no = #{employeeNo}
+    )
+
+</update>			     	
+
+
+<!-- active 계약이 생긴 대기 직원 → 재직 -->
+<update id="activateWaitingEmployees">
+
+    update employee E
+
+    set E.employee_status = '재직'
+
+    where E.employee_status = '대기'
+
+      and exists (
+
+          select 1
+
+          from employment_contract C
+
+          where C.employee_no = E.employee_no
+            and C.contract_status = 'active'
+            and C.signed_time is not null
+      )
+
+</update>		
+
+
+
+<!-- active 계약이 있는 직원 계정 활성화 -->
+<update id="activateEmployeeAccounts">
+
+    update account A
+
+    set A.account_status = 'Y'
+
+    where A.account_status != 'Y'
+
+      and exists (
+
+          select 1
+
+          from employee E
+
+          join employment_contract C
+            on C.employee_no = E.employee_no
+
+          where E.account_no = A.account_no
+            and E.employee_status = '재직'
+            and C.contract_status = 'active'
+            and C.signed_time is not null
+      )
+
+</update>
+
+
+<!-- 최초 출근 시 고용일자 등록 -->
+<update id="updateEmploymentDateIfNull">
+
+    update employee
+
+    set employee_htime = #{clockIn}
+
+    where employee_no = #{employeeNo}
+      and employee_htime is null
+
+</update>
+	
 </mapper>

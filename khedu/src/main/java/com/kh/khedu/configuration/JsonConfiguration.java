@@ -1,11 +1,10 @@
 package com.kh.khedu.configuration;
 
-import java.beans.Customizer;
+import java.util.TimeZone;
 
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.cfg.CoercionAction;
@@ -55,6 +54,14 @@ public class JsonConfiguration {
 							CoercionAction.AsNull
 						);
 			});
+			
+			//JSON 날짜/시간 한국기준
+			builder.timeZone(
+			        TimeZone.getTimeZone("Asia/Seoul")
+			);
+		
 		};
 	}
+	
+	
 }

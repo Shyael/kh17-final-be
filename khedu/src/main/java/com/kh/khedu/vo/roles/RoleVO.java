@@ -6,10 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Schema(name = "직원별 권한 저장 객체")
+@Schema(name = "권한 조회용 VO")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class RoleVO {
-	private int accountNo;
     private int roleNo;
     private String roleName;
+    private String roleDescription;
 }

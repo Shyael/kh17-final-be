@@ -1,5 +1,6 @@
 package com.kh.khedu.dao;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,7 +12,9 @@ import com.kh.khedu.dto.PaymentDetailDto;
 import com.kh.khedu.dto.PaymentDiscountDto;
 import com.kh.khedu.dto.PaymentDto;
 import com.kh.khedu.vo.payment.DiscountVO;
+import com.kh.khedu.vo.payment.PaymentComprehensiveVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
+import com.kh.khedu.vo.student.StudentCourseVO;
 
 @Repository
 public class PaymentDaoMybatis implements PaymentDao {
@@ -63,5 +66,40 @@ public class PaymentDaoMybatis implements PaymentDao {
     @Override
     public void updateDiscount(DiscountVO discountVO) {
         sqlSession.update("mapper.discount.updateDiscount", discountVO);
+    }
+    
+    @Override
+    public List<Integer> selectAllActiveStudents() {
+        // 결과가 단순 숫자(int)들의 모임이므로 List<Integer>로 바로 받습니다.
+        return sqlSession.selectList("mapper.payment.selectAllActiveStudents");
+    }
+
+    @Override
+    public int checkDuplicateBilling(int studentNo, String currentMonth) {
+        // 파라미터가 2개이므로 Map에 담아서 전달
+        Map<String, Object> params = new HashMap<>();
+        params.put("studentNo", studentNo);
+        params.put("currentMonth", currentMonth);
+        return sqlSession.selectOne("mapper.payment.checkDuplicateBilling", params);
+    }
+
+    @Override
+    public List<StudentCourseVO> selectStudentCourses(int studentNo) {
+        return sqlSession.selectList("mapper.payment.selectStudentCourses", studentNo);
+    }
+    
+    @Override
+    public PaymentDto selectPaymentMaster(int paymentNo) {
+        return sqlSession.selectOne("mapper.payment.selectPaymentMaster", paymentNo);
+    }
+    
+    @Override
+    public List<PaymentDetailDto> selectPaymentDetails(int paymentNo) {
+        return sqlSession.selectList("mapper.payment.selectPaymentDetails", paymentNo);
+    }
+    
+    @Override
+    public List<PaymentDiscountDto> selectPaymentDiscounts(int paymentNo) {
+        return sqlSession.selectList("mapper.payment.selectPaymentDiscounts", paymentNo);
     }
 }

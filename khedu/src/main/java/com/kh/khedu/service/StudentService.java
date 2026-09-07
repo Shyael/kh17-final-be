@@ -125,7 +125,7 @@ public class StudentService {
 	}
 	
 	// 학생 정보 수정 로직
-    @Transactional // 🌟 둘 다 성공하거나, 하나라도 실패하면 롤백!
+    @Transactional // 둘 다 성공하거나, 하나라도 실패하면 롤백!
     public void updateStudentInfo(StudentUpdateRequestVO requestVO) {
         // 1. Account 정보 변경
         studentDao.updateAccount(requestVO);
