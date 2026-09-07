@@ -28,8 +28,8 @@
 		contract_end,
 		payday,
 		contract_status,
-		contract_content
-		weekly_holilday_day
+		contract_content,
+		weekly_holiday_day
 		)
 		values(
 		#{contractNo},
@@ -44,7 +44,7 @@
 		#{payday},
 		#{contractStatus},
 		#{contractContent},
-		#{weekly_holiday_day}
+		#{weeklyHolidayDay}
 		)
 	</insert>
 
