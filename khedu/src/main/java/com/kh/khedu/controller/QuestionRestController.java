@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dto.QuestionDto;
 import com.kh.khedu.enums.RoleType;
@@ -33,6 +34,10 @@ public class QuestionRestController {
 
     @Autowired
     private QuestionService questionService;
+    
+    //스웨거 오류때문에
+    @Autowired
+    private ObjectMapper objectMapper;
 
     // 문제 등록
     @Operation(summary = "문제 등록")
@@ -42,12 +47,18 @@ public class QuestionRestController {
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public int insert(
-            @RequestPart("question") QuestionDto questionDto,
+            @RequestPart("question") String questionJson,
             @RequestPart(value = "files", required = false)
             List<MultipartFile> files,
             @CurrentUser TokenParseResponseVO parseVO)
             throws IllegalStateException, IOException {
-
+    	
+    	QuestionDto questionDto =
+                objectMapper.readValue(
+                        questionJson,
+                        QuestionDto.class
+                );
+    	
         boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
 
         return questionService.insert(

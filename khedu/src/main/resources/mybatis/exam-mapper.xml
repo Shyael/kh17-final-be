@@ -223,7 +223,7 @@
 	        and at.student_no = cs.student_no
 	
 	    where cs.student_no = #{studentNo}
-	        and cs.course_status = '수강중'
+	        and cs.student_course_status = '수강중'
 	        and e.exam_status in ('공개', '마감')
 	
 	    order by e.exam_start desc
@@ -261,7 +261,7 @@
 	        at.attempt_start,
 	        at.attempt_submit,
 	        at.attempt_score
-
+	
 	    from exam e
 	
 	    join student_course sc
@@ -280,5 +280,6 @@
 	    where e.exam_no = #{examNo}
 	
 	    order by sc.student_no asc
+	
 	</select>
 </mapper>

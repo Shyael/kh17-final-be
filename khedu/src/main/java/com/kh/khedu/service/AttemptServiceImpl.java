@@ -458,7 +458,23 @@ public class AttemptServiceImpl implements AttemptService {
         if (attempt.getStudentNo() != studentNo) {
             throw new GetOutException();
         }
-
+        
+        ExamDto exam = examDao.selectOne(attempt.getExamNo());
+        
+        if (exam == null) {
+            throw new TargetNotfoundException();
+        }
+        
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime examEnd = exam.getExamEnd().toLocalDateTime();
+        
+        if (now.isBefore(examEnd)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "시험 종료 후 결과를 확인할 수 있습니다."
+            );
+        }
+        
         // 결과 VO 조립
         return buildResult(attempt);
     }
