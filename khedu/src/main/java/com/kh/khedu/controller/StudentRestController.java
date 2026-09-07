@@ -3,10 +3,10 @@ package com.kh.khedu.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -14,25 +14,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.service.StudentService;
-import com.kh.khedu.vo.account.AccountJoinResponseVO;
-import com.kh.khedu.vo.account.CheckPasswordRequestVO;
-import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
-import com.kh.khedu.vo.student.ChangeStudentRequestVO;
-import com.kh.khedu.vo.student.ChangeStudentResponseVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
-import com.kh.khedu.vo.student.StudentDetailVO;
-import com.kh.khedu.vo.student.StudentJoinRequestVO;
 import com.kh.khedu.vo.student.StudentListResponseVO;
 import com.kh.khedu.vo.student.StudentUpdateRequestVO;
-import com.kh.khedu.vo.studentLink.StudentLinkResponseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 
 @Tag(name = "학생 정보 관리 서비스")
 @RestController
@@ -85,4 +74,17 @@ public class StudentRestController {
         studentService.removeStudentDiscount(studentDiscountNo);
         return ResponseEntity.ok("학생의 할인이 해제되었습니다.");
     }
+    
+	// 학생 재원 승인 API
+    @PatchMapping("/approve/{studentNo}")
+    public ResponseEntity<String> approveStudent(@PathVariable int studentNo) {
+        try {
+            studentService.approveStudent(studentNo);
+            return ResponseEntity.ok("재원 처리(승인)가 완료되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("승인 처리 실패");
+        }
+    }
+
 }

@@ -16,6 +16,7 @@ public class StudentDetailResponseVO {
     private String studentGrade;  // 학년
     private String studentGender; // 성별
     private String studentEtc;    // 특이사항 (remarks)
+    private String studentAcademicStatus;
 
     // 3. 보호자 및 주소 (현재 DB에 없으므로 쿼리에서 임시 하드코딩할 예정)
     private String guardianName;

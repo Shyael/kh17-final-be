@@ -14,7 +14,7 @@ public class PaymentScheduler {
     private PaymentService paymentService;
 
     // 실무 배포용: 매월 1일 새벽 0시 0분 0초에 실행
-    // @Scheduled(cron = "0 0 0 1 * ?") 
+//     @Scheduled(cron = "0 0 0 1 * ?") 
     
     // 테스트용: 우선 버튼 누르듯 테스트하기 위해 1분마다 실행되게 주석 해제해서 써보세요!
 //    @Scheduled(cron = "0 * * * * ?") 

@@ -11,8 +11,8 @@ import org.springframework.stereotype.Repository;
 import com.kh.khedu.dto.PaymentDetailDto;
 import com.kh.khedu.dto.PaymentDiscountDto;
 import com.kh.khedu.dto.PaymentDto;
+import com.kh.khedu.dto.PaymentHistoryDto;
 import com.kh.khedu.vo.payment.DiscountVO;
-import com.kh.khedu.vo.payment.PaymentComprehensiveVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
 import com.kh.khedu.vo.student.StudentCourseVO;
 
@@ -101,5 +101,10 @@ public class PaymentDaoMybatis implements PaymentDao {
     @Override
     public List<PaymentDiscountDto> selectPaymentDiscounts(int paymentNo) {
         return sqlSession.selectList("mapper.payment.selectPaymentDiscounts", paymentNo);
+    }
+    
+    @Override
+    public List<PaymentHistoryDto> selectPaymentHistorys(int paymentNo) {
+    	return sqlSession.selectList("mapper.payment.selectPaymentHistorys", paymentNo);
     }
 }

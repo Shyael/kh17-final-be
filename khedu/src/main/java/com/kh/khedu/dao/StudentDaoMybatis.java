@@ -79,5 +79,10 @@ public class StudentDaoMybatis implements StudentDao {
 	public boolean updateAll(StudentDto studentDto) {
 		return sqlSession.update("mapper.student.updateAll", studentDto) > 0;
 	}
+	
+	@Override
+	public boolean approveStudent(int studentNo) {
+		return sqlSession.update("mapper.student.approveStudent", studentNo) > 0;
+	}
 
 }
