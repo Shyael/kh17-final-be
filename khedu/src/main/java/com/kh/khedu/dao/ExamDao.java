@@ -3,6 +3,7 @@ package com.kh.khedu.dao;
 import java.util.List;
 
 import com.kh.khedu.dto.ExamDto;
+import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamListVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
@@ -31,5 +32,7 @@ public interface ExamDao {
     boolean update(ExamDto examDto);
     // 시험 삭제
     boolean delete(int examNo);
+    //강사용 시험 응시자 목록
+    List<ExamAttemptListVO> selectAttemptList(int examNo);
     
 }

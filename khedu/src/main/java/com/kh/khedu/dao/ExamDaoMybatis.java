@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.ExamDto;
+import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamListVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
@@ -89,8 +90,9 @@ public class ExamDaoMybatis implements ExamDao {
 		return sqlSession.delete("mapper.exam.delete", examNo) > 0;
 	}
 
-	 
-
-	
-
+	//강사용 수강생 제출목록
+	@Override
+	public List<ExamAttemptListVO> selectAttemptList(int examNo) {
+		return sqlSession.selectList("mapper.exam.selectAttemptList", examNo);
+	}
 }

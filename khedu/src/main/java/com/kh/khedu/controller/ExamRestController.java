@@ -16,6 +16,7 @@ import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dto.ExamDto;
 import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.service.ExamService;
+import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamListVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
@@ -47,14 +48,6 @@ public class ExamRestController {
 
         return examService.insert(examDto);
     }
-
-    // 전체 시험 목록 조회
-    @Operation(summary = "전체 시험 목록 조회")
-    @GetMapping("/")
-    public List<ExamListVO> selectList() {
-        return examService.selectList();
-    }
-
 
     // 직원용 시험 목록 조회
     @Operation(summary = "직원용 시험 목록 조회")
@@ -89,14 +82,6 @@ public class ExamRestController {
     	return examService.selectDetailByStudent(examNo, parseVO.getNoType());
     }
 
-
-    // 특정 강의의 시험 목록 조회
-    @Operation(summary = "특정 강의 시험 목록 조회")
-    @GetMapping("/course/{courseNo}")
-    public List<ExamListVO> selectListByCourse(@PathVariable int courseNo) {
-        return examService.selectListByCourse(courseNo);
-    }
-    
     // 학생용 시험 목록 조회
     @Operation(summary = "학생 시험 목록 조회")
     @GetMapping("/student")
@@ -130,5 +115,17 @@ public class ExamRestController {
             @CurrentUser TokenParseResponseVO parseVO) {
         boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
         return examService.delete(examNo, parseVO.getNoType(), tutor);
+    }
+    
+    // 강사용 시험 응시자 목록 조회
+    @Operation(summary = "시험 응시자 목록 조회")
+    @GetMapping("/{examNo}/attempts")
+    public List<ExamAttemptListVO> selectAttemptList(
+            @PathVariable int examNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+
+        boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
+
+        return examService.selectAttemptList(examNo, parseVO.getNoType(), tutor);
     }
 }

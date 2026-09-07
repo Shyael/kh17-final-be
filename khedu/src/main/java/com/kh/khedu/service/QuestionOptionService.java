@@ -14,7 +14,10 @@ public interface QuestionOptionService {
     // 보기 단일 조회
     QuestionOptionDto selectOne(int optionNo);
     // 특정 문제의 보기 목록 조회
-    List<QuestionOptionDto> selectListByQuestion(int questionNo);
+    List<QuestionOptionDto> selectListByQuestion(
+            int questionNo,
+            int employeeNo,
+            boolean tutor);
     // 보기 수정
     boolean update(
             QuestionOptionDto questionOptionDto,

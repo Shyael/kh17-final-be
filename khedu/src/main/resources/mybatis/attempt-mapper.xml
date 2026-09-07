@@ -52,25 +52,6 @@
           and student_no = #{studentNo}
     </select>
 
-
-    <!-- 특정 시험 응시 목록 -->
-    <select id="selectListByExam" resultType="AttemptDto">
-        select *
-        from attempt
-        where exam_no = #{examNo}
-        order by attempt_start asc
-    </select>
-
-
-    <!-- 특정 학생의 전체 시험 응시 목록 -->
-    <select id="selectListByStudent" resultType="AttemptDto">
-        select *
-        from attempt
-        where student_no = #{studentNo}
-        order by attempt_start desc
-    </select>
-
-
     <!-- 시험 제출 -->
     <update id="submit">
         update attempt
@@ -80,20 +61,14 @@
             attempt_score = #{attemptScore}
         where attempt_no = #{attemptNo}
     </update>
-
-
-    <!-- 응시 상태 수정 -->
-    <update id="updateStatus">
-        update attempt
-        set attempt_status = #{attemptStatus}
-        where attempt_no = #{attemptNo}
-    </update>
-
-
-    <!-- 응시 삭제 -->
-    <delete id="delete">
-        delete from attempt
-        where attempt_no = #{attemptNo}
-    </delete>
+    
+    <!-- 시험 응시 학생 이름 조회 -->
+	<select id="selectStudentName" resultType="String">
+	    select a.account_name
+	    from student s
+	    join account a
+	        on s.account_no = a.account_no
+	    where s.student_no = #{studentNo}
+	</select>
 
 </mapper>

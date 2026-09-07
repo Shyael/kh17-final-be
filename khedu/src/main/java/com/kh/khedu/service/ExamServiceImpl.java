@@ -19,6 +19,7 @@ import com.kh.khedu.dto.QuestionDto;
 import com.kh.khedu.dto.QuestionOptionDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamListVO;
 import com.kh.khedu.vo.exam.QuestionManageDetailVO;
@@ -40,6 +41,9 @@ public class ExamServiceImpl implements ExamService {
 	
 	@Autowired
 	private AttachDao attachDao;
+	
+	@Autowired
+	private AttachService attachService;
 	
 	//공통 메소드
 	//권한검사
@@ -97,6 +101,31 @@ public class ExamServiceImpl implements ExamService {
 	    }
 	}
 	
+	private void checkStatusChange(
+	        String beforeStatus,
+	        String afterStatus) {
+
+	    // 같은 상태 유지
+	    if (beforeStatus.equals(afterStatus)) {
+	        return;
+	    }
+
+	    // 작성중 → 공개
+	    if ("작성중".equals(beforeStatus) && "공개".equals(afterStatus)) {
+	        return;
+	    }
+
+	    // 공개 → 마감
+	    if ("공개".equals(beforeStatus) && "마감".equals(afterStatus)) {
+	        return;
+	    }
+
+	    throw new ResponseStatusException(
+	            HttpStatus.BAD_REQUEST,
+	            "변경할 수 없는 시험 상태입니다."
+	    );
+	}
+	
 	//시험등록
 	@Override
 	public int insert(ExamDto examDto) {
@@ -104,6 +133,9 @@ public class ExamServiceImpl implements ExamService {
 		int examNo = examDao.sequence();
 		
 		examDto.setExamNo(examNo);
+		
+		//최초 등록은 무조건 작성중
+		examDto.setExamStatus("작성중");
 		
 		//시험등록
 		examDao.insert(examDto);
@@ -228,10 +260,13 @@ public class ExamServiceImpl implements ExamService {
 	//시험 수정
 	@Override
 	public boolean update(ExamDto examDto, int employeeNo, boolean tutor) {
-		 ExamDto beforeExam = checkAuthority(examDto.getExamNo(), employeeNo, tutor);
-
-		 // 작성중 → 공개로 변경하는 경우
-	    if ("공개".equals(examDto.getExamStatus()) && !"공개".equals(beforeExam.getExamStatus())) {
+		ExamDto beforeExam = checkAuthority(examDto.getExamNo(), employeeNo, tutor);
+		
+		//상태 변경 검증
+		checkStatusChange(beforeExam.getExamStatus(), examDto.getExamStatus());
+		
+		// 작성중 → 공개
+	    if ("작성중".equals(beforeExam.getExamStatus()) && "공개".equals(examDto.getExamStatus())) {
 	        validatePublish(examDto.getExamNo());
 	    }
 	    return examDao.update(examDto);
@@ -239,9 +274,46 @@ public class ExamServiceImpl implements ExamService {
 
 	@Override
 	public boolean delete(int examNo, int employeeNo, boolean tutor) {
-	    checkAuthority(examNo, employeeNo, tutor);
+	    ExamDto exam = checkAuthority(examNo, employeeNo, tutor);
 	    
-	    return examDao.delete(examNo);
+	    // 작성중 시험만 삭제
+	    if (!"작성중".equals(exam.getExamStatus())) {
+	        throw new ResponseStatusException(
+	                HttpStatus.BAD_REQUEST,
+	                "공개된 시험은 삭제할 수 없습니다."
+	        );
+	    }
+	    //문제 첨부파일 번호 미리 조회
+	    List<QuestionDto> questionList = questionDao.selectListByExam(examNo);
+	    List<Integer> fileNos = new ArrayList<>();
+	    
+	    for (QuestionDto question : questionList) {
+	        List<Integer> questionFileNos = questionDao.selectFiles(question.getQuestionNo());
+
+	        if (questionFileNos != null) {
+	        	fileNos.addAll(questionFileNos);
+	        }
+	    }
+	    
+	    //시험 삭제
+	    boolean result = examDao.delete(examNo);
+	    
+	    //실제 첨부파일 삭제
+	    if(result) {
+	    	for(Integer attachNo : fileNos) {
+	    		attachService.delete(attachNo);
+	    	}
+	    }
+	    
+	    return result;
+	}
+
+	@Override
+	public List<ExamAttemptListVO> selectAttemptList(int examNo, int employeeNo, boolean tutor) {
+		//시험 존재 여부 + 강사 본인 시험인지 확인
+		checkAuthority(examNo, employeeNo, tutor);
+		
+		return examDao.selectAttemptList(examNo);
 	}
 
 }

@@ -3,6 +3,7 @@ package com.kh.khedu.service;
 import java.util.List;
 
 import com.kh.khedu.dto.ExamDto;
+import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamListVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
@@ -37,6 +38,12 @@ public interface ExamService {
     );
     // 시험 삭제
     boolean delete(
+            int examNo,
+            int employeeNo,
+            boolean tutor
+    );
+    //강사용 응시자 목록 조회
+    List<ExamAttemptListVO> selectAttemptList(
             int examNo,
             int employeeNo,
             boolean tutor

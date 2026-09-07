@@ -18,6 +18,8 @@ import com.kh.khedu.dto.AttachDto;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.attach.AttachInfoVO;
 
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 @Service
 @Profile("local")//spring profile이 local일 때 활성화 되는 서비스
 public class AttachServiceLocal implements AttachService {

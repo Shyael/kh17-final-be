@@ -12,8 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dto.AttemptAnswerDto;
 import com.kh.khedu.service.AttemptAnswerService;
+import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,24 +34,20 @@ public class AttemptAnswerRestController {
     @Operation(summary = "시험 답안 등록")
     @ApiResponse(responseCode = "200", description = "시험 답안 등록 성공")
     @PostMapping("/")
-    public void insert(@RequestBody AttemptAnswerDto attemptAnswerDto) {
-        attemptAnswerService.insert(attemptAnswerDto);
+    public void insert(
+            @RequestBody AttemptAnswerDto attemptAnswerDto,
+            @CurrentUser TokenParseResponseVO parseVO) {
+        attemptAnswerService.insert(attemptAnswerDto, parseVO.getNoType());
     }
-
-
-    // 특정 응시의 특정 문제 답안 조회
-    @Operation(summary = "특정 문제 답안 조회")
-    @GetMapping("/attempt/{attemptNo}/question/{questionNo}")
-    public AttemptAnswerDto selectOne(@PathVariable int attemptNo, @PathVariable int questionNo) {
-        return attemptAnswerService.selectOne(attemptNo, questionNo);
-    }
-
 
     // 특정 응시의 전체 답안 목록 조회
     @Operation(summary = "특정 응시 전체 답안 조회")
     @GetMapping("/attempt/{attemptNo}")
-    public List<AttemptAnswerDto> selectListByAttempt(@PathVariable int attemptNo) {
-    	return attemptAnswerService.selectListByAttempt(attemptNo);
+    public List<AttemptAnswerDto> selectListByAttempt(
+            @PathVariable int attemptNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+    	
+        return attemptAnswerService.selectListByAttempt(attemptNo, parseVO.getNoType());
     }
 
 
@@ -60,10 +58,12 @@ public class AttemptAnswerRestController {
     public boolean update(
             @PathVariable int attemptNo,
             @PathVariable int questionNo,
-            @RequestBody AttemptAnswerDto attemptAnswerDto) {
+            @RequestBody AttemptAnswerDto attemptAnswerDto,
+            @CurrentUser TokenParseResponseVO parseVO) {
         attemptAnswerDto.setAttemptNo(attemptNo);
         attemptAnswerDto.setQuestionNo(questionNo);
-        return attemptAnswerService.update(attemptAnswerDto);
+
+        return attemptAnswerService.update(attemptAnswerDto, parseVO.getNoType());
     }
 
 
@@ -71,16 +71,11 @@ public class AttemptAnswerRestController {
     @Operation(summary = "시험 답안 삭제")
     @ApiResponse(responseCode = "200", description = "시험 답안 삭제 성공")
     @DeleteMapping("/attempt/{attemptNo}/question/{questionNo}")
-    public boolean delete(@PathVariable int attemptNo, @PathVariable int questionNo) {
-        return attemptAnswerService.delete(attemptNo, questionNo);
-    }
+    public boolean delete(
+            @PathVariable int attemptNo,
+            @PathVariable int questionNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
 
-
-    // 특정 응시의 전체 답안 삭제
-    @Operation(summary = "특정 응시 전체 답안 삭제")
-    @ApiResponse(responseCode = "200", description = "전체 답안 삭제 성공")
-    @DeleteMapping("/attempt/{attemptNo}")
-    public boolean deleteByAttempt(@PathVariable int attemptNo) {
-        return attemptAnswerService.deleteByAttempt(attemptNo);
+        return attemptAnswerService.delete(attemptNo, questionNo, parseVO.getNoType());
     }
 }

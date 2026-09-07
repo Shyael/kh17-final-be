@@ -37,9 +37,6 @@ public class QuestionServiceImpl implements QuestionService {
     private AttachService attachService;
     
     @Autowired
-    private AttemptDao attemptDao;
-    
-    @Autowired
     private QuestionOptionDao questionOptionDao;
     
     @Autowired
@@ -47,6 +44,9 @@ public class QuestionServiceImpl implements QuestionService {
     
     @Autowired
     private ExamDao examDao;
+    
+    @Autowired
+    private AttemptService attemptService;
     
     //공통 메서드
     private ExamDto checkEditableExam(int examNo, int employeeNo, boolean tutor) {
@@ -65,7 +65,7 @@ public class QuestionServiceImpl implements QuestionService {
         if (!"작성중".equals(exam.getExamStatus())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "공개된 시험의 문제는 수정할 수 없습니다."
+                    "작성중인 시험의 문제만 수정할 수 있습니다."
             );
         }
 
@@ -158,23 +158,9 @@ public class QuestionServiceImpl implements QuestionService {
     //학생용 문제 조회 구현
     @Override
 	public List<StudentQuestionVO> selectListByAttempt(int attemptNo, int studentNo) {
-    	// 1. 응시정보 확인
-        AttemptDto attempt = attemptDao.selectOne(attemptNo);
-
-        if (attempt == null) {
-            throw new TargetNotfoundException();
-        }
-
-        // 2. 본인 응시인지 확인
-        if (attempt.getStudentNo() != studentNo) {
-            throw new GetOutException();
-        }
-
-        // 3. 이미 제출한 시험이면 응시화면 접근 금지
-        if ("제출완료".equals(attempt.getAttemptStatus())) {
-            throw new GetOutException();
-        }
-
+    	
+    	AttemptDto attempt = attemptService.checkAvailableAttempt(attemptNo, studentNo);
+        
         // 4. 해당 시험 문제 목록
         List<QuestionDto> questionList = questionDao.selectListByExam(attempt.getExamNo());
 
@@ -294,8 +280,10 @@ public class QuestionServiceImpl implements QuestionService {
         boolean result = questionDao.delete(questionNo);
 
         // attach DB + 실제 파일 삭제
-        for (Integer attachNo : fileNos) {
-            attachService.delete(attachNo);
+        if (result && fileNos != null) {
+            for (Integer attachNo : fileNos) {
+                attachService.delete(attachNo);
+            }
         }
         
         return result;
