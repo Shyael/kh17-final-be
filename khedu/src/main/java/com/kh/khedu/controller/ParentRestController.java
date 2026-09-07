@@ -33,69 +33,11 @@ import jakarta.validation.Valid;
 
 @Tag(name = "학부모 정보 관리 서비스")
 @RestController
-@RequestMapping("/api/parent")
+@RequestMapping("/api/employee/parent")
 public class ParentRestController {
 	
 	@Autowired
 	private ParentService parentService;
-	
-	//학부모 등록
-	@ApiResponse(responseCode = "200", description="등록 성공")
-	@PostMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
-	public AccountJoinResponseVO join(
-			@RequestBody ParentJoinRequestVO request) {
-			//회원가입 처리
-			AccountJoinResponseVO accountJoinResponseVO 
-			 = parentService.joinParent(request);
-		return accountJoinResponseVO;
-	}
-	
-	//내 정보라는 건  cookie에 포함된 loginId를 읽으면 된다
-	//stateless(무상태) 서버의 세션 대체 방안
-	@ApiResponse(responseCode = "200", description = "조회 성공")
-	@GetMapping(value = "/me", produces= "application/json")
-	public ParentDetailVO me(
-		@CurrentUser TokenParseResponseVO parseVO
-	) {
-		ParentDetailVO parentDetailVO = parentService.findMyInfo(parseVO.getAccountId());
-		return parentDetailVO; 
-	}
-	
-	//개인정보 수정(본인)
-	@PutMapping("/")
-	public ChangeParentResponseVO updateAll(
-			@CurrentUser TokenParseResponseVO parseVO,
-			@Valid @RequestBody ChangeParentRequestVO request
-	) {
-		return parentService.updateMyInfo(request, parseVO);
-	}
-	
-	//비밀번호 확인
-	@PostMapping("/password-check")
-	public boolean checkPassword(
-			@CurrentUser TokenParseResponseVO parseVO,
-			@Valid @RequestBody CheckPasswordRequestVO request
-	) {
-		return parentService.checkPassword(request, parseVO);
-	}
-	
-	//연동코드
-	@PostMapping("/link-student")
-	public ResponseEntity<ParentLinkResponseVO> link(
-			@CurrentUser TokenParseResponseVO parseVO,
-			@Valid @RequestBody ParentLinkRequestVO request
-	) {
-		ParentLinkResponseVO response = parentService.linkStudent(request, parseVO);
-		return ResponseEntity.ok(response);
-	}
-	
-	//관계 수정
-	@PutMapping("/relationship")
-	public void relationship(
-			@RequestBody ParentStudentRelatioshipUpdateRequestVO request,
-			@CurrentUser TokenParseResponseVO parseVO) {
-		parentService.updateRelationship(parseVO, request);
-	}
 	
 	@GetMapping("/student/{studentNo}")
     public ResponseEntity<List<ParentDetailVO>> getParentInfoByStudent(@PathVariable int studentNo) {

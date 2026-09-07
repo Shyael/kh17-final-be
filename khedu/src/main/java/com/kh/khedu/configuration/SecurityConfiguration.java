@@ -78,7 +78,8 @@ public class SecurityConfiguration {
 						).permitAll()
 						
 						//직원(학원 정보 수정)
-						.requestMatchers("/api/academy/**").permitAll() 
+						.requestMatchers("/api/academy/**").permitAll()
+						.requestMatchers("/api/employe/**").permitAll()
 						//직원(강사 정보 수정)
 						.requestMatchers("/api/tutor/**").permitAll() 
 						//메소드(crud) 중 일부 메소드만 허용하고 싶은경우 아래와 같이 추가

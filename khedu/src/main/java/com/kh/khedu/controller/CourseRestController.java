@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dto.CourseDto;
-import com.kh.khedu.service.CourseService;
+import com.kh.khedu.service.course.CourseService;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
@@ -24,7 +24,7 @@ import jakarta.validation.Valid;
 
 @Tag(name = "강좌 정보 관리 서비스")
 @RestController
-@RequestMapping("/api/course")
+@RequestMapping("/api/employee/course")
 public class CourseRestController {
 	
 	@Autowired

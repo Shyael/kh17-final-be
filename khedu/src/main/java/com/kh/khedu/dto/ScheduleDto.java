@@ -1,7 +1,8 @@
 package com.kh.khedu.dto;
 
 
-import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -14,10 +15,10 @@ import lombok.NoArgsConstructor;
 public class ScheduleDto {
 	private int scheduleNo;
 	private int courseNo;
-	private Timestamp scheduleOpen; //개강일
-	private Timestamp scheduleClose; //종강일
 	private String scheduleWeek; //요일
-	private Timestamp scheduleStart;
-	private Timestamp scheduleEnd;
+	private LocalDate scheduleOpen; // 개강일 (null가능)
+	private LocalDate scheduleClose; // 종강일 (null가능)
+	private String scheduleStart; //시작 시간 (HH:mm)
+	private String scheduleEnd; //종료 시간(HH:mm)
 	private int classroomNo;
 }

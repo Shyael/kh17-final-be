@@ -1,10 +1,5 @@
 package com.kh.khedu.dto;
 
-import java.util.List;
-
-import com.kh.khedu.vo.course.CourseVO;
-import com.kh.khedu.vo.schedule.ScheduleCreateRequestVO;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

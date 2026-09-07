@@ -23,11 +23,12 @@ public class CourseDto {
     private String courseSubject;
     @Schema(description = "5.수강 정원")
     private int courseLimit;
-    private int courseCurrentCount;
+    @Schema(description = "6.현재 수강 신청한 인원")
+    private int courseCurrentCount; //기본값 0
     @Schema(description = "7.수강료")
     private int courseFee;
     @Schema(description = "8.강좌 상태", example="모집중, 모집마감, 진행중, 종료, 페강")
-    private String courseStatus;
+    private String courseStatus; //기본값 모집중
     @Schema(description = "9.강좌 설명")
     private String courseInfo;
     @Schema(description = "10.강좌 생성일")

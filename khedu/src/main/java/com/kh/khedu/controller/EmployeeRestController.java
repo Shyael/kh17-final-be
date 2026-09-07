@@ -35,7 +35,7 @@ import jakarta.validation.Valid;
 
 @Tag(name = "직원 정보 관리 서비스")
 @RestController
-@RequestMapping("/api/employee")
+@RequestMapping("/api/employee/worker")
 public class EmployeeRestController {
 	
 	@Autowired
