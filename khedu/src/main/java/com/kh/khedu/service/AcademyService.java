@@ -9,6 +9,8 @@ import com.kh.khedu.dto.AcademyDto;
 import com.kh.khedu.dto.AcademyHistoryDto;
 import com.kh.khedu.dto.AcademySubjectDto;
 import com.kh.khedu.vo.academy.AcademyDetailResponseVO;
+import com.kh.khedu.vo.consult.ConsultReservationInsertRequestVO;
+import com.kh.khedu.vo.consult.ConsultReservationInsertResponseVO;
 
 public interface AcademyService {
 	
@@ -55,4 +57,8 @@ public interface AcademyService {
 	
 	//이미지 삭제
 	void deleteImage(int academyNo, int attachNo);
+	
+	// ==================== 상담예약 ====================
+	// 상담 예약 신청
+	ConsultReservationInsertResponseVO insertReservation(ConsultReservationInsertRequestVO request);
 }

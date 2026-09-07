@@ -21,6 +21,8 @@ import com.kh.khedu.dto.AcademyHistoryDto;
 import com.kh.khedu.dto.AcademySubjectDto;
 import com.kh.khedu.service.AcademyService;
 import com.kh.khedu.vo.academy.AcademyDetailResponseVO;
+import com.kh.khedu.vo.consult.ConsultReservationInsertRequestVO;
+import com.kh.khedu.vo.consult.ConsultReservationInsertResponseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -162,5 +164,13 @@ public class AcademyRestController {
 	            attachNo
 	    );
 	}
-
+	
+	// ==================== 상담 신청 ====================
+	@Operation(summary = "상담 예약 등록")
+	@ApiResponse(responseCode = "200", description = "상담 예약 등록 성공")
+	@PutMapping(value = "/reservation", produces = "application/json")
+	public ConsultReservationInsertResponseVO insertReservation(
+			@RequestBody ConsultReservationInsertRequestVO request) {
+		return academyService.insertReservation(request);
+	}
 }

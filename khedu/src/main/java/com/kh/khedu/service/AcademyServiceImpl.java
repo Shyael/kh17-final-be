@@ -1,7 +1,9 @@
 package com.kh.khedu.service;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.khedu.dao.AcademyDao;
 import com.kh.khedu.dao.AcademyHistoryDao;
+import com.kh.khedu.dao.AcademyReservationDao;
 import com.kh.khedu.dao.AcademySubjectDao;
 import com.kh.khedu.dao.AttachDao;
 import com.kh.khedu.dto.AcademyDto;
@@ -20,6 +23,8 @@ import com.kh.khedu.error.AlreadyExistsException;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.academy.AcademyDetailResponseVO;
+import com.kh.khedu.vo.consult.ConsultReservationInsertRequestVO;
+import com.kh.khedu.vo.consult.ConsultReservationInsertResponseVO;
 
 @Service
 @Transactional
@@ -33,6 +38,9 @@ public class AcademyServiceImpl implements AcademyService {
 
 	@Autowired
 	private AcademySubjectDao academySubjectDao;
+	
+	@Autowired
+	private AcademyReservationDao academyReservationDao;
 	
 	@Autowired
 	private AttachService attachService;
@@ -255,6 +263,26 @@ public class AcademyServiceImpl implements AcademyService {
 		//DB + 실제 파일 삭제
 		attachService.delete(attachNo);
 		
+	}
+
+	// ==================== 상담 예약 ====================
+	
+	@Override
+	public ConsultReservationInsertResponseVO insertReservation(ConsultReservationInsertRequestVO request) {
+		try {
+			int reservationNo = academyReservationDao.sequence();
+			request.setReservationNo(reservationNo);
+			boolean result = academyReservationDao.insertReservation(request);
+			return ConsultReservationInsertResponseVO.builder()
+						.result(result)
+						.errMsg(result ? null : "DB 오류가 발생했습니다")
+					.build();
+		} catch(Exception e) {
+			return ConsultReservationInsertResponseVO.builder()
+					.result(false)
+					.errMsg("일시적인 오류가 발생했습니다")
+				.build();
+		}
 	}
 
 }
