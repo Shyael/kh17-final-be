@@ -14,6 +14,7 @@ import com.kh.khedu.dao.StudentDao;
 import com.kh.khedu.dto.PaymentDetailDto;
 import com.kh.khedu.dto.PaymentDiscountDto;
 import com.kh.khedu.dto.PaymentDto;
+import com.kh.khedu.dto.PaymentHistoryDto;
 import com.kh.khedu.vo.payment.DiscountVO;
 import com.kh.khedu.vo.payment.PaymentComprehensiveVO;
 import com.kh.khedu.vo.payment.PaymentDetailVO;
@@ -115,14 +116,13 @@ public class PaymentService {
         
         for (Integer studentNo : targetStudents) {
             
-            // 🛡️ [방어 로직] 이 학생의 '이번 달' 청구서가 이미 존재하는지 카운트 확인
+            // [방어 로직] 이 학생의 '이번 달' 청구서가 이미 존재하는지 카운트 확인
             int isAlreadyBilled = paymentDao.checkDuplicateBilling(studentNo, currentMonth);
             if (isAlreadyBilled > 0) {
                 continue; // 이미 이번 달 청구서가 있으면 다음 학생으로 패스! (중복 발행 차단)
             }
             
             // 2. 학생이 듣고 있는 강좌 목록을 가져와서 '원금 총액' 계산
-            // (만들어두신 복사 테이블을 조회하는 쿼리 결과를 받는 VO를 StudentCourseVO라 가정)
             List<StudentCourseVO> courses = paymentDao.selectStudentCourses(studentNo);
             if (courses.isEmpty()) {
                 continue; // 듣는 강좌가 없으면 청구서 발행 안 함
@@ -172,6 +172,26 @@ public class PaymentService {
             
             // (선택) 6. DB에 어떤 할인이 들어갔는지 기록(payment_discount) INSERT
             // 이 테이블이 있다면 반복문 돌려서 기록해 주면 나중에 영수증 볼 때 아주 좋습니다.
+            if (discounts != null && !discounts.isEmpty()) {
+                for (StudentDiscountVO discount : discounts) {
+                    PaymentDiscountDto discountDto = new PaymentDiscountDto();
+                    discountDto.setPaymentNo(paymentNo);
+                    discountDto.setDiscountName(discount.getDiscountName()); // 할인 이름 (예: 형제할인)
+                    
+                    // 영수증에 보여줄 "실제로 깎인 금액" 계산
+                    int actualDiscountAmount = 0;
+                    if ("비율".equals(discount.getDiscountType())) {
+                        actualDiscountAmount = (totalFee * discount.getDiscountValue() / 100);
+                    } else {
+                        actualDiscountAmount = discount.getDiscountValue();
+                    }
+                    
+                    // DB에는 %가 아닌 '실제 차감된 돈'을 기록해둡니다.
+                    discountDto.setDiscountValue(actualDiscountAmount); 
+                    
+                    paymentDao.insertPaymentDiscount(discountDto);
+                }
+            }
         }
     }
     
@@ -184,15 +204,17 @@ public class PaymentService {
             throw new RuntimeException("존재하지 않는 수납 번호입니다.");
         }
         
-        // 2. 상세 및 할인 내역 리스트 가져오기
+        // 2. 상세 및 할인 내역 및 수납 이력 리스트 가져오기
         List<PaymentDetailDto> details = paymentDao.selectPaymentDetails(paymentNo);
         List<PaymentDiscountDto> discounts = paymentDao.selectPaymentDiscounts(paymentNo);
+        List<PaymentHistoryDto> historys = paymentDao.selectPaymentHistorys(paymentNo);
 
         // 3. 하나의 VO로 조립해서 반환
         return PaymentComprehensiveVO.builder()
                 .payment(master)
                 .details(details)
                 .discounts(discounts)
+                .historys(historys)
                 .build();
     }
 }

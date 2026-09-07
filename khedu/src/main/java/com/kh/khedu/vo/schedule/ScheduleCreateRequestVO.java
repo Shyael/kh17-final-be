@@ -1,6 +1,6 @@
 package com.kh.khedu.vo.schedule;
 
-import java.sql.Timestamp;
+import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -15,9 +15,9 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ScheduleCreateRequestVO {
 	private String scheduleWeek; //요일
-	private Timestamp scheduleOpen; // 개강일 (null가능)
-	private Timestamp scheduleClose; // 종강일 (null가능)
-	private Timestamp scheduleStart; //시작 시간 (HH:mm)
-	private Timestamp scheduleEnd; //종료 시간(HH:mm)
+	private LocalDate scheduleOpen; // 개강일 (null가능)
+	private LocalDate scheduleClose; // 종강일 (null가능)
+	private String scheduleStart; //시작 시간 (HH:mm)
+	private String scheduleEnd; //종료 시간(HH:mm)
 	private int classroomNo; //기본 강의실
 }

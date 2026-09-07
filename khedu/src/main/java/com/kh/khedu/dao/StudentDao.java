@@ -28,4 +28,5 @@ public interface StudentDao {
     void deleteStudentDiscount(int studentDiscountNo);
 	StudentDto selectOne(int accountNo);
 	boolean updateAll(StudentDto studentDto);
+	boolean approveStudent(int studentNo);
 }

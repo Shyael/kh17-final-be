@@ -291,5 +291,10 @@ public class StudentService {
 					.linkExpire(expire)
 				.build();
 	}
+	
+	public void approveStudent(int studentNo) {
+        // 성공/실패 여부에 따른 예외 처리 추가 가능
+        studentDao.approveStudent(studentNo);
+    }
 
 }

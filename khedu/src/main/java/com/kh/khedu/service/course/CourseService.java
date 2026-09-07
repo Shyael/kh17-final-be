@@ -1,4 +1,4 @@
-package com.kh.khedu.service;
+package com.kh.khedu.service.course;
 
 import java.util.List;
 
