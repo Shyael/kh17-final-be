@@ -18,7 +18,9 @@ import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.service.ExamService;
 import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
+import com.kh.khedu.vo.exam.ExamDraftRequestVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
 import com.kh.khedu.vo.exam.StudentExamListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
@@ -127,5 +129,37 @@ public class ExamRestController {
         boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
 
         return examService.selectAttemptList(examNo, parseVO.getNoType(), tutor);
+    }
+    
+    // 시험 문제 일괄 임시저장
+    @Operation(summary = "시험 문제 일괄 임시저장")
+    @ApiResponse(responseCode = "200", description = "시험 문제 임시저장 성공")
+    @PutMapping("/{examNo}/draft")
+    public ExamDraftRequestVO saveDraft(
+            @PathVariable int examNo,
+            @RequestBody ExamDraftRequestVO request,
+            @CurrentUser TokenParseResponseVO parseVO) {
+        boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
+        
+        return examService.saveDraft(
+                examNo,
+                request,
+                parseVO.getNoType(),
+                tutor
+        );
+    }
+    
+    //시험 통계 조회
+    @Operation(summary = "시험 통계 조회")
+    @GetMapping("/{examNo}/statistics")
+    public ExamStatisticsVO selectStatistics(
+    		@PathVariable int examNo,
+    		@CurrentUser TokenParseResponseVO parseVO) {
+    	boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
+    	
+    	return examService.selectStatistics(
+    			examNo,
+    			parseVO.getNoType(),
+    			tutor);
     }
 }

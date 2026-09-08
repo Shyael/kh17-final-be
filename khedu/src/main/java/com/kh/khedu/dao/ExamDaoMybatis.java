@@ -11,6 +11,8 @@ import com.kh.khedu.dto.ExamDto;
 import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamStatisticsVO;
+import com.kh.khedu.vo.exam.QuestionStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
 import com.kh.khedu.vo.exam.StudentExamListVO;
 
@@ -94,5 +96,15 @@ public class ExamDaoMybatis implements ExamDao {
 	@Override
 	public List<ExamAttemptListVO> selectAttemptList(int examNo) {
 		return sqlSession.selectList("mapper.exam.selectAttemptList", examNo);
+	}
+
+	@Override
+	public ExamStatisticsVO selectStatistics(int examNo) {
+		return sqlSession.selectOne("mapper.exam.selectStatistics", examNo);
+	}
+
+	@Override
+	public List<QuestionStatisticsVO> selectQuestionStatistics(int examNo) {
+		return sqlSession.selectList("mapper.exam.selectQuestionStatistics", examNo);
 	}
 }

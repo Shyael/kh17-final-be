@@ -46,7 +46,7 @@ public class CourseRestController {
 	
 	// 로그인한 강사의 진행중인 강의 목록 조회
 	@Operation(summary = "내가 수업중인 강의 목록 조회")
-	@GetMapping("/employee")
+	@GetMapping("/tutor")
 	public List<CourseDto> selectListByEmployee(
 	        @CurrentUser TokenParseResponseVO parseVO) {
 	    return courseDao.selectTeachingListByEmployee(
