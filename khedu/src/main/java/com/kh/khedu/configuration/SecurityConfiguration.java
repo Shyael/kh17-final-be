@@ -75,6 +75,7 @@ public class SecurityConfiguration {
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
 							,"/api/admin/employee/**"
+							,"/api/account/check-id/**"
 						).permitAll()
 						
 						//직원(학원 정보 수정)

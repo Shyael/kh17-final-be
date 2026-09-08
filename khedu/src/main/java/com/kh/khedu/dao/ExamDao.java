@@ -6,6 +6,8 @@ import com.kh.khedu.dto.ExamDto;
 import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamStatisticsVO;
+import com.kh.khedu.vo.exam.QuestionStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
 import com.kh.khedu.vo.exam.StudentExamListVO;
 
@@ -34,5 +36,8 @@ public interface ExamDao {
     boolean delete(int examNo);
     //강사용 시험 응시자 목록
     List<ExamAttemptListVO> selectAttemptList(int examNo);
-    
+    //제출 현황 및 시험 현황
+    ExamStatisticsVO selectStatistics(int examNo);
+    //문항별 통계
+    List<QuestionStatisticsVO> selectQuestionStatistics(int examNo);
 }

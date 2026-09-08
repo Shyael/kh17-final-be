@@ -282,4 +282,159 @@
 	    order by sc.student_no asc
 	
 	</select>
+	
+	<!-- 시험 전체 통계 -->
+	<select id="selectStatistics" resultType="ExamStatisticsVO">
+		select 
+			count(sc.student_no) as totalStudentCount,
+			sum(
+				case
+					when at.attempt_status = '제출완료'
+					then 1
+					else 0
+				end
+			) as submittedCount,
+			
+			 sum(
+	            case
+	                when at.attempt_status = '응시중'
+	                then 1
+	                else 0
+	            end
+	        ) as inProgressCount,
+	
+	        sum(
+	            case
+	                when at.attempt_no is null
+	                then 1
+	                else 0
+	            end
+	        ) as notAttemptedCount,
+			<!-- 평균 -->
+	        round(
+	            avg(
+	                case
+	                    when at.attempt_status = '제출완료'
+	                    then at.attempt_score
+	                end
+	            ),
+	            1
+	        ) as averageScore,
+			<!-- 최고 점수  -->
+	        max(
+	            case
+	                when at.attempt_status = '제출완료'
+	                then at.attempt_score
+	            end
+	        ) as highestScore,
+			<!-- 최저 점수 -->
+	        min(
+	            case
+	                when at.attempt_status = '제출완료'
+	                then at.attempt_score
+	            end
+	        ) as lowestScore
+	
+	    from exam e
+	
+	    join student_course sc
+	        on e.course_no = sc.course_no
+	
+	    left join attempt at
+	        on e.exam_no = at.exam_no
+	        and sc.student_no = at.student_no
+	
+	    where e.exam_no = #{examNo}
+	
+	        <!-- 네가 아까 수정한 실제 수강상태 컬럼명 사용 -->
+	        and sc.student_course_status = '수강중'
+	</select>
+	
+	<!-- 시험 문항별 통계 -->
+	<select id="selectQuestionStatistics" resultType="QuestionStatisticsVO">
+	
+	    select
+	        q.question_no as questionNo,
+	        q.question_order as questionOrder,
+	        q.question_content as questionContent,
+	
+	        sum(
+	            case
+	                when at.attempt_status = '제출완료'
+	                    and aa.is_correct = 'Y'
+	                then 1
+	                else 0
+	            end
+	        ) as correctCount,
+	
+	        sum(
+	            case
+	                when at.attempt_status = '제출완료'
+	                then 1
+	                else 0
+	            end
+	        ) as submittedCount,
+	
+	        case
+	            when sum(
+	                case
+	                    when at.attempt_status = '제출완료'
+	                    then 1
+	                    else 0
+	                end
+	            ) = 0
+	            then 0
+	
+	            else round(
+	                sum(
+	                    case
+	                        when at.attempt_status = '제출완료'
+	                            and aa.is_correct = 'Y'
+	                        then 1
+	                        else 0
+	                    end
+	                )
+	                /
+	                sum(
+	                    case
+	                        when at.attempt_status = '제출완료'
+	                        then 1
+	                        else 0
+	                    end
+	                )
+	                * 100,
+	                1
+	            )
+	        end as correctRate
+	
+	    from question q
+	
+	    join exam e
+	        on q.exam_no = e.exam_no
+	
+	    join student_course sc
+	        on e.course_no = sc.course_no
+	
+	    left join attempt at
+	        on e.exam_no = at.exam_no
+	        and sc.student_no = at.student_no
+	
+	    left join attempt_answer aa
+	        on at.attempt_no = aa.attempt_no
+	        and q.question_no = aa.question_no
+	
+	    where q.exam_no = #{examNo}
+	
+	        <!-- 실제 수강상태 컬럼명으로 맞추기 -->
+	        and sc.student_course_status = '수강중'
+	
+	    group by
+	        q.question_no,
+	        q.question_order,
+	        q.question_content
+	
+	    order by
+	        q.question_order asc
+	
+	</select>
 </mapper>

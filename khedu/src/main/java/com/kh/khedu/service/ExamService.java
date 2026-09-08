@@ -5,7 +5,9 @@ import java.util.List;
 import com.kh.khedu.dto.ExamDto;
 import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
+import com.kh.khedu.vo.exam.ExamDraftRequestVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
 import com.kh.khedu.vo.exam.StudentExamListVO;
 
@@ -48,4 +50,18 @@ public interface ExamService {
             int employeeNo,
             boolean tutor
     );
+    //일괄저장
+    ExamDraftRequestVO saveDraft(
+	    int examNo,
+	    ExamDraftRequestVO request,
+	    int employeeNo,
+	    boolean tutor
+	);
+    //통계 VO
+    ExamStatisticsVO selectStatistics(
+    		int examNo,
+    		int employeeNo,
+    		boolean tutor
+    );
+    
 }
