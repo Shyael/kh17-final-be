@@ -5,10 +5,12 @@
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
   
 <mapper namespace="mapper.schedule">
-	<!-- 등록 -->
+	<!-- schedule 번호 생성 -->
 	<select id="sequence" resultType="int">
 		select schedule_seq.nextval from dual
 	</select>
+	
+	<!-- schedule 등록 -->
 	<insert id="add">
 		insert into schedule(
 			schedule_no,
@@ -31,4 +33,71 @@
 			#{classroomNo}
 		)
 	</insert>
+	
+	<!-- 담당 강사의 기존 수업과 충돌 확인  -->
+	<select id="checkTutorScheduleConflict" resultType="int">
+		select count(*) 
+		from schedule s
+		join course c
+			on s.course_no = c.course_no
+		where c.employee_no = #{employeeNo}
+		
+		<!-- 날짜 범위 충돌(개강일 종강일) -->
+		and (
+			<![CDATA[
+			s.schedule_open is null
+			or #{schedule.scheduleClose} is null
+			or s.schedule_open <= #{schedule.scheduleClose}
+			]]>
+		)
+		and (
+			<![CDATA[
+			s.schedule_close is null
+			or #{schedule.scheduleOpen} is null
+			or s.schedule_close >= #{schedule.scheduleOpen}
+			]]>
+		)
+		
+		<!-- 같은 요일 -->
+		and s.schedule_week = #{schedule.scheduleWeek}
+		
+		<!-- 시간 충돌 -->
+		<![CDATA[
+		and s.schedule_start < #{schedule.scheduleEnd}
+		and s.schedule_end > #{schedule.scheduleStart}
+		]]> 
+	</select>
+	
+	
+	<!-- 강의실 기존 수업과 충돌 확인 -->
+	<select id="checkClassroomScheduleConflict" resultType="int">
+		select count(*) 
+		from schedule s
+		where s.classroom_no = #{classroomNo}
+		
+		<!-- 날짜 범위 충돌(개강일 종강일) -->
+		and (
+			<![CDATA[
+			s.schedule_open is null
+			or #{schedule.scheduleClose} is null
+			or s.schedule_open <= #{schedule.scheduleClose}
+			]]>
+		)
+		and (
+			<![CDATA[
+			s.schedule_close is null
+			or #{schedule.scheduleOpen} is null
+			or s.schedule_close >= #{schedule.scheduleOpen}
+			]]>
+		)
+		
+		<!-- 같은 요일 -->
+		and s.schedule_week = #{schedule.scheduleWeek}
+		
+		<!-- 시간 충돌 -->
+		<![CDATA[
+		and s.schedule_start < #{schedule.scheduleEnd}
+		and s.schedule_end > #{schedule.scheduleStart}
+		]]> 
+	</select>
 </mapper>

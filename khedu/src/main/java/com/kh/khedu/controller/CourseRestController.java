@@ -11,10 +11,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CurrentUser;
+import com.kh.khedu.dao.AcademySubjectDao;
 import com.kh.khedu.dao.CourseDao;
+import com.kh.khedu.dao.GradeDao;
+import com.kh.khedu.dao.TutorDao;
 import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.service.course.CourseService;
+import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
+import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
+import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,11 +37,17 @@ public class CourseRestController {
 	private CourseDao courseDao;
 	@Autowired
 	private CourseService courseService;
+	
+	@ApiResponse(responseCode = "200", description = "강좌 등록 초기 데이터 조회")
+	@GetMapping("/form-data")
+	public CourseFormDataVO getFormData() {
 
+	    return courseService.getCourseFormData();
+	}
 	
 	// 강좌 등록
 	@ApiResponse(responseCode = "200", description = "등록 성공")
-	@PostMapping("/course")
+	@PostMapping("/")
 	public ResponseEntity<Void> courseInsert(
 			@CurrentUser TokenParseResponseVO parseVO,
 			@Valid @RequestBody CourseCreateRequestVO request) {
@@ -43,10 +55,17 @@ public class CourseRestController {
 		return ResponseEntity.ok().build();
 	}
 	
+	//사용가능 강의실 판단
+	@PostMapping("/available-classrooms")
+	public List<ClassroomWhenRegisterVO> getAvailableClassrooms(
+			@RequestBody AvailableClassroomRequestVO request){
+		return courseService.getAvailAbleClassrooms(request);
+	}
+	
 	
 	// 로그인한 강사의 진행중인 강의 목록 조회
 	@Operation(summary = "내가 수업중인 강의 목록 조회")
-	@GetMapping("/employee")
+	@GetMapping("/tutor")
 	public List<CourseDto> selectListByEmployee(
 	        @CurrentUser TokenParseResponseVO parseVO) {
 	    return courseDao.selectTeachingListByEmployee(

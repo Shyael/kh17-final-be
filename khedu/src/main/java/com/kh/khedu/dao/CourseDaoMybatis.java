@@ -22,12 +22,13 @@ public class CourseDaoMybatis implements CourseDao {
 		 return sqlSession.selectList("mapper.course.selectTeachingListByEmployee", employeeNo);
 	}
 	
-	//강좌 등록
+	//강좌 번호생성
 	@Override
 	public int sequence() {
 		return sqlSession.selectOne("mapper.course.sequence");
 	}
 	
+	//강좌 등록
 	@Override
 	public void insertCourse(CourseDto courseDto) {
 		sqlSession.insert("mapper.course.add", courseDto);

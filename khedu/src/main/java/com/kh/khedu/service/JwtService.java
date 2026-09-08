@@ -48,6 +48,7 @@ public class JwtService {
 				//커스텀 데이터 - 마음대로
 				.claim("accountNo", request.getAccountNo())
 				.claim("accountId", request.getAccountId())
+				.claim("accountName", request.getAccountName())
 				.claim("accountType", request.getAccountType())
 				.claim("roleNames", request.getRoleNames())
 				.claim("noType", request.getTypeNo())
@@ -67,13 +68,7 @@ public class JwtService {
 	public TokenParseResponseVO parseAccessToken(String token) throws JwtValidationException {
 		//모두 검사 후 정보추출 (문제가 생기면 JwtValidationException 발생)
 		Jwt jwt = jwtDecoder.decode(token);
-		return TokenParseResponseVO.builder()
-					.accountNo(((Long)jwt.getClaim("accountNo")).intValue())
-					.accountId(jwt.getClaimAsString("accountId"))
-					.accountType(jwt.getClaimAsString("accountType"))
-					.roleNames(jwt.getClaim("roleNames"))
-					.noType(((Long) jwt.getClaim("noType")).intValue())
-				.build();
+		return parseAccessToken(jwt);
 	}
 	
 	//액세스 토큰 해석 메소드
@@ -81,6 +76,7 @@ public class JwtService {
 		return TokenParseResponseVO.builder()
 				.accountNo(((Long)jwt.getClaim("accountNo")).intValue())
 				.accountId(jwt.getClaimAsString("accountId"))
+				.accountType(jwt.getClaimAsString("accountType"))
 				.accountType(jwt.getClaimAsString("accountType"))
 				.roleNames(jwt.getClaim("roleNames"))
 				.noType(((Long) jwt.getClaim("noType")).intValue())

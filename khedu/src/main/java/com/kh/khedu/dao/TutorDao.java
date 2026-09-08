@@ -6,6 +6,8 @@ import com.kh.khedu.dto.TutorDto;
 import com.kh.khedu.vo.tutor.TutorDetailVO;
 import com.kh.khedu.vo.tutor.TutorEmployeeVO;
 import com.kh.khedu.vo.tutor.TutorListVO;
+import com.kh.khedu.vo.tutor.TutorSearchRequestVO;
+import com.kh.khedu.vo.tutor.TutorSubjectVO;
 
 public interface TutorDao {
 
@@ -29,4 +31,12 @@ public interface TutorDao {
 	//파일
 	void connect(int tutorNo, int attachNo);
 	Integer selectImage(int tutorNo);
+	
+	
+	/* 강의 관련 강사용으로 만든 Dao (필요 시 다른 곳 사용) */
+	
+	// =========== 강사가 해당 과목을 담당하는 지 확인  =============
+	int checkTutorSubject(int employeeNo, int academySubjectNo);
+	// =========== 강사 조회  =============
+	List<TutorSubjectVO> tutorListBySubject();
 }

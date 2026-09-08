@@ -53,5 +53,16 @@
 		delete from academy_subject
 		where academy_subject_no = #{academySubjectNo}
 	</delete>
-
+	
+	<!--  
+		강의 등록에 사용
+	-->
+	<!-- 과목 전체 목록 -->
+	<select id="subjectList" resultType="AcademySubjectDto">
+		select
+	        *
+	    from academy_subject
+	    order by academy_subject_no
+	</select>
+	
 </mapper>
