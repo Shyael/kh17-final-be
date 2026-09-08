@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 @Schema(name="강의실 DTO")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
-public class ClassRoomDto {
+public class ClassroomDto {
 	private int classroomNo;
 	private String classroomName;
 	private int classroomCapacity; //수용인원 0초과

@@ -9,8 +9,10 @@ import com.kh.khedu.vo.course.CourseListVO;
 public interface CourseDao {
 	List<CourseDto> selectTeachingListByEmployee(int employeeNo);
 	
-	// 강좌 등록
+	//강좌 번호 생성
 	int sequence();
+	
+	// 강좌 등록
 	void insertCourse(CourseDto courseDto);
 
 	// 강좌 목록
@@ -18,5 +20,5 @@ public interface CourseDao {
 
 	// 강좌 상세
 	CourseDetailVO selectCourseDetail(int courseNo);
-
+	
 }

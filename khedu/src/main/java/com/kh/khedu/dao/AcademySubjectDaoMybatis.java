@@ -43,5 +43,12 @@ public class AcademySubjectDaoMybatis implements AcademySubjectDao {
 	public boolean delete(int academySubjectNo) {
 		return sqlSession.delete("mapper.academySubject.delete", academySubjectNo) > 0;
 	}
+	
+	
+	//강의 등록에서 과목 전체 조회
+	@Override
+	public List<AcademySubjectDto> subjectList() {
+		return sqlSession.selectList("mapper.academySubject.subjectList");
+	}
 
 }
