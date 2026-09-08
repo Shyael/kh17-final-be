@@ -213,7 +213,7 @@
 </update>
 
 <!-- 직원 고용일자 조회 -->
-<select id="findEmploymentDate" resultType="timestamp">
+<select id="findEmploymentDate" resultType="java.sql.Timestamp">
 	select employee_htime
 	from employee
 	where employee_no = #{employeeNo}
