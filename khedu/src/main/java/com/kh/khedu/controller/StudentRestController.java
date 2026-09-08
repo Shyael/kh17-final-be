@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.khedu.dto.StudentCourseDto;
+import com.kh.khedu.service.StudentCourseService;
 import com.kh.khedu.service.StudentService;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
@@ -29,13 +32,19 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class StudentRestController {
 	@Autowired 
 	private StudentService studentService;
+	@Autowired
+	private StudentCourseService studentCourseService;
 	
     //학생 목록 전체 조회
-    @GetMapping(value = "/list", produces = "application/json")
-    public List<StudentListResponseVO> list() {
-        return studentService.getStudentList();
+	@GetMapping("/list")
+    public ResponseEntity<List<StudentListResponseVO>> getStudentList(
+            @RequestParam(required = false, defaultValue = "전체") String filter,
+            @RequestParam(required = false, defaultValue = "") String searchKeyword) {
+        
+        List<StudentListResponseVO> list = studentService.getStudentList(filter, searchKeyword);
+        return ResponseEntity.ok(list);
     }
-    
+	
     //학생 상세 조회
     @Operation(summary = "학생 상세 조회", description = "특정 학생의 상세 정보를 반환합니다.")
     @GetMapping(value = "/detail/{studentNo}", produces = "application/json")
@@ -85,6 +94,19 @@ public class StudentRestController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("승인 처리 실패");
         }
+    }
+    
+    @PostMapping("/course/add")
+    public ResponseEntity<String> addCourse(@RequestBody StudentCourseDto dto) {
+        String result = studentCourseService.enrollCourse(dto);
+        
+        if ("GRADE_MISMATCH".equals(result)) {
+            return ResponseEntity.badRequest().body("신청 불가: 학생의 학년과 강의 대상 학년이 일치하지 않습니다.");
+        } else if ("TIME_CONFLICT".equals(result)) {
+            return ResponseEntity.badRequest().body("신청 불가: 기존에 수강 중인 강의와 요일/시간이 겹칩니다.");
+        }
+        
+        return ResponseEntity.ok("성공적으로 수강 신청되었습니다.");
     }
 
 }

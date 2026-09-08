@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.studentCourse">
+	<insert id="insert">
+		insert into student_course(
+			course_no, 
+			student_no, 
+			student_course_status
+		)
+		values(
+			#{courseNo}, 
+			#{studentNo}, 
+			'수강중'
+		)	
+	</insert>
+	
+	<update id="update">
+		update student_course set 
+			student_course_status = #{studentCourseStatus} 
+		where student_no = #{studentNo} and course_no = #{courseNo}
+	</update>
+	
+	<!-- 특정 학생의 수강 내역 전체 조회 -->
+    <select id="selectListByStudentNo" resultType="com.kh.khedu.vo.studentCourse.StudentCourseVO">
+        select
+            SC.course_no as courseNo,
+            SC.student_no as studentNo,
+            SC.student_course_status as studentCourseStatus,
+            C.course_title as courseTitle,
+            C.course_subject as courseSubject,
+            C.course_type as courseType,
+            C.course_status as courseStatus,
+        from 
+            student_course SC
+        inner join 
+            course C on SC.course_no = C.course_no
+        where 
+            SC.student_no = #{studentNo}
+        order by 
+            SC.course_no desc
+    </select>
+    
+    <!-- 수강 신청 전: 시간표 겹침 여부 및 학년 확인용 쿼리 -->
+	<select id="checkEnrollmentValidation" resultType="int">
+	    select count(*)
+	    from schedule new_sch
+	    <!-- 1. 기존에 학생이 수강 중인 강의의 스케줄을 조인 (요일이 같은 것만) -->
+	    inner join schedule old_sch 
+	        on new_sch.schedule_week = old_sch.schedule_week
+	    <!-- 2. 그 스케줄이 '이 학생'이 '수강 중'인 과목인지 조인 -->
+	    inner join student_course sc 
+	        on old_sch.course_no = sc.course_no
+	    where 
+	        new_sch.course_no = #{courseNo}          <!-- 내가 지금 신청하려는 강의 번호 -->
+	        and sc.student_no = #{studentNo}         <!-- 내 학생 번호 -->
+	        and sc.student_course_status in ('신청', '수강중') <!-- 유효한 수강건만 비교 -->
+	        
+	        <!-- 3. 대망의 시간 겹침 공식 적용! -->
+	        and new_sch.schedule_start &lt; old_sch.schedule_end
+	        and new_sch.schedule_end &gt; old_sch.schedule_start
+	</select>
+</mapper>

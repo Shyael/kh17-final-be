@@ -10,13 +10,13 @@ public class AttendanceScheduler {
 	 @Autowired
 	    private EmployeeAttendanceService employeeAttendanceService;
 
-	 @Scheduled(
-		        cron = "0 * * * * *",
-		        zone = "Asia/Seoul"
-		    )
-		    public void autoAbsent() {
-
-		        employeeAttendanceService.autoAbsent();
-		    }
+//	 @Scheduled(
+//		        cron = "0 * * * * *",
+//		        zone = "Asia/Seoul"
+//		    )
+//		    public void autoAbsent() {
+//
+//		        employeeAttendanceService.autoAbsent();
+//		    }
 
 }

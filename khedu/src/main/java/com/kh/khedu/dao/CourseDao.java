@@ -18,5 +18,8 @@ public interface CourseDao {
 
 	// 강좌 상세
 	CourseDetailVO selectCourseDetail(int courseNo);
+	
+	// 강의 대상 학년 조회
+    String selectCourseGrade(int courseNo);
 
 }

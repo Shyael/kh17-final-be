@@ -42,25 +42,66 @@
 		where account_no = #{accountNo}
 	</update>
 	
-	<!-- 학생 목록 전체 조회 (Account 테이블과 JOIN) -->
+	<!-- 학생 목록 전체 조회 (검색 및 필터 포함) -->
 	<select id="list" resultType="com.kh.khedu.vo.student.StudentListResponseVO">
 	    select 
 	        S.student_no as studentNo,
-	        A.account_name as studentName,       <!-- 계정 테이블의 이름을 가져와서 VO의 studentName에 매핑 -->
+	        A.account_name as studentName,
 	        S.student_school as studentSchool,
 	        S.student_grade as studentGrade,
 	        S.student_academic_status as studentAcademicStatus,
 	        
-	        <!-- 통계 및 집계 데이터는 테이블이 완성되기 전까지 임시(더미) 데이터로 채워둡니다 -->
+	        -- 해당 학생의 누적 미납액 계산
+	        NVL((
+	            select sum(P.payment_amount - NVL(
+	                (select sum(H.payment_history_amount) from payment_history H where H.payment_no = P.payment_no)
+	            , 0))
+	            from payment P
+	            where P.student_no = S.student_no
+	              and P.payment_status != '완납'
+	        ), 0) as totalUnpaidAmount,
+	        
 	        100 as attendanceRate, 
 	        0 as unpaidAmount,
 	        '안전' as riskLevel
 	    from 
 	        student S
 	    inner join 
-	        account A ON S.account_no = A.account_no
+	        account A on S.account_no = A.account_no
+	
+	    <where>
+	        <!-- 1. 드롭다운 필터 조건 (전체가 아닐 때만 발동) -->
+	        <if test="filter != null and filter != '전체'">
+	            <choose>
+	                <!-- 미납: 미납/부분납 영수증이 하나라도 존재하는(EXISTS) 학생 -->
+	                <when test="filter == '미납'">
+	                    and exists (
+	                        select 1 from payment P 
+	                        where P.student_no = S.student_no 
+	                          and P.payment_status != '완납'
+	                    )
+	                </when>
+	                <!-- 대기: 아까 만든 승인 대기 상태 -->
+	                <when test="filter == '대기'">
+	                    and S.student_academic_status = '대기'
+	                </when>
+	                <!-- 휴원: 휴원 또는 퇴원 상태 -->
+	                <when test="filter == '휴원'">
+	                    and S.student_academic_status in ('휴원', '퇴원')
+	                </when>
+	            </choose>
+	        </if>
+	
+	        <!-- 2. 텍스트 검색 조건 (이름 또는 학교명에 키워드가 포함되어 있으면) -->
+	        <if test="searchKeyword != null and searchKeyword != ''">
+	            and (
+	                A.account_name like '%' || #{searchKeyword} || '%'
+	                or S.student_school like '%' || #{searchKeyword} || '%'
+	            )
+	        </if>
+	    </where>
 	    order by 
-	        S.student_no desc <!-- 최신 등록된 학생이 먼저 보이도록 내림차순 정렬 -->
+	        S.student_no desc
 	</select>
 	
 	<!-- 학생 상세 정보 조회 -->
@@ -97,7 +138,8 @@
         update account 
         set 
             account_phone = #{studentPhone},
-            account_id = #{studentEmail}
+            account_name = #{studentName},
+            account_utime = systimestamp
         where 
             account_no = #{accountNo}
     </update>
@@ -109,7 +151,8 @@
             student_school = #{studentSchool},
             student_grade = #{studentGrade},
             student_gender = #{studentGender},
-            student_etc = #{studentEtc}
+            student_etc = #{studentEtc}, 
+            student_utime = systimestamp
         where 
             student_no = #{studentNo}
     </update>
@@ -120,5 +163,12 @@
         set student_academic_status = '재원' 
         where student_no = #{studentNo}
     </update>
+    
+    <!-- 학생 학년만 단건으로 조회 -->
+    <select id="selectStudentGrade" resultType="string">
+        select student_grade 
+        from student 
+        where student_no = #{studentNo}
+    </select>
 	
 </mapper>

@@ -42,4 +42,12 @@
 			#{courseType}
 		)
 	</insert>
+	
+	<!-- 강의의 대상 학년 조회 -->
+    <select id="selectCourseGrade" resultType="string">
+        select G.grade_level
+        from course C
+        inner join grade G on C.grade_no = G.grade_no
+        where C.course_no = #{courseNo}
+    </select>
 </mapper>

@@ -19,4 +19,7 @@ public class StudentListResponseVO {
     private int attendanceRate;
     private int unpaidAmount;
     private String riskLevel;
+    
+    //미납액 정보
+    private int totalUnpaidAmount;
 }

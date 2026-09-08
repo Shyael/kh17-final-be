@@ -10,13 +10,13 @@ import com.kh.khedu.service.payroll.ContractService;
 @Component
 public class ContractScheduler {
 	
-	@Autowired
-	private ContractService contractService;
-	
-	
-	@Scheduled(cron = "0 * * * * *"
-	,zone ="Asia/Seoul")
-	public void refreshContractStatus() {
-		contractService.refreshContractStatus();
-	}
+//	@Autowired
+//	private ContractService contractService;
+//	
+//	
+//	@Scheduled(cron = "0 * * * * *"
+//	,zone ="Asia/Seoul")
+//	public void refreshContractStatus() {
+//		contractService.refreshContractStatus();
+//	}
 }

@@ -29,6 +29,11 @@
             discount_status = #{discountStatus}
         where discount_no = #{discountNo}
     </update>
+    
+    <delete id="deleteDiscount">
+    	delete from discount 
+    	where discount_no = ${discountNo}
+    </delete>
 
 
     <!-- ===================================== -->
