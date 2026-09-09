@@ -665,6 +665,7 @@ public class EmployeeAttendanceServiceImpl
         double actualOvertimeHours =
                 overtimeMinutes / 60.0;
 
+        
 
         // 야간근무시간 계산
         long nightMinutes = 0;

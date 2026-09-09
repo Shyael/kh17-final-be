@@ -56,10 +56,16 @@ public class ContractServiceImpl implements ContractService {
 
 	    private void validateWrittenBreakTimes(
 	            double dailyWorkHours,
+	            double weeklyWorkHours,
 	            double writtenBreakTimes) {
 
-	        
-
+	       if (dailyWorkHours>8) {
+	    	   throw new GetOutException();
+	       }
+	       
+	       if(weeklyWorkHours > 40) {
+	    	   throw new GetOutException();
+	       }
 	        if (writtenBreakTimes < 0) {
 	            throw new GetOutException();
 	        }
@@ -210,7 +216,7 @@ public class ContractServiceImpl implements ContractService {
 		
 		if(contractDto.getDailyWorkHours()<15) contractDto.setWeeklyHolidayDay(null);
 		
-		validateWrittenBreakTimes(contractDto.getDailyWorkHours(), contractDto.getWrittenBreakMinutes());
+		validateWrittenBreakTimes(contractDto.getDailyWorkHours(), contractDto.getWrittenBreakMinutes(), contractDto.getWeeklyWorkHours());
 
 		// [6] 최초 등록 상태는 서명대기
 		contractDto.setContractStatus("pending");
@@ -291,7 +297,7 @@ public class ContractServiceImpl implements ContractService {
 		
 		if(currentContract.getDailyWorkHours()<15||currentContract.getWeeklyHolidayDay()==null) currentContract.setWeeklyHolidayDay(null);
 		
-		validateWrittenBreakTimes(currentContract.getDailyWorkHours(), currentContract.getWrittenBreakMinutes());
+		validateWrittenBreakTimes(currentContract.getDailyWorkHours(), currentContract.getWrittenBreakMinutes(),currentContract.getWeeklyWorkHours());
 		
 		request.setContractNo(contractNo);
 		
@@ -858,6 +864,7 @@ public class ContractServiceImpl implements ContractService {
 	    validateWrittenBreakTimes(
 	            newContractDto.getDailyWorkHours(),
 	            newContractDto.getWrittenBreakMinutes()
+	            ,newContractDto.getWeeklyWorkHours()
 	    );
 
 	    if(newContractDto.getDailyWorkHours()<15) newContractDto.setWeeklyHolidayDay(null);

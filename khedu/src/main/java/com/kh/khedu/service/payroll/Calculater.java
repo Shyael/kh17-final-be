@@ -21,393 +21,744 @@ import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
 import com.kh.khedu.vo.payroll.response.ContractFindOrdinaryEmployeeVO;
+
 @Component
 public class Calculater {
-	
+
 	@Autowired
 	private ContractDao contractDao;
-	
+
 	@Autowired
 	private EmployeeDao employeeDao;
-	
+
 	@Autowired
 	private EmployeeAttendanceDao employeeAttendanceDao;
-	
+
 	@Autowired
 	private EmployeeWorkScheduleDao employeeWorkScheduleDao;
+
+
 	public PayrollDto calculatePayroll(
 			long payrollNo,
 			int employeeNo,
 			int payrollYear,
 			int payrollMonth) {
 
-		// 네 현재 calculate()에 있는
-		//
-		// LocalDate start
-		// LocalDate end
-		// contractList
-		// scheduleList
-		// totalWorkHours
-		// ...
-		// basePay
-		// overtimePay
-		// nightPay
-		// holidayPay
-		// weekHolidayPay
-		// grossPay
-		//
-		// 계산 부분을 여기로 이동
 
-		
-		
-		// 급여 산정기간 시작일
-		// ex) 2026년 9월 급여 -> 2026-09-01
-		LocalDate start = LocalDate.of(payrollYear, payrollMonth, 1);
+		// =========================
+		// 급여 산정기간
+		// =========================
 
-		// 다음 달 1일
-		// ex) 2026-09-01 -> 2026-10-01
-		// Mapper에서 endDate 미만(<)으로 조회하기 때문에
-		// 실제 조회범위는 9/1 ~ 9/30
-		LocalDate end = start.plusMonths(1);
+		LocalDate start =
+				LocalDate.of(
+						payrollYear,
+						payrollMonth,
+						1
+				);
 
-		Timestamp startDate = Timestamp.valueOf(start.atStartOfDay());
+		LocalDate end =
+				start.plusMonths(1);
 
-		Timestamp endDate = Timestamp.valueOf(end.atStartOfDay());
 
-		// 급여기간과 겹치는 계약 전체 조회
-		List<ContractDto> contractList = contractDao.findListByEmployeeAndPeriod(employeeNo, startDate, endDate);
+		Timestamp startDate =
+				Timestamp.valueOf(
+						start.atStartOfDay()
+				);
 
-		// 해당 월에 적용되는 계약이 없으면 급여 계산 불가
-		if (contractList.isEmpty()) {
+		Timestamp endDate =
+				Timestamp.valueOf(
+						end.atStartOfDay()
+				);
+
+
+		// =========================
+		// 고용일자
+		// =========================
+
+		Timestamp employmentDate =
+				employeeDao
+						.findEmploymentDate(
+								employeeNo
+						);
+
+
+		if (employmentDate == null) {
+
 			throw new TargetNotfoundException();
 		}
 
-		// 같은 급여기간의 근무스케줄 조회
-		List<EmployeeWorkScheduleDto> scheduleList = employeeWorkScheduleDao.findByPeriod(employeeNo, startDate,
-				endDate);
 
-		// 월 전체 실제 근로시간 합계
+		LocalDate hireDate =
+				employmentDate
+						.toLocalDateTime()
+						.toLocalDate();
+
+
+		// =========================
+		// 급여기간 계약
+		// =========================
+
+		List<ContractDto> contractList =
+				contractDao
+						.findListByEmployeeAndPeriod(
+								employeeNo,
+								startDate,
+								endDate
+						);
+
+
+		if (contractList.isEmpty()) {
+
+			throw new TargetNotfoundException();
+		}
+
+
+		// =========================
+		// 급여기간 스케줄
+		// =========================
+
+		List<EmployeeWorkScheduleDto> scheduleList =
+				employeeWorkScheduleDao
+						.findByPeriod(
+								employeeNo,
+								startDate,
+								endDate
+						);
+
+
+		// =========================
+		// 월 전체 실제 근로시간
+		// =========================
+
 		double totalWorkHours = 0;
+
 		double totalOvertimeHours = 0;
+
 		double totalNightHours = 0;
+
 		double totalHolidayHours = 0;
 
-		for (EmployeeWorkScheduleDto scheduleDto : scheduleList) {
 
-			if (scheduleDto.getActualWorkHours() != null) {
+		// =========================
+		// 연장근로시간
+		// 입사일부터 날짜 7개 = 1주
+		// 현재 KH EDU 기준 주 12시간까지만 반영
+		// =========================
 
-				totalWorkHours += scheduleDto.getActualWorkHours();
+		int dayCount = 0;
+
+		double weeklyOvertimeHours = 0;
+
+
+		for (LocalDate date = hireDate;
+				date.isBefore(end);
+				date = date.plusDays(1)) {
+
+
+			dayCount++;
+
+
+			for (EmployeeWorkScheduleDto scheduleDto
+					: scheduleList) {
+
+
+				LocalDate workDate =
+						scheduleDto
+								.getScheduledWorkDate()
+								.toLocalDateTime()
+								.toLocalDate();
+
+
+				if (!workDate.equals(date)) {
+
+					continue;
+				}
+
+
+				if (scheduleDto.getActualOvertimeHours()
+						!= null) {
+
+
+					weeklyOvertimeHours +=
+							scheduleDto
+									.getActualOvertimeHours();
+				}
 			}
 
-			if (scheduleDto.getActualOvertimeHours() != null) {
 
-				totalOvertimeHours += scheduleDto.getActualOvertimeHours();
-			}
+			// 7일 완료
+			if (dayCount == 7) {
 
-			if (scheduleDto.getActualNightHours() != null) {
 
-				totalNightHours += scheduleDto.getActualNightHours();
-			}
+				if (weeklyOvertimeHours > 12) {
 
-			if (scheduleDto.getActualHolidayHours() != null) {
+					weeklyOvertimeHours = 12;
+				}
 
-				totalHolidayHours += scheduleDto.getActualHolidayHours();
+
+				totalOvertimeHours +=
+						weeklyOvertimeHours;
+
+
+				dayCount = 0;
+
+				weeklyOvertimeHours = 0;
 			}
 		}
 
-		// 계약별 급여 계산
-		// 월 전체 기본급
+
+		// 월 마지막에 7일이 완성되지 않은 구간
+		if (dayCount > 0) {
+
+
+			if (weeklyOvertimeHours > 12) {
+
+				weeklyOvertimeHours = 12;
+			}
+
+
+			totalOvertimeHours +=
+					weeklyOvertimeHours;
+		}
+
+
+		// =========================
+		// 일반 / 야간 / 휴일 총 시간
+		// =========================
+
+		for (EmployeeWorkScheduleDto scheduleDto
+				: scheduleList) {
+
+
+			if (scheduleDto.getActualWorkHours()
+					!= null) {
+
+
+				totalWorkHours +=
+						scheduleDto
+								.getActualWorkHours();
+			}
+
+
+			if (scheduleDto.getActualNightHours()
+					!= null) {
+
+
+				totalNightHours +=
+						scheduleDto
+								.getActualNightHours();
+			}
+
+
+			if (scheduleDto.getActualHolidayHours()
+					!= null) {
+
+
+				totalHolidayHours +=
+						scheduleDto
+								.getActualHolidayHours();
+			}
+		}
+
+
+		// =========================
+		// 급여 항목
+		// =========================
+
 		long basePay = 0;
+
+		long weekHolidayPay = 0;
 
 		long overtimePay = 0;
 
 		long nightPay = 0;
-		
+
 		long holidayPay = 0;
-		
-		long weekHolidayPay = 0;
 
+
+		// =========================
 		// 계약별 급여 계산
-		for (ContractDto contractDto : contractList) {
+		// =========================
 
-			long contractNo = contractDto.getContractNo();
+		for (ContractDto contractDto
+				: contractList) {
 
-			// 현재 계약에 해당하는 근무스케줄만 담기
-			List<EmployeeWorkScheduleDto> contractScheduleList = new ArrayList<>();
 
-			for (EmployeeWorkScheduleDto scheduleDto : scheduleList) {
+			long contractNo =
+					contractDto
+							.getContractNo();
 
-				if (scheduleDto.getContractNo() == contractNo) {
 
-					contractScheduleList.add(scheduleDto);
+			List<EmployeeWorkScheduleDto> contractScheduleList =
+					new ArrayList<>();
+
+
+			for (EmployeeWorkScheduleDto scheduleDto
+					: scheduleList) {
+
+
+				if (scheduleDto.getContractNo()
+						== contractNo) {
+
+
+					contractScheduleList
+							.add(
+									scheduleDto
+							);
 				}
 			}
 
-			String wageType = contractDto.getWageType();
 
-			long baseWage = contractDto.getBaseWage();
+			String wageType =
+					contractDto
+							.getWageType();
+
+
+			long baseWage =
+					contractDto
+							.getBaseWage();
+
+
+			// =========================
+			// 1. 기본급
+			// =========================
+
 
 			// =========================
 			// 월급제
 			// =========================
+
 			if ("monthly".equals(wageType)) {
 
-				// 급여월 마지막 날짜
-				LocalDate payrollEnd = end.minusDays(1);
 
-				LocalDate contractStart = contractDto.getContractStart().toLocalDateTime().toLocalDate();
+				LocalDate payrollEnd =
+						end.minusDays(1);
 
-				LocalDate contractEnd = contractDto.getContractEnd() == null ? payrollEnd
-						: contractDto.getContractEnd().toLocalDateTime().toLocalDate();
 
-				// 급여월 시작일과 계약 시작일 중 더 늦은 날짜
-				LocalDate appliedStart = contractStart.isAfter(start) ? contractStart : start;
+				LocalDate contractStart =
+						contractDto
+								.getContractStart()
+								.toLocalDateTime()
+								.toLocalDate();
 
-				// 급여월 마지막날과 계약 종료일 중 더 빠른 날짜
-				LocalDate appliedEnd = contractEnd.isBefore(payrollEnd) ? contractEnd : payrollEnd;
 
-				if (appliedEnd.isBefore(appliedStart)) {
+				LocalDate contractEnd =
+						contractDto.getContractEnd() == null
+								? payrollEnd
+								: contractDto
+										.getContractEnd()
+										.toLocalDateTime()
+										.toLocalDate();
+
+
+				LocalDate appliedStart =
+						contractStart.isAfter(start)
+								? contractStart
+								: start;
+
+
+				LocalDate appliedEnd =
+						contractEnd.isBefore(payrollEnd)
+								? contractEnd
+								: payrollEnd;
+
+
+				if (appliedEnd.isBefore(
+						appliedStart)) {
+
 					continue;
 				}
 
-				// 해당 월에서 이 계약이 적용된 역일수
-				long appliedDays = ChronoUnit.DAYS.between(appliedStart, appliedEnd) + 1;
 
-				// 결근 / 무급휴가 일수
+				long appliedDays =
+						ChronoUnit.DAYS
+								.between(
+										appliedStart,
+										appliedEnd
+								)
+						+ 1;
+
+
 				long unpaidDays = 0;
 
-				for (EmployeeWorkScheduleDto scheduleDto : contractScheduleList) {
 
-					EmployeeAttendanceDto attendanceDto = employeeAttendanceDao
-							.findBySchedule(scheduleDto.getWorkScheduleNo());
+				for (EmployeeWorkScheduleDto scheduleDto
+						: contractScheduleList) {
+
+
+					EmployeeAttendanceDto attendanceDto =
+							employeeAttendanceDao
+									.findBySchedule(
+											scheduleDto
+													.getWorkScheduleNo()
+									);
+
 
 					if (attendanceDto == null) {
+
 						continue;
 					}
 
-					if ("absent".equals(attendanceDto.getAttendanceType())
-							|| "unpaid_leave".equals(attendanceDto.getAttendanceType())) {
+
+					if ("absent".equals(
+							attendanceDto
+									.getAttendanceType())
+							|| "unpaid_leave".equals(
+									attendanceDto
+											.getAttendanceType())) {
+
 
 						unpaidDays++;
 					}
 				}
 
-				// 실제 급여 지급 대상 역일수
-				long paidDays = appliedDays - unpaidDays;
+
+				long paidDays =
+						appliedDays
+						- unpaidDays;
+
 
 				if (paidDays < 0) {
+
 					paidDays = 0;
 				}
 
-				// 해당 월의 역일수
-				int daysInMonth = start.lengthOfMonth();
 
-				// 월급 ÷ 해당 월 역일수 × 지급 대상 역일수
-				double contractBasePay = (double) baseWage / daysInMonth * paidDays;
+				int daysInMonth =
+						start.lengthOfMonth();
 
-				basePay += Math.round(contractBasePay);
+
+				double contractBasePay =
+						(double) baseWage
+						/ daysInMonth
+						* paidDays;
+
+
+				basePay +=
+						Math.round(
+								contractBasePay
+						);
 			}
+
 
 			// =========================
 			// 시급제
 			// =========================
+
 			else if ("hourly".equals(wageType)) {
+
 
 				double contractWorkHours = 0;
 
-				for (EmployeeWorkScheduleDto scheduleDto : contractScheduleList) {
 
-					if (scheduleDto.getActualWorkHours() != null) {
+				for (EmployeeWorkScheduleDto scheduleDto
+						: contractScheduleList) {
 
-						contractWorkHours += scheduleDto.getActualWorkHours();
+
+					if (scheduleDto.getActualWorkHours()
+							!= null) {
+
+
+						contractWorkHours +=
+								scheduleDto
+										.getActualWorkHours();
 					}
 				}
 
-				// actualWorkHours 전체에 기본 시급 지급
-				// 연장 / 야간 / 휴일 가산분은 이후 따로 계산
-				double contractBasePay = baseWage * contractWorkHours;
 
-				basePay += Math.round(contractBasePay);
+				double contractBasePay =
+						baseWage
+						* contractWorkHours;
+
+
+				basePay +=
+						Math.round(
+								contractBasePay
+						);
 			}
+
 
 			// =========================
 			// 일급제
 			// =========================
+
 			else if ("daily".equals(wageType)) {
+
 
 				long paidDays = 0;
 
-				for (EmployeeWorkScheduleDto scheduleDto : contractScheduleList) {
 
-					EmployeeAttendanceDto attendanceDto = employeeAttendanceDao
-							.findBySchedule(scheduleDto.getWorkScheduleNo());
+				for (EmployeeWorkScheduleDto scheduleDto
+						: contractScheduleList) {
+
+
+					EmployeeAttendanceDto attendanceDto =
+							employeeAttendanceDao
+									.findBySchedule(
+											scheduleDto
+													.getWorkScheduleNo()
+									);
+
 
 					if (attendanceDto == null) {
+
 						continue;
 					}
 
-					// 정상 근무
-					if ("normal".equals(attendanceDto.getAttendanceType())) {
+
+					if ("normal".equals(
+							attendanceDto
+									.getAttendanceType())) {
+
 
 						paidDays++;
 					}
 
-					// 유급휴가도 지급 대상
-					else if ("paid_leave".equals(attendanceDto.getAttendanceType())) {
+
+					else if ("paid_leave".equals(
+							attendanceDto
+									.getAttendanceType())) {
+
 
 						paidDays++;
 					}
 				}
 
-				basePay += baseWage * paidDays;
+
+				basePay +=
+						baseWage
+						* paidDays;
 			}
 
+
 			else {
+
 				throw new GetOutException();
 			}
 
+
 			// =========================
-			// 2. 계약별 연장수당 계산
+			// 통상시급 계산
 			// =========================
 
-			// 현재 계약의 일반 근무일 연장시간 합계
-			double contractOvertimeHours = 0;
-
-			for (EmployeeWorkScheduleDto scheduleDto : contractScheduleList) {
-
-				// 휴일 / 휴무일 연장은
-				// overtimePay가 아니라 holidayPay에서 처리
-				if ("holiday".equals(scheduleDto.getScheduledDayType())
-						|| "dayOff".equals(scheduleDto.getScheduledDayType())) {
-
-					continue;
-				}
-
-				if (scheduleDto.getActualOvertimeHours() != null) {
-
-					contractOvertimeHours += scheduleDto.getActualOvertimeHours();
-				}
-			}
-
-			// 통상시급
 			double ordinaryHourlyWage = 0;
 
-			// 시급제
+
 			if ("hourly".equals(wageType)) {
 
-				ordinaryHourlyWage = baseWage;
+
+				ordinaryHourlyWage =
+						baseWage;
 			}
 
-			// 일급제
+
 			else if ("daily".equals(wageType)) {
 
-				if (contractDto.getDailyWorkHours() == null || contractDto.getDailyWorkHours() <= 0) {
+
+				if (contractDto.getDailyWorkHours()
+						== null
+						|| contractDto.getDailyWorkHours()
+								<= 0) {
+
 
 					throw new GetOutException();
-				}
-
-				ordinaryHourlyWage = (double) baseWage / contractDto.getDailyWorkHours();
-			}
-
-			// 월급제
-			else if ("monthly".equals(wageType)) {
-
-				if (contractDto.getWeeklyWorkHours() == null || contractDto.getWeeklyWorkHours() <= 0) {
-
-					throw new GetOutException();
-				}
-				
-				double monthlyScheduledWorkHours =
-				        contractDto.getWeeklyWorkHours()
-				        * 365.0
-				        / 7.0
-				        / 12.0;
-
-				if (monthlyScheduledWorkHours <= 0) {
-				    throw new GetOutException();
 				}
 
 
 				ordinaryHourlyWage =
-				        (double) baseWage
-				        / monthlyScheduledWorkHours;
+						(double) baseWage
+						/ contractDto
+								.getDailyWorkHours();
 			}
 
-			// 월급제 / 일급제는
-			// 기존 basePay에 연장근무시간의 기본 1배가 포함되지 않으므로 추가
-			if ("monthly".equals(wageType) || "daily".equals(wageType)) {
 
-				double overtimeBasePay = ordinaryHourlyWage * contractOvertimeHours;
+			else if ("monthly".equals(wageType)) {
 
-				basePay += Math.round(overtimeBasePay);
-			}
 
-			// overtimePay에는
-			// 연장근무로 발생한 가산분 0.5만 저장
-			double contractOvertimePay = ordinaryHourlyWage * contractOvertimeHours * 0.5;
+				if (contractDto.getWeeklyWorkHours()
+						== null
+						|| contractDto.getWeeklyWorkHours()
+								<= 0) {
 
-			overtimePay += Math.round(contractOvertimePay);
 
-			// =========================
-			// 3. 계약별 야간수당 계산
-			// =========================
-
-			double contractNightHours = 0;
-
-			for (EmployeeWorkScheduleDto scheduleDto : contractScheduleList) {
-
-				if (scheduleDto.getActualNightHours() != null) {
-
-					contractNightHours += scheduleDto.getActualNightHours();
+					throw new GetOutException();
 				}
+
+
+				double monthlyScheduledWorkHours =
+						contractDto
+								.getWeeklyWorkHours()
+						* 365.0
+						/ 7.0
+						/ 12.0;
+
+
+				if (monthlyScheduledWorkHours <= 0) {
+
+					throw new GetOutException();
+				}
+
+
+				ordinaryHourlyWage =
+						(double) baseWage
+						/ monthlyScheduledWorkHours;
 			}
 
-			// nightPay에는
-			// 야간근무로 발생한 가산분 0.5만 저장
-			double contractNightPay = ordinaryHourlyWage * contractNightHours * 0.5;
 
-			nightPay += Math.round(contractNightPay);
+			else {
+
+				throw new GetOutException();
+			}
+
 
 			// =========================
-			// 계약별 휴일근로수당 계산
+			// 2. 연장근로수당
 			// =========================
 
-			for(EmployeeWorkScheduleDto scheduleDto
+			double contractOvertimeHours = 0;
+
+
+			for (EmployeeWorkScheduleDto scheduleDto
 					: contractScheduleList) {
 
-				// 휴일 / 휴무일 근무만 계산
-				if(!"holiday".equals(
-						scheduleDto.getScheduledDayType())
-						&& !"dayOff".equals(
-								scheduleDto.getScheduledDayType())) {
+
+				// 휴일 / 휴무일은
+				// 휴일근로수당에서 계산
+				if ("holiday".equals(
+						scheduleDto
+								.getScheduledDayType())
+						|| "dayOff".equals(
+								scheduleDto
+										.getScheduledDayType())) {
+
 
 					continue;
 				}
 
 
-				// 실제 휴일근무시간이 없으면 계산하지 않음
-				if(scheduleDto.getActualHolidayHours() == null
-						|| scheduleDto.getActualHolidayHours() <= 0) {
+				if (scheduleDto.getActualOvertimeHours()
+						!= null) {
+
+
+					contractOvertimeHours +=
+							scheduleDto
+									.getActualOvertimeHours();
+				}
+			}
+
+
+			// 월급 / 일급은
+			// 연장근로 기본 1배 추가
+			if ("monthly".equals(wageType)
+					|| "daily".equals(wageType)) {
+
+
+				double overtimeBasePay =
+						ordinaryHourlyWage
+						* contractOvertimeHours;
+
+
+				basePay +=
+						Math.round(
+								overtimeBasePay
+						);
+			}
+
+
+			// 연장 가산 0.5배
+			double contractOvertimePay =
+					ordinaryHourlyWage
+					* contractOvertimeHours
+					* 0.5;
+
+
+			overtimePay +=
+					Math.round(
+							contractOvertimePay
+					);
+
+
+			// =========================
+			// 3. 야간근로수당
+			// =========================
+
+			double contractNightHours = 0;
+
+
+			for (EmployeeWorkScheduleDto scheduleDto
+					: contractScheduleList) {
+
+
+				if (scheduleDto.getActualNightHours()
+						!= null) {
+
+
+					contractNightHours +=
+							scheduleDto
+									.getActualNightHours();
+				}
+			}
+
+
+			double contractNightPay =
+					ordinaryHourlyWage
+					* contractNightHours
+					* 0.5;
+
+
+			nightPay +=
+					Math.round(
+							contractNightPay
+					);
+
+
+			// =========================
+			// 4. 휴일근로수당
+			// =========================
+
+			for (EmployeeWorkScheduleDto scheduleDto
+					: contractScheduleList) {
+
+
+				if (!"holiday".equals(
+						scheduleDto
+								.getScheduledDayType())
+						&& !"dayOff".equals(
+								scheduleDto
+										.getScheduledDayType())) {
+
+
+					continue;
+				}
+
+
+				if (scheduleDto.getActualHolidayHours()
+						== null
+						|| scheduleDto.getActualHolidayHours()
+								<= 0) {
+
 
 					continue;
 				}
 
 
 				double holidayHours =
-						scheduleDto.getActualHolidayHours();
+						scheduleDto
+								.getActualHolidayHours();
 
 
 				// =========================
-				// 휴일근무 기본 1배 처리
+				// 휴일근로 기본 1배
 				// =========================
 
-				// 시급제는 actualWorkHours 전체를 이용해
-				// 이미 basePay를 계산했으므로 기본 1배 추가하지 않음
+
+				// 시급제는 actualWorkHours에
+				// 이미 기본 1배 포함
 
 
-				// 월급제는 휴일에 실제 근무한 시간의
-				// 기본 1배가 basePay에 포함되어 있지 않으므로 추가
-				if("monthly".equals(wageType)) {
+				// 월급제
+				if ("monthly".equals(wageType)) {
+
 
 					basePay +=
 							Math.round(
@@ -417,17 +768,18 @@ public class Calculater {
 				}
 
 
-				// 일급제는 하루 일급에 dailyWorkHours까지의
-				// 기본임금이 이미 포함되어 있으므로
-				// dailyWorkHours 초과분만 기본 1배 추가
-				else if("daily".equals(wageType)) {
+				// 일급제
+				else if ("daily".equals(wageType)) {
+
 
 					double extraBasicHours =
 							holidayHours
-							- contractDto.getDailyWorkHours();
+							- contractDto
+									.getDailyWorkHours();
 
 
-					if(extraBasicHours > 0) {
+					if (extraBasicHours > 0) {
+
 
 						basePay +=
 								Math.round(
@@ -439,14 +791,14 @@ public class Calculater {
 
 
 				// =========================
-				// 휴일근로 가산분 계산
+				// 휴일 가산
 				// =========================
 
 				double contractHolidayPay = 0;
 
 
-				// 휴일근로 8시간 이내
-				if(holidayHours <= 8) {
+				if (holidayHours <= 8) {
+
 
 					contractHolidayPay =
 							ordinaryHourlyWage
@@ -455,19 +807,18 @@ public class Calculater {
 				}
 
 
-				// 휴일근로 8시간 초과
 				else {
 
-					// 최초 8시간은 0.5배 가산
+
 					double firstEightHoursPay =
 							ordinaryHourlyWage
 							* 8
 							* 0.5;
 
 
-					// 8시간 초과분은 1.0배 가산
 					double overEightHours =
-							holidayHours - 8;
+							holidayHours
+							- 8;
 
 
 					double overEightHoursPay =
@@ -487,149 +838,142 @@ public class Calculater {
 								contractHolidayPay
 						);
 			}
-		
-		
-		
-		
 		}
 
-//		주휴 부터 해야 함
-		
-		
-		
-		
-		// =========================
-		// 주휴수당 계산
-		// =========================
 
-		// 직원 고용일자 조회
-		Timestamp employmentDate =
-				employeeDao.findEmploymentDate(employeeNo);
+		// ============================================
+		// 5. 주휴수당
+		// ============================================
 
-		if (employmentDate == null) {
+
+		AdminEmployeeDetailVO employeeVO =
+				employeeDao
+						.selectAdminEmployeeDetailByEmployeeNo(
+								employeeNo
+						);
+
+
+		if (employeeVO == null) {
+
 			throw new TargetNotfoundException();
 		}
 
-		LocalDate hireDate =
-				employmentDate
-						.toLocalDateTime()
-						.toLocalDate();
 
-
-		// 급여월 첫 주는 이전 달 날짜가 포함될 수 있음
+		// 급여월 첫 주 판단을 위해
+		// 이전 6일까지 조회
 		LocalDate weekSearchStart =
 				start.minusDays(6);
 
+
 		Timestamp weekSearchStartDate =
 				Timestamp.valueOf(
-						weekSearchStart.atStartOfDay()
+						weekSearchStart
+								.atStartOfDay()
 				);
 
-		// 주휴 판단용 스케줄
+
 		List<EmployeeWorkScheduleDto> weekScheduleList =
-				employeeWorkScheduleDao.findByPeriod(
-						employeeNo,
-						weekSearchStartDate,
-						endDate
-				);
+				employeeWorkScheduleDao
+						.findByPeriod(
+								employeeNo,
+								weekSearchStartDate,
+								endDate
+						);
 
 
-		// 급여월의 날짜를 하루씩 확인
+		// =========================
+		// 급여월 날짜 하루씩 확인
+		// =========================
+
 		for (LocalDate weekHolidayDate = start;
 				weekHolidayDate.isBefore(end);
-				weekHolidayDate = weekHolidayDate.plusDays(1)) {
+				weekHolidayDate =
+						weekHolidayDate.plusDays(1)) {
 
 
 			// =========================
-			// 현재 날짜에 적용되는 계약 찾기
+			// 해당 날짜 적용 계약
 			// =========================
 
 			ContractDto holidayContract = null;
 
-			for (ContractDto contractDto : contractList) {
 
-				if(contractDto.getWeeklyHolidayDay()==null) {
-						continue;
+			for (ContractDto contractDto
+					: contractList) {
+
+
+				if (contractDto.getWeeklyHolidayDay()
+						== null) {
+
+
+					continue;
 				}
-				
+
+
 				LocalDate contractStart =
-						contractDto.getContractStart()
+						contractDto
+								.getContractStart()
 								.toLocalDateTime()
 								.toLocalDate();
 
+
 				LocalDate contractEnd = null;
 
-				if (contractDto.getContractEnd() != null) {
+
+				if (contractDto.getContractEnd()
+						!= null) {
+
 
 					contractEnd =
-							contractDto.getContractEnd()
+							contractDto
+									.getContractEnd()
 									.toLocalDateTime()
 									.toLocalDate();
 				}
 
 
 				boolean afterStart =
-						!weekHolidayDate.isBefore(contractStart);
+						!weekHolidayDate
+								.isBefore(
+										contractStart
+								);
+
 
 				boolean beforeEnd =
 						contractEnd == null
-						|| !weekHolidayDate.isAfter(contractEnd);
+						|| !weekHolidayDate
+								.isAfter(
+										contractEnd
+								);
 
 
-				if (afterStart && beforeEnd) {
+				if (afterStart
+						&& beforeEnd) {
 
-					holidayContract = contractDto;
+
+					holidayContract =
+							contractDto;
 
 					break;
 				}
 			}
 
 
-			// 해당 날짜에 계약이 없음
 			if (holidayContract == null) {
+
 				continue;
 			}
-			
-			//계약이 있으면 통상근로자인지 조회
-			AdminEmployeeDetailVO employeeVO =
-			        employeeDao
-			                .selectAdminEmployeeDetailByEmployeeNo(
-			                        employeeNo
-			                );
 
-			if (employeeVO == null) {
-			    throw new TargetNotfoundException();
-			}
 
-			Timestamp targetDate =
-			        Timestamp.valueOf(
-			                weekHolidayDate.atStartOfDay()
-			        );
-			
-			
-			List<ContractFindOrdinaryEmployeeVO> ordinaryEmployeeList =
-			        contractDao
-			                .findOrdinaryEmployeeNoList(
-			                        employeeVO.getEmployeeType(),
-			                        targetDate
-			                );
-
-			if (ordinaryEmployeeList.isEmpty()) {
-			    throw new TargetNotfoundException();
-			}
-			
-			
-			
-			
 			// =========================
-			// 계약상 주휴일 확인
+			// 계약상 주휴요일
 			// =========================
-		
-			
+
 			String holidayDay =
 					weekHolidayDate
 							.getDayOfWeek()
 							.toString();
+
 
 			String weeklyHolidayDay =
 					holidayContract
@@ -639,106 +983,38 @@ public class Calculater {
 			if (!holidayDay.equals(
 					weeklyHolidayDay)) {
 
-				continue;
-			}
-
-
-			// =========================
-			// 월급제 제외
-			// =========================
-
-			// 현재 KH EDU 기준
-			// 월급제는 월 기본급에 주휴임금이 포함된 것으로 처리
-			if ("monthly".equals(
-					holidayContract.getWageType())) {
 
 				continue;
 			}
-
 
 
 			// =========================
 			// 이번 주 범위
 			// =========================
 
-			// 주휴일 포함 직전 7일
 			LocalDate weekStart =
-					weekHolidayDate.minusDays(6);
+					weekHolidayDate
+							.minusDays(6);
+
 
 			LocalDate weekEnd =
 					weekHolidayDate;
 
-			
+
 			// =========================
-			// 4주 평균 소정근로시간 산정기간
-			// =========================
-
-			// 현재 주휴일을 마지막 날로 하는 28일
-			LocalDate fourWeekStart =
-			        weekHolidayDate.minusDays(27);
-
-
-			// Mapper가 endDate 미만(<)으로 조회하므로
-			// 주휴일 다음 날 00:00을 종료값으로 사용
-			LocalDate fourWeekEnd =
-			        weekHolidayDate.plusDays(1);
-
-
-			Timestamp fourWeekStartDate =
-			        Timestamp.valueOf(
-			                fourWeekStart.atStartOfDay()
-			        );
-
-
-			Timestamp fourWeekEndDate =
-			        Timestamp.valueOf(
-			                fourWeekEnd.atStartOfDay()
-			        );
-
-			
-			
-			// =========================
-			// 4주 평균 1주 소정근로시간 확인
+			// 근로관계 유지
 			// =========================
 
-			double fourWeekScheduledWorkHours =
-			        employeeWorkScheduleDao
-			                .sumScheduledWorkHoursByPeriod(
-			                        employeeNo,
-			                        fourWeekStartDate,
-			                        fourWeekEndDate
-			                );
+			if (hireDate.isAfter(
+					weekStart)) {
 
-
-			// 4주 평균 1주 소정근로시간이
-			// 15시간 미만이면 주휴 대상 제외
-			
-			
-			double averageWeeklyScheduledWorkHours =
-			        fourWeekScheduledWorkHours
-			        / 4.0;
-
-
-		
-			if (averageWeeklyScheduledWorkHours < 15) {
-
-			    continue;
-			}
-			
-			// =========================
-			// 근로관계 유지 확인
-			// =========================
-
-			// 이번 주 시작 이후 입사했다면
-			// 완전한 7일 근로관계가 아니므로 제외
-			if (hireDate.isAfter(weekStart)) {
 
 				continue;
 			}
 
 
 			// =========================
-			// 소정근로일 개근 확인
+			// 소정근로일 개근
 			// =========================
 
 			boolean hasWorkday = false;
@@ -751,6 +1027,7 @@ public class Calculater {
 			for (EmployeeWorkScheduleDto scheduleDto
 					: weekScheduleList) {
 
+
 				LocalDate scheduleDate =
 						scheduleDto
 								.getScheduledWorkDate()
@@ -758,21 +1035,26 @@ public class Calculater {
 								.toLocalDate();
 
 
-				// 이번 주 이전
-				if (scheduleDate.isBefore(weekStart)) {
+				if (scheduleDate.isBefore(
+						weekStart)) {
+
+
 					continue;
 				}
 
 
-				// 이번 주 이후
-				if (scheduleDate.isAfter(weekEnd)) {
+				if (scheduleDate.isAfter(
+						weekEnd)) {
+
+
 					continue;
 				}
 
 
-				// 실제 소정근로일만 확인
 				if (!"workday".equals(
-						scheduleDto.getScheduledDayType())) {
+						scheduleDto
+								.getScheduledDayType())) {
+
 
 					continue;
 				}
@@ -781,8 +1063,6 @@ public class Calculater {
 				hasWorkday = true;
 
 
-				// 네가 기존 basePay에서도 사용 중인
-				// 현재 Attendance 조회 메소드 그대로 사용
 				EmployeeAttendanceDto attendanceDto =
 						employeeAttendanceDao
 								.findBySchedule(
@@ -791,17 +1071,17 @@ public class Calculater {
 								);
 
 
-				// 소정근로일인데 근태 자체가 없으면
-				// 급여 계산 데이터가 아직 완성되지 않은 상태
 				if (attendanceDto == null) {
 
 					throw new GetOutException();
 				}
 
 
-				// 결근이면 개근 실패
+				// 결근
 				if ("absent".equals(
-						attendanceDto.getAttendanceType())) {
+						attendanceDto
+								.getAttendanceType())) {
+
 
 					perfectAttendance = false;
 
@@ -809,71 +1089,191 @@ public class Calculater {
 				}
 
 
-				// 정상근무를 실제 한 날이 있는지 확인
+				// 실제 정상근무가 하나라도 있는지
 				if ("normal".equals(
-						attendanceDto.getAttendanceType())) {
+						attendanceDto
+								.getAttendanceType())) {
 
-					if (scheduleDto.getActualWorkHours() != null
-							&& scheduleDto.getActualWorkHours() > 0) {
+
+					if (scheduleDto.getActualWorkHours()
+							!= null
+							&& scheduleDto.getActualWorkHours()
+									> 0) {
+
 
 						hasActualWork = true;
 					}
 				}
 
 
-				// paid_leave
-				// unpaid_leave
-				//
-				// 현재 KH EDU에서는 승인된 휴가로 취급
-				// 개근 실패로 처리하지 않음
+				// paid_leave / unpaid_leave
+				// 현재 프로젝트에서는
+				// 승인된 휴가이므로 개근 실패 처리하지 않음
 			}
 
 
-			// 소정근로일 자체가 없음
 			if (!hasWorkday) {
+
 				continue;
 			}
 
 
-			// 결근 발생
 			if (!perfectAttendance) {
+
 				continue;
 			}
 
 
-			// 한 주 전체가 휴가 등으로
-			// 실제 근무가 하나도 없음
 			if (!hasActualWork) {
+
 				continue;
 			}
 
 
 			// =========================
-			// 주휴 통상시급 계산
+			// 4주 평균 소정근로시간
+			// =========================
+
+			LocalDate fourWeekStart =
+					weekHolidayDate
+							.minusDays(28);
+
+
+			// 4주 미만 근로자라면
+			// 입사일을 산정 시작일로 사용
+			LocalDate calculationStart =
+					hireDate.isAfter(
+							fourWeekStart)
+							? hireDate
+							: fourWeekStart;
+
+
+			LocalDate fourWeekEnd =
+					weekHolidayDate;
+
+
+			Timestamp calculationStartDate =
+					Timestamp.valueOf(
+							calculationStart
+									.atStartOfDay()
+					);
+
+
+			Timestamp fourWeekEndDate =
+					Timestamp.valueOf(
+							fourWeekEnd
+									.atStartOfDay()
+					);
+
+
+			double periodScheduledWorkHours =
+					employeeWorkScheduleDao
+							.sumScheduledWorkHoursByPeriod(
+									employeeNo,
+									calculationStartDate,
+									fourWeekEndDate
+							);
+
+
+			long calculationDays =
+					ChronoUnit.DAYS
+							.between(
+									calculationStart,
+									fourWeekEnd
+							);
+
+
+			if (calculationDays <= 0) {
+
+				continue;
+			}
+
+
+			double calculationWeeks =
+					calculationDays
+					/ 7.0;
+
+
+			if (calculationWeeks <= 0) {
+
+				continue;
+			}
+
+
+			double averageWeeklyScheduledWorkHours =
+					periodScheduledWorkHours
+					/ calculationWeeks;
+
+
+			if (averageWeeklyScheduledWorkHours
+					< 15) {
+
+
+				continue;
+			}
+
+
+			// =========================
+			// 동종 업무 통상근로자 후보
+			// =========================
+
+			Timestamp targetDate =
+					Timestamp.valueOf(
+							weekHolidayDate
+									.atStartOfDay()
+					);
+
+
+			List<ContractFindOrdinaryEmployeeVO> ordinaryEmployeeList =
+					contractDao
+							.findOrdinaryEmployeeNoList(
+									employeeVO
+											.getEmployeeType(),
+									targetDate
+							);
+
+
+			if (ordinaryEmployeeList.isEmpty()) {
+
+				throw new TargetNotfoundException();
+			}
+
+
+			// =========================
+			// 주휴용 통상시급
 			// =========================
 
 			String wageType =
-					holidayContract.getWageType();
+					holidayContract
+							.getWageType();
+
 
 			long baseWage =
-					holidayContract.getBaseWage();
+					holidayContract
+							.getBaseWage();
+
 
 			double ordinaryHourlyWage = 0;
 
 
-			// 시급제
+			// 시급
 			if ("hourly".equals(wageType)) {
+
 
 				ordinaryHourlyWage =
 						baseWage;
 			}
 
 
-			// 일급제
+			// 일급
 			else if ("daily".equals(wageType)) {
 
-				if (holidayContract.getDailyWorkHours() == null
-						|| holidayContract.getDailyWorkHours() <= 0) {
+
+				if (holidayContract.getDailyWorkHours()
+						== null
+						|| holidayContract.getDailyWorkHours()
+								<= 0) {
+
 
 					throw new GetOutException();
 				}
@@ -881,7 +1281,42 @@ public class Calculater {
 
 				ordinaryHourlyWage =
 						(double) baseWage
-						/ holidayContract.getDailyWorkHours();
+						/ holidayContract
+								.getDailyWorkHours();
+			}
+
+
+			// 월급
+			else if ("monthly".equals(wageType)) {
+
+
+				if (holidayContract.getWeeklyWorkHours()
+						== null
+						|| holidayContract.getWeeklyWorkHours()
+								<= 0) {
+
+
+					throw new GetOutException();
+				}
+
+
+				double monthlyScheduledWorkHours =
+						holidayContract
+								.getWeeklyWorkHours()
+						* 365.0
+						/ 7.0
+						/ 12.0;
+
+
+				if (monthlyScheduledWorkHours <= 0) {
+
+					throw new GetOutException();
+				}
+
+
+				ordinaryHourlyWage =
+						(double) baseWage
+						/ monthlyScheduledWorkHours;
 			}
 
 
@@ -892,97 +1327,176 @@ public class Calculater {
 
 
 			// =========================
-			// 통상근로자 소정근로일수 최댓값 구하기
+			// 통상근로자 기준
 			// =========================
 
 			int ordinaryScheduledWorkDays = 0;
 
 			double ordinaryWeeklyWorkHours = 0;
+
+
 			for (ContractFindOrdinaryEmployeeVO ordinaryEmployee
-			        : ordinaryEmployeeList) {
+					: ordinaryEmployeeList) {
 
-				
-				
-			    int scheduledWorkDays =
-			            employeeWorkScheduleDao
-			                    .countScheduledWorkDaysByPeriod(
-			                            ordinaryEmployee.getEmployeeNo(),
-			                            fourWeekStartDate,
-			                            fourWeekEndDate
-			                    );
-			    double formalWeeklyWorkHours = ordinaryEmployee.getWeeklyWorkHours();
 
-			    if (scheduledWorkDays <= 0) {
-			        continue;
-			    }
+				int scheduledWorkDays =
+						employeeWorkScheduleDao
+								.countScheduledWorkDaysByPeriod(
+										ordinaryEmployee
+												.getEmployeeNo(),
+										calculationStartDate,
+										fourWeekEndDate
+								);
 
-			    if(formalWeeklyWorkHours <= 0) {
-			    	continue;
-			    }
 
-			    // 통상근로자 후보 중
-			    // 소정근로일수가 가장 많은 근로자를 기준으로 사용
-			    if (scheduledWorkDays
-			            > ordinaryScheduledWorkDays) {
+				double formalWeeklyWorkHours =
+						ordinaryEmployee
+								.getWeeklyWorkHours();
 
-			        ordinaryScheduledWorkDays =
-			                scheduledWorkDays;
-			    }
-			    
-			    if(formalWeeklyWorkHours > ordinaryWeeklyWorkHours) {
-			    	ordinaryWeeklyWorkHours = formalWeeklyWorkHours;
-			    }
+
+				if (scheduledWorkDays <= 0) {
+
+					continue;
+				}
+
+
+				if (formalWeeklyWorkHours <= 0) {
+
+					continue;
+				}
+
+
+				if (scheduledWorkDays
+						> ordinaryScheduledWorkDays) {
+
+
+					ordinaryScheduledWorkDays =
+							scheduledWorkDays;
+				}
+
+
+				if (formalWeeklyWorkHours
+						> ordinaryWeeklyWorkHours) {
+
+
+					ordinaryWeeklyWorkHours =
+							formalWeeklyWorkHours;
+				}
 			}
 
 
 			if (ordinaryScheduledWorkDays <= 0) {
 
-			    throw new TargetNotfoundException();
-			}
-			
-			if (ordinaryWeeklyWorkHours <= 0){
 				throw new TargetNotfoundException();
 			}
-			
-			
-		ContractDto target = contractDao.findContractByEmployeeNo(employeeNo);
-		
-		boolean isPartTimerTarget = target.getWeeklyWorkHours()<ordinaryWeeklyWorkHours;
-		boolean isOrdinaryWorkerTarget = target.getWeeklyWorkHours()==ordinaryWeeklyWorkHours;
-		
-		if(isPartTimerTarget) {
-			// 단시간근로자의 1일 소정근로시간
-			double dailyScheduledWorkHours =
-			        fourWeekScheduledWorkHours
-			        / ordinaryScheduledWorkDays;
 
 
-			//단시간 근로자의  주휴수당
-			double contractWeekHolidayPay =
-			        ordinaryHourlyWage
-			        * dailyScheduledWorkHours;
-			weekHolidayPay +=
-					Math.round(
-			                contractWeekHolidayPay
-			        );
-			
+			if (ordinaryWeeklyWorkHours <= 0) {
+
+				throw new TargetNotfoundException();
+			}
+
+
+			// =========================
+			// 대상 직원 주 소정근로시간
+			// =========================
+
+			if (holidayContract.getWeeklyWorkHours()
+					== null
+					|| holidayContract.getWeeklyWorkHours()
+							<= 0) {
+
+
+				throw new GetOutException();
+			}
+
+
+			double targetWeeklyWorkHours =
+					holidayContract
+							.getWeeklyWorkHours();
+
+
+			boolean isPartTimerTarget =
+					targetWeeklyWorkHours
+					< ordinaryWeeklyWorkHours;
+
+
+			boolean isOrdinaryWorkerTarget =
+					targetWeeklyWorkHours
+					== ordinaryWeeklyWorkHours;
+
+
+			// 통상근로자 최대시간보다
+			// 대상 직원 시간이 더 클 수 없음
+			if (targetWeeklyWorkHours
+					> ordinaryWeeklyWorkHours) {
+
+
+				throw new GetOutException();
+			}
+
+
+			// =========================
+			// 단시간근로자 주휴
+			// =========================
+
+			if (isPartTimerTarget) {
+
+
+				double dailyScheduledWorkHours =
+						periodScheduledWorkHours
+						/ ordinaryScheduledWorkDays;
+
+
+				double contractWeekHolidayPay =
+						ordinaryHourlyWage
+						* dailyScheduledWorkHours;
+
+
+				weekHolidayPay +=
+						Math.round(
+								contractWeekHolidayPay
+						);
+			}
+
+
+			// =========================
+			// 통상근로자 주휴
+			// =========================
+
+			if (isOrdinaryWorkerTarget) {
+
+
+				if (holidayContract.getDailyWorkHours()
+						== null
+						|| holidayContract.getDailyWorkHours()
+								<= 0) {
+
+
+					throw new GetOutException();
+				}
+
+
+				double dailyScheduledWorkHours =
+						holidayContract
+								.getDailyWorkHours();
+
+
+				double contractWeekHolidayPay =
+						ordinaryHourlyWage
+						* dailyScheduledWorkHours;
+
+
+				weekHolidayPay +=
+						Math.round(
+								contractWeekHolidayPay
+						);
+			}
 		}
-		
-		
-		if(isOrdinaryWorkerTarget) {
-			
-		}
-			
-			
-		
 
 
-
-		
-		}
-		
 		// =========================
-		// 총 지급액 계산
+		// 총 지급액
 		// =========================
 
 		long grossPay =
@@ -992,34 +1506,76 @@ public class Calculater {
 				+ nightPay
 				+ holidayPay;
 
-		return PayrollDto.builder()
-				.payrollNo(payrollNo)
-				.employeeNo(employeeNo)
-				.payrollYear(payrollYear)
-				.payrollMonth(payrollMonth)
 
-				.totalWorkHours(totalWorkHours)
-				.totalOvertimeHours(totalOvertimeHours)
-				.totalNightHours(totalNightHours)
-				.totalHolidayHours(totalHolidayHours)
+		// =========================
+		// PayrollDto
+		// =========================
 
-				.basePay(basePay)
-				.weekHolidayPay(weekHolidayPay)
-				.overtimePay(overtimePay)
-				.nightPay(nightPay)
-				.holidayPay(holidayPay)
+		return PayrollDto
+				.builder()
+				.payrollNo(
+						payrollNo
+				)
+				.employeeNo(
+						employeeNo
+				)
+				.payrollYear(
+						payrollYear
+				)
+				.payrollMonth(
+						payrollMonth
+				)
 
-				.grossPay(grossPay)
+				.totalWorkHours(
+						totalWorkHours
+				)
+				.totalOvertimeHours(
+						totalOvertimeHours
+				)
+				.totalNightHours(
+						totalNightHours
+				)
+				.totalHolidayHours(
+						totalHolidayHours
+				)
 
-				.totalDeduction(0L)
-				.netPay(0L)
+				.basePay(
+						basePay
+				)
+				.weekHolidayPay(
+						weekHolidayPay
+				)
+				.overtimePay(
+						overtimePay
+				)
+				.nightPay(
+						nightPay
+				)
+				.holidayPay(
+						holidayPay
+				)
 
-				.payrollStatus("calculating")
-				.calculatedAt(null)
-				.confirmedAt(null)
+				.grossPay(
+						grossPay
+				)
+
+				.totalDeduction(
+						0L
+				)
+				.netPay(
+						0L
+				)
+
+				.payrollStatus(
+						"calculating"
+				)
+				.calculatedAt(
+						null
+				)
+				.confirmedAt(
+						null
+				)
 
 				.build();
-
-		
 	}
 }
