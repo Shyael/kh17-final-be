@@ -9,7 +9,7 @@ import lombok.Data;
 @Schema(name="강의 검색용 VO")
 @Data @JsonIgnoreProperties(ignoreUnknown = true)
 public class CourseSearchVO extends PaginationVO {
-	private String courseName;
+	private String courseTitle;
 	private String courseSubject;
 	private Integer gradeNo;
 	private String courseStatus;

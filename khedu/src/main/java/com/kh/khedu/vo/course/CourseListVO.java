@@ -12,7 +12,7 @@ public class CourseListVO {
 	private Integer courseNo;
     private String courseTitle;
     private String courseSubject;
-    private int gradeLevel; //grade 테이블 grade명 초1 초2 초3 ...    
+    private String gradeLevel; //grade 테이블 grade명 초1 초2 초3 ...    
     private String tutorName; //accountName
     
     private int courseLimit;

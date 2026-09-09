@@ -98,12 +98,12 @@
 					) AS schedule_info,	
 					c.course_status		
 				from course c
-					join employee e
-						on c.employee_no = e.employee_no
-					join account a
-						on e.account_no = a.account_no
-					join grade g
-						on c.grade_no = g.grade_no
+			    left join employee e
+			        on c.employee_no = e.employee_no
+			    left join account a
+			        on e.account_no = a.account_no
+			    left join grade g
+			        on c.grade_no = g.grade_no
 				<!-- 공통 검색 조건 include -->
 				<include refid="courseSearchCondition" />
 				order by c.course_no desc
