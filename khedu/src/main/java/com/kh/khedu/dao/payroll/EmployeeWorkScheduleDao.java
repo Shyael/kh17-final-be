@@ -44,4 +44,16 @@ public interface EmployeeWorkScheduleDao {
 	        Timestamp endDate
 	);
 
+	
+	Double sumScheduledWorkHoursByPeriod(
+			int employeeNo,
+			Timestamp startDate,
+			Timestamp endDate
+	);
+	
+	int countScheduledWorkDaysByPeriod(
+			int employeeNo,
+			Timestamp startDate,
+			Timestamp endDate
+	);
 }

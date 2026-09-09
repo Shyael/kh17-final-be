@@ -19,6 +19,8 @@ import com.kh.khedu.dto.payroll.EmployeeWorkScheduleDto;
 import com.kh.khedu.dto.payroll.PayrollDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
+import com.kh.khedu.vo.payroll.response.ContractFindOrdinaryEmployeeVO;
 @Component
 public class Calculater {
 	
@@ -314,18 +316,21 @@ public class Calculater {
 
 					throw new GetOutException();
 				}
+				
+				double monthlyScheduledWorkHours =
+				        contractDto.getWeeklyWorkHours()
+				        * 365.0
+				        / 7.0
+				        / 12.0;
 
-				// 현재 KH EDU 기준
-				// 주 40시간 월급제는 월 통상임금 산정시간 209시간 사용
-				if (contractDto.getWeeklyWorkHours() == 40) {
-
-					ordinaryHourlyWage = (double) baseWage / 209;
+				if (monthlyScheduledWorkHours <= 0) {
+				    throw new GetOutException();
 				}
 
-				else {
 
-					throw new GetOutException();
-				}
+				ordinaryHourlyWage =
+				        (double) baseWage
+				        / monthlyScheduledWorkHours;
 			}
 
 			// 월급제 / 일급제는
@@ -490,6 +495,9 @@ public class Calculater {
 
 //		주휴 부터 해야 함
 		
+		
+		
+		
 		// =========================
 		// 주휴수당 계산
 		// =========================
@@ -527,9 +535,9 @@ public class Calculater {
 
 
 		// 급여월의 날짜를 하루씩 확인
-		for (LocalDate holidayDate = start;
-				holidayDate.isBefore(end);
-				holidayDate = holidayDate.plusDays(1)) {
+		for (LocalDate weekHolidayDate = start;
+				weekHolidayDate.isBefore(end);
+				weekHolidayDate = weekHolidayDate.plusDays(1)) {
 
 
 			// =========================
@@ -540,6 +548,10 @@ public class Calculater {
 
 			for (ContractDto contractDto : contractList) {
 
+				if(contractDto.getWeeklyHolidayDay()==null) {
+						continue;
+				}
+				
 				LocalDate contractStart =
 						contractDto.getContractStart()
 								.toLocalDateTime()
@@ -557,11 +569,11 @@ public class Calculater {
 
 
 				boolean afterStart =
-						!holidayDate.isBefore(contractStart);
+						!weekHolidayDate.isBefore(contractStart);
 
 				boolean beforeEnd =
 						contractEnd == null
-						|| !holidayDate.isAfter(contractEnd);
+						|| !weekHolidayDate.isAfter(contractEnd);
 
 
 				if (afterStart && beforeEnd) {
@@ -577,14 +589,45 @@ public class Calculater {
 			if (holidayContract == null) {
 				continue;
 			}
+			
+			//계약이 있으면 통상근로자인지 조회
+			AdminEmployeeDetailVO employeeVO =
+			        employeeDao
+			                .selectAdminEmployeeDetailByEmployeeNo(
+			                        employeeNo
+			                );
 
+			if (employeeVO == null) {
+			    throw new TargetNotfoundException();
+			}
 
+			Timestamp targetDate =
+			        Timestamp.valueOf(
+			                weekHolidayDate.atStartOfDay()
+			        );
+			
+			
+			List<ContractFindOrdinaryEmployeeVO> ordinaryEmployeeList =
+			        contractDao
+			                .findOrdinaryEmployeeNoList(
+			                        employeeVO.getEmployeeType(),
+			                        targetDate
+			                );
+
+			if (ordinaryEmployeeList.isEmpty()) {
+			    throw new TargetNotfoundException();
+			}
+			
+			
+			
+			
 			// =========================
 			// 계약상 주휴일 확인
 			// =========================
-
+		
+			
 			String holidayDay =
-					holidayDate
+					weekHolidayDate
 							.getDayOfWeek()
 							.toString();
 
@@ -613,16 +656,6 @@ public class Calculater {
 			}
 
 
-			// =========================
-			// 주 15시간 미만 제외
-			// =========================
-
-			if (holidayContract.getWeeklyWorkHours() == null
-					|| holidayContract.getWeeklyWorkHours() < 15) {
-
-				continue;
-			}
-
 
 			// =========================
 			// 이번 주 범위
@@ -630,12 +663,68 @@ public class Calculater {
 
 			// 주휴일 포함 직전 7일
 			LocalDate weekStart =
-					holidayDate.minusDays(6);
+					weekHolidayDate.minusDays(6);
 
 			LocalDate weekEnd =
-					holidayDate;
+					weekHolidayDate;
+
+			
+			// =========================
+			// 4주 평균 소정근로시간 산정기간
+			// =========================
+
+			// 현재 주휴일을 마지막 날로 하는 28일
+			LocalDate fourWeekStart =
+			        weekHolidayDate.minusDays(27);
 
 
+			// Mapper가 endDate 미만(<)으로 조회하므로
+			// 주휴일 다음 날 00:00을 종료값으로 사용
+			LocalDate fourWeekEnd =
+			        weekHolidayDate.plusDays(1);
+
+
+			Timestamp fourWeekStartDate =
+			        Timestamp.valueOf(
+			                fourWeekStart.atStartOfDay()
+			        );
+
+
+			Timestamp fourWeekEndDate =
+			        Timestamp.valueOf(
+			                fourWeekEnd.atStartOfDay()
+			        );
+
+			
+			
+			// =========================
+			// 4주 평균 1주 소정근로시간 확인
+			// =========================
+
+			double fourWeekScheduledWorkHours =
+			        employeeWorkScheduleDao
+			                .sumScheduledWorkHoursByPeriod(
+			                        employeeNo,
+			                        fourWeekStartDate,
+			                        fourWeekEndDate
+			                );
+
+
+			// 4주 평균 1주 소정근로시간이
+			// 15시간 미만이면 주휴 대상 제외
+			
+			
+			double averageWeeklyScheduledWorkHours =
+			        fourWeekScheduledWorkHours
+			        / 4.0;
+
+
+		
+			if (averageWeeklyScheduledWorkHours < 15) {
+
+			    continue;
+			}
+			
 			// =========================
 			// 근로관계 유지 확인
 			// =========================
@@ -803,28 +892,93 @@ public class Calculater {
 
 
 			// =========================
-			// 주휴시간 계산
+			// 통상근로자 소정근로일수 최댓값 구하기
 			// =========================
 
-			double weekHolidayHours =
-					holidayContract.getWeeklyWorkHours()
-					/ 40.0
-					* 8.0;
+			int ordinaryScheduledWorkDays = 0;
+
+			double ordinaryWeeklyWorkHours = 0;
+			for (ContractFindOrdinaryEmployeeVO ordinaryEmployee
+			        : ordinaryEmployeeList) {
+
+				
+				
+			    int scheduledWorkDays =
+			            employeeWorkScheduleDao
+			                    .countScheduledWorkDaysByPeriod(
+			                            ordinaryEmployee.getEmployeeNo(),
+			                            fourWeekStartDate,
+			                            fourWeekEndDate
+			                    );
+			    double formalWeeklyWorkHours = ordinaryEmployee.getWeeklyWorkHours();
+
+			    if (scheduledWorkDays <= 0) {
+			        continue;
+			    }
+
+			    if(formalWeeklyWorkHours <= 0) {
+			    	continue;
+			    }
+
+			    // 통상근로자 후보 중
+			    // 소정근로일수가 가장 많은 근로자를 기준으로 사용
+			    if (scheduledWorkDays
+			            > ordinaryScheduledWorkDays) {
+
+			        ordinaryScheduledWorkDays =
+			                scheduledWorkDays;
+			    }
+			    
+			    if(formalWeeklyWorkHours > ordinaryWeeklyWorkHours) {
+			    	ordinaryWeeklyWorkHours = formalWeeklyWorkHours;
+			    }
+			}
 
 
-			// =========================
-			// 주휴수당 계산
-			// =========================
+			if (ordinaryScheduledWorkDays <= 0) {
 
+			    throw new TargetNotfoundException();
+			}
+			
+			if (ordinaryWeeklyWorkHours <= 0){
+				throw new TargetNotfoundException();
+			}
+			
+			
+		ContractDto target = contractDao.findContractByEmployeeNo(employeeNo);
+		
+		boolean isPartTimerTarget = target.getWeeklyWorkHours()<ordinaryWeeklyWorkHours;
+		boolean isOrdinaryWorkerTarget = target.getWeeklyWorkHours()==ordinaryWeeklyWorkHours;
+		
+		if(isPartTimerTarget) {
+			// 단시간근로자의 1일 소정근로시간
+			double dailyScheduledWorkHours =
+			        fourWeekScheduledWorkHours
+			        / ordinaryScheduledWorkDays;
+
+
+			//단시간 근로자의  주휴수당
 			double contractWeekHolidayPay =
-					ordinaryHourlyWage
-					* weekHolidayHours;
-
-
+			        ordinaryHourlyWage
+			        * dailyScheduledWorkHours;
 			weekHolidayPay +=
 					Math.round(
-							contractWeekHolidayPay
-					);
+			                contractWeekHolidayPay
+			        );
+			
+		}
+		
+		
+		if(isOrdinaryWorkerTarget) {
+			
+		}
+			
+			
+		
+
+
+
+		
 		}
 		
 		// =========================

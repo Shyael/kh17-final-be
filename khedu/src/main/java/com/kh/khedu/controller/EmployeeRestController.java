@@ -103,7 +103,7 @@ public class EmployeeRestController {
 	}
 	
 	@ApiResponse(responseCode= "200", description = "이름 검색 성공")
-	@GetMapping(value="/searchName", produces="application/json")
+	@GetMapping(value="/searchName/{accountName}", produces="application/json")
 	public List<EmployeeSearchByNameVO> searchName(String accountName){
 		List<EmployeeSearchByNameVO> result = employeeDao.searchByName(accountName);
 		return result;

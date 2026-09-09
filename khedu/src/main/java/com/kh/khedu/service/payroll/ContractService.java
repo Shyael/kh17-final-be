@@ -103,8 +103,7 @@ public interface ContractService {
 			TokenParseResponseVO parseVO
 	);
 
-	// 시작일 도래 계약 활성화 및 종료일 도래 계약 종료
-	void refreshContractStatus();
+	
 	
 	//도중 퇴사
 	
@@ -113,6 +112,15 @@ public interface ContractService {
 	List<ContractSearchResponseVO> contractSearch(
 	        ContractSearchRequestVO request,
 	        TokenParseResponseVO parseVO
+	);
+
+	void refreshEndedContractStatus();
+
+	void refreshActiveContractStatus();
+	
+	void cancelContract(
+			long contractNo,
+			TokenParseResponseVO parseVO
 	);
 	
 }

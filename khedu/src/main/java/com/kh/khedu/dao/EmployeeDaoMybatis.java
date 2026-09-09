@@ -72,22 +72,7 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 	}
 	
 	
-	@Override
-	public int activateWaitingEmployees() {
-
-	    return sqlSession.update(
-	            "mapper.employee.activateWaitingEmployees"
-	    );
-	}
-
-
-	@Override
-	public int activateEmployeeAccounts() {
-
-	    return sqlSession.update(
-	            "mapper.employee.activateEmployeeAccounts"
-	    );
-	}
+	
 	
 	//첫 출근시에 고용일자 업데이트
 	@Override
@@ -109,5 +94,16 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 	@Override
 	public Timestamp findEmploymentDate(long employeeNo) {
 		return sqlSession.selectOne("mapper.employee.findEmploymentDate",employeeNo);
+	}
+	@Override
+	public boolean checkEmployeeOwner(int accountNo, int employeeNo) {
+		
+		Map<String, Object> params =
+	            new HashMap<>();
+
+	    params.put("employeeNo", employeeNo);
+	    params.put("accountNo", accountNo);
+		
+		return sqlSession.selectOne("mapper.employee.checkEmployeeOwner", params);
 	}
 }

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -253,6 +254,21 @@ public class ContractController {
 	            parseVO
 	    );
 	}
+	// 관리자 계약 검색
+		@ApiResponse(
+		    responseCode = "200",
+		    description = "계약 삭제 성공"
+		)
 	
+	@DeleteMapping("/{contractNo}")
+	public void cancelContract(
+			@PathVariable long contractNo,
+			TokenParseResponseVO parseVO) {
+
+		contractService.cancelContract(
+				contractNo,
+				parseVO
+		);
+	}
 	
 }

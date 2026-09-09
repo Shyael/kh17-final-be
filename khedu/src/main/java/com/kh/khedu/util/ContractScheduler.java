@@ -14,9 +14,16 @@ public class ContractScheduler {
 	private ContractService contractService;
 	
 	
-	@Scheduled(cron = "0 * * * * *"
+	@Scheduled(cron = "0 0 0 * * *"
 	,zone ="Asia/Seoul")
-	public void refreshContractStatus() {
-		contractService.refreshContractStatus();
+	public void refreshActiveContractStatus() {
+		contractService.refreshActiveContractStatus();
+		
 	}
+	
+	@Scheduled(cron = "0 0 0 * * *"
+			,zone ="Asia/Seoul")
+			public void refreshEndedContractStatus() {
+				contractService.refreshEndedContractStatus();
+			}
 }

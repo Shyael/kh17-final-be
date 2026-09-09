@@ -219,4 +219,104 @@
 	where employee_no = #{employeeNo}
 </select>
 	
+	
+	
+	<!-- 계속되는 계약이 없는 재직 직원 → 대기 -->
+<update id="deactivateEndedEmployees">
+
+	update employee E
+
+	set E.employee_status = '대기'
+
+	where E.employee_status = '재직'
+
+		and exists (
+
+			select 1
+
+			from employment_contract C
+
+			where C.employee_no = E.employee_no
+				and C.contract_status = 'ended'
+		)
+
+		and not exists (
+
+			select 1
+
+			from employment_contract C
+
+			where C.employee_no = E.employee_no
+				and C.contract_status in (
+					'active',
+					'scheduled'
+				)
+		)
+
+</update>
+
+
+<!-- 계약 종료로 대기 상태가 된 직원 계정 비활성화 -->
+<update id="deactivateEndedEmployeeAccounts">
+
+	update account A
+
+	set A.account_status = 'N'
+
+	where A.account_status != 'N'
+
+		and exists (
+
+			select 1
+
+			from employee E
+
+			where E.account_no = A.account_no
+				and E.employee_status = '대기'
+
+				and exists (
+
+					select 1
+
+					from employment_contract C
+
+					where C.employee_no = E.employee_no
+						and C.contract_status = 'ended'
+				)
+
+				and not exists (
+
+					select 1
+
+					from employment_contract C
+
+					where C.employee_no = E.employee_no
+						and C.contract_status in (
+							'active',
+							'scheduled'
+						)
+				)
+		)
+
+</update>
+
+
+<!-- 로그인 계정의 직원 본인 여부 확인 -->
+<select id="checkEmployeeOwner"
+        resultType="boolean">
+
+	select
+		case
+			when exists (
+				select 1
+				from employee
+				where account_no = #{accountNo}
+				and employee_no = #{employeeNo}
+			)
+			then 1
+			else 0
+		end
+	from dual
+
+</select>
 </mapper>

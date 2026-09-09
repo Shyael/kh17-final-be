@@ -421,6 +421,20 @@
 	
 	</select>
 
+
+	<!-- 기간 내 계약 직원번호 목록 조회 -->
+	<select id="findEmployeeNoByPeriod"
+        resultType="int">
+
+	select distinct employee_no
+	from employment_contract
+	where contract_start <![CDATA[ < ]]> #{endDate}
+	and (
+		contract_end is null
+		or contract_end >= #{startDate}
+	)
+
+	</select>
 	<select id="findContractByEmployeeNo" resultType="ContractDto">
 
 		select * from
@@ -516,8 +530,103 @@
 </select>
 
 
+<!-- 직원의 계속되는 계약 개수 -->
+<select id="countContinuingContract"
+        resultType="int">
+
+	select count(*)
+	from employment_contract
+	where employee_no = #{employeeNo}
+	and contract_status in (
+		'active',
+		'scheduled'
+	)
+
+</select>
+
+<!-- 직원 퇴사 처리 -->
+<update id="resignEmployee">
+
+	update employee
+	set employee_status = '퇴사'
+	where employee_no = #{employeeNo}
+
+</update>
 
 
+<!-- 종료일이 도래한 계약 조회 -->
+<select id="findContractsToEnd"
+        resultType="ContractDto">
+
+	select *
+	from employment_contract
+	where contract_status = 'active'
+	and contract_end is not null
+	and contract_end <![CDATA[ <= ]]> systimestamp
+
+</select>
+
+
+<!-- 양측 서명 전 근로계약 취소 -->
+<delete id="cancelContract">
+
+	delete from employment_contract
+
+	where contract_no = #{contractNo}
+
+	and contract_status = 'pending'
+
+	and employee_signature is null
+
+	and employer_signature is null
+
+	and signed_time is null
+
+</delete>
+
+
+<!-- 동종업무 통상근로자 후보 조회 -->
+<select id="findOrdinaryEmployeeNoList"
+        resultType="int">
+
+	select distinct
+		E.employee_no
+		C.weelkly_work_hours
+
+	from employee E
+
+		inner join employment_contract C
+			on E.employee_no = C.employee_no
+
+	where E.employee_type = #{employeeType}
+
+	and C.contract_start <![CDATA[ <= ]]> #{targetDate}
+
+	and (
+		C.contract_end is null
+		or C.contract_end <![CDATA[ >= ]]> #{targetDate}
+	)
+
+	and C.weekly_work_hours = (
+
+		select max(C2.weekly_work_hours)
+
+		from employee E2
+
+			inner join employment_contract C2
+				on E2.employee_no = C2.employee_no
+
+		where E2.employee_type = #{employeeType}
+
+		and C2.contract_start <![CDATA[ <= ]]> #{targetDate}
+
+		and (
+			C2.contract_end is null
+			or C2.contract_end <![CDATA[ >= ]]> #{targetDate}
+		)
+	)
+
+</select>
 
 
 <!-- ======================== 급여 ======================== -->
@@ -626,6 +735,10 @@
 	where employee_no = #{employeeNo}
 	order by payroll_year desc, payroll_month desc
 </select>
+
+
+
+
 
 
 <!-- ======================== 급여 공제 ======================== -->
@@ -747,21 +860,26 @@
 	order by p.payment_at desc, p.payroll_payment_no desc
 </select>
 
-<!-- 급여번호를 이용해 취소되지 않은 지급내역 조회 -->
+
+
 <select id="paymentFindNotCancelledByPayroll"
 		resultType="PayrollPaymentDto">
-	select p.*
-	from payroll_payment p
-	where p.payroll_no = #{payrollNo}
-		and p.payment_status = 'paid'
-		and not exists (
-			select 1
-			from payroll_payment c
-			where c.cancel_target_payment_no = p.payroll_payment_no
-				and c.payment_status = 'cancelled'
-		)
-	order by p.payment_at desc, p.payroll_payment_no desc
+	select P.*
+	from payroll_payment P
+	where P.payroll_no = #{payrollNo}
+	and P.payment_status = 'paid'
+	and P.payment_amount > nvl(
+		(
+			select sum(C.payment_amount)
+			from payroll_payment C
+			where C.payment_status = 'cancelled'
+			and C.cancel_target_payment_no = P.payroll_payment_no
+		),
+		0
+	)
 </select>
+
+
 
 
 

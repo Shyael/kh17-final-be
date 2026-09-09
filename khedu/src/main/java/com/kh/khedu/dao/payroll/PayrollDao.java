@@ -1,5 +1,6 @@
 package com.kh.khedu.dao.payroll;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import com.kh.khedu.dto.payroll.PayrollDto;
@@ -24,4 +25,5 @@ public interface PayrollDao {
 
     List<PayrollDto> findAllByEmployee(long employeeNo);
 
+    
 }

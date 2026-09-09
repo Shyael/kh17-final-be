@@ -37,11 +37,7 @@ public interface EmployeeDao {
 	List<EmployeeSearchByNameVO> searchByName(String accountName);
 
 	
-	// active 계약이 생긴 대기 직원 → 재직
-	int activateWaitingEmployees();
 	
-	// active 계약이 있는 직원 계정 → Y
-	int activateEmployeeAccounts();
 	
 	void updateEmploymentDateIfNull(
 	        int employeeNo,
@@ -49,4 +45,9 @@ public interface EmployeeDao {
 	);
 	//고용일자 조회
 	Timestamp findEmploymentDate(long employeeNo);
+	//직원이 본인이 맞는지 확인
+	boolean checkEmployeeOwner(
+			int accountNo,
+			int employeeNo
+	);
 }
