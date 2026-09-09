@@ -42,4 +42,86 @@
 			#{courseType}
 		)
 	</insert>
+	
+	<!-- 
+		검색 기능 구현을 위한 필요 구문 [1] [2] [3] 참조
+	 -->
+	
+	<!-- [1] 공통 검색 조건 (목록 조회와 전체 카운트에서 재사용) -->
+	<sql id="courseSearchCondition">
+		<where>
+			<if test="courseTitle != null and courseTitle != ''">
+				and c.course_title like '%' || #{courseTitle} || '%'
+			</if>
+			<if test="courseSubject != null and courseSubject !=''">
+				and c.course_subject = #{courseSubject} 
+			</if>
+			<if test="gradeNo != null">
+				and c.grade_no = #{gradeNo}
+			</if>
+			<if test="courseStatus != null and courseStatus != ''">
+				and c.course_status = #{courseStatus}
+			</if>
+		</where>
+	</sql>
+	
+	
+	<!-- [2] 강좌 검색 조회  -->
+	<select id="searchList" resultType="CourseListVO">
+		select *
+		from (
+			select
+				inner_table.*,
+				ROWNUM AS rn
+			from (
+				select 
+					c.course_no,
+					c.course_title,
+					c.course_subject,
+					g.grade_level,		
+					a.account_name AS tutor_name,
+					c.course_limit,
+					c.course_current_count,
+					(
+					    SELECT LISTAGG(
+					        s.schedule_week
+					        || ' '
+					        || s.schedule_start
+					        || '~'
+					        || s.schedule_end,
+					        '/'
+					    ) WITHIN GROUP (
+					        ORDER BY s.schedule_start
+					    )
+					    FROM schedule s
+					    WHERE s.course_no = c.course_no
+					) AS schedule_info,	
+					c.course_status		
+				from course c
+					join employee e
+						on c.employee_no = e.employee_no
+					join account a
+						on e.account_no = a.account_no
+					join grade g
+						on c.grade_no = g.grade_no
+				<!-- 공통 검색 조건 include -->
+				<include refid="courseSearchCondition" />
+				order by c.course_no desc
+			) inner_table
+			<![CDATA[
+			where ROWNUM <= #{endRow}
+			]]>
+		)
+		<![CDATA[
+		where rn >= #{beginRow}
+		]]>
+	</select>
+	
+	<!-- [3] 총 데이터 건수 조회 (페이지 번호 계산용) -->
+	<select id="selectCount" resultType="int">
+		select count(*)
+		from course c
+			<!-- 공통 검색 조건 include -->
+			<include refid="courseSearchCondition" />
+	</select>
 </mapper>

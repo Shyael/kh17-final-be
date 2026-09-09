@@ -2,12 +2,14 @@ package com.kh.khedu.service.course;
 
 import java.util.List;
 
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
 import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
+import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 public interface CourseService {
@@ -26,5 +28,8 @@ public interface CourseService {
 	
 	//강좌 상세
 	CourseDetailVO getCourseDetail(int courseNo);
+	
+	//강좌 검색 조회
+	PageResponseVO<CourseListVO> selectList(CourseSearchVO search);
 	
 }
