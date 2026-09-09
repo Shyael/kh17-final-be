@@ -17,14 +17,8 @@ public class StudentDetailResponseVO {
     private String studentGender; // 성별
     private String studentEtc;    // 특이사항 (remarks)
     private String studentAcademicStatus;
+    
+    //출석률 정보
+    private int attendanceRate;
 
-    // 3. 보호자 및 주소 (현재 DB에 없으므로 쿼리에서 임시 하드코딩할 예정)
-    private String guardianName;
-    private String guardianPhone;
-    private String guardianEmail;
-    private String address;
-
-    // 4. 수납 및 상태 정보 (임시 하드코딩)
-    private int tuition;          // 이번 달 수강료
-    private boolean isPaid;       // 납부 여부 (true: 완납, false: 미납)
 }

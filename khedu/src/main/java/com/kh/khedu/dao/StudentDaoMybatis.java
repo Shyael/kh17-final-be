@@ -91,5 +91,4 @@ public class StudentDaoMybatis implements StudentDao {
     public String selectStudentGrade(int studentNo) {
         return sqlSession.selectOne("mapper.student.selectStudentGrade", studentNo);
     }
-
 }

@@ -22,6 +22,8 @@ import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentListResponseVO;
 import com.kh.khedu.vo.student.StudentUpdateRequestVO;
+import com.kh.khedu.vo.studentCourse.AvailableCourseVO;
+import com.kh.khedu.vo.studentCourse.StudentCourseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -108,5 +110,18 @@ public class StudentRestController {
         
         return ResponseEntity.ok("성공적으로 수강 신청되었습니다.");
     }
-
+    
+    // 모달창 셀렉트 박스용 강의 목록 조회 API
+    @GetMapping("/course/list")
+    public ResponseEntity<List<AvailableCourseVO>> getAvailableCourseList() {
+        List<AvailableCourseVO> list = studentCourseService.getAvailableCourseList();
+        return ResponseEntity.ok(list);
+    }
+    
+    // 학생 상세 페이지: '수강 중인 강의 목록' 조회 API
+    @GetMapping("/course/enrolled/{studentNo}")
+    public ResponseEntity<List<StudentCourseVO>> getEnrolledCourses(@PathVariable int studentNo) {
+        List<StudentCourseVO> list = studentCourseService.getListByStudentNo(studentNo);
+        return ResponseEntity.ok(list);
+    }
 }

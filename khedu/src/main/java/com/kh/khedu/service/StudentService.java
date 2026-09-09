@@ -301,5 +301,4 @@ public class StudentService {
         // 성공/실패 여부에 따른 예외 처리 추가 가능
         studentDao.approveStudent(studentNo);
     }
-
 }
