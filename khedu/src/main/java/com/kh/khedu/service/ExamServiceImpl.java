@@ -114,21 +114,18 @@ public class ExamServiceImpl implements ExamService {
 	    if (beforeStatus.equals(afterStatus)) {
 	        return;
 	    }
-
-	    // 작성중 → 공개
-	    if ("작성중".equals(beforeStatus) && "공개".equals(afterStatus)) {
-	        return;
+	    
+	    boolean valid = 
+	    		("작성중".equals(beforeStatus) && "공개".equals(afterStatus))
+	    		||
+	    		("공개".equals(beforeStatus) && "마감".equals(afterStatus));
+	    
+	    if(!valid) {
+	    	throw new ResponseStatusException(
+	    			HttpStatus.BAD_REQUEST,
+	    			"변경할 수 없는 시험 상태입니다."
+	    	);	    	
 	    }
-
-	    // 공개 → 마감
-	    if ("공개".equals(beforeStatus) && "마감".equals(afterStatus)) {
-	        return;
-	    }
-
-	    throw new ResponseStatusException(
-	            HttpStatus.BAD_REQUEST,
-	            "변경할 수 없는 시험 상태입니다."
-	    );
 	}
 	
 	//시험등록
@@ -266,6 +263,11 @@ public class ExamServiceImpl implements ExamService {
 	@Override
 	public boolean update(ExamDto examDto, int employeeNo, boolean tutor) {
 		ExamDto beforeExam = checkAuthority(examDto.getExamNo(), employeeNo, tutor);
+		
+		//상태값을 보내지 않는 경우 기존 상태 유지
+		if(examDto.getExamStatus() == null) {
+			examDto.setExamStatus(beforeExam.getExamStatus());
+		}
 		
 		//상태 변경 검증
 		checkStatusChange(beforeExam.getExamStatus(), examDto.getExamStatus());
