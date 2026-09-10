@@ -12,11 +12,13 @@ import com.kh.khedu.dao.AcademySubjectDao;
 import com.kh.khedu.dao.ClassroomDao;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.GradeDao;
+import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.ScheduleDao;
 import com.kh.khedu.dao.TutorDao;
 import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.error.AlreadyExistsException;
+import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
@@ -26,7 +28,9 @@ import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
+import com.kh.khedu.vo.course.StudentCourseListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 import com.kh.khedu.vo.schedule.ScheduleCreateRequestVO;
 
 @Service
@@ -44,7 +48,26 @@ public class CourseServiceImpl implements CourseService {
 	private AcademySubjectDao academySubjectDao;
 	@Autowired
 	private GradeDao gradeDao;
+	@Autowired
+	private ParentStudentDao parentStudentDao;
 	
+	//	공통메소드
+	//학부모-자녀 관계 확인
+    private void checkParentStudent(
+    		int parentNo,
+    		int studentNo) {
+    	List<ParentStudentVO> studentList = 
+    			parentStudentDao.findByParentNo(parentNo);
+    	
+    	boolean connected = 
+    			studentList.stream()
+    				.anyMatch(student ->
+    						student.getStudentNo() == studentNo
+    				);
+    	if(!connected) {
+    		throw new GetOutException();
+    	}
+    }
 	
 	//강좌 등록화면 진입 시 최초 조회
 	@Override
@@ -243,6 +266,22 @@ public class CourseServiceImpl implements CourseService {
 	@Override
 	public CourseDetailVO getCourseDetail(int courseNo) {
 		return courseDao.selectCourseDetail(courseNo);
+	}
+
+	@Override
+	public List<StudentCourseListVO> selectListByStudent(int studentNo) {
+	    return courseDao.selectListByStudent(studentNo);
+	}
+	
+	@Override
+	public List<StudentCourseListVO> selectListByParentStudent(
+	        int parentNo,
+	        int studentNo) {
+
+	    //부모-자녀 관계 확인
+	    checkParentStudent(parentNo, studentNo);
+
+	    return courseDao.selectListByStudent(studentNo);
 	}
 
 }

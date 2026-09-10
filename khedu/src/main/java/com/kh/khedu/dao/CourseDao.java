@@ -6,9 +6,13 @@ import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
+import com.kh.khedu.vo.course.StudentCourseListVO;
 
 public interface CourseDao {
 	List<CourseDto> selectTeachingListByEmployee(int employeeNo);
+	
+	//학생이 현재 수강 중인 강의 목록
+	List<StudentCourseListVO> selectListByStudent(int studentNo);
 	
 	//강좌 번호 생성
 	int sequence();

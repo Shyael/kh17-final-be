@@ -16,8 +16,11 @@ import com.kh.khedu.dto.AssignmentDto;
 import com.kh.khedu.dto.AttachDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.assignment.AssignmentDetailVO;
 import com.kh.khedu.vo.assignment.AssignmentListVO;
+import com.kh.khedu.vo.assignment.AssignmentSearchVO;
+import com.kh.khedu.vo.assignment.AssignmentStudentSearchVO;
 import com.kh.khedu.vo.assignment.StudentAssignmentListVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
@@ -134,29 +137,60 @@ public class AssignmentServiceImpl implements AssignmentService {
     	return assignment;
     }
 
-    // 전체 과제 목록 조회
+    // 특정 강의의 최근 5개 과제 목록 조회
     @Override
-    public List<AssignmentListVO> selectList() {
-        return assignmentDao.selectList();
-    }
-
-    // 특정 강의의 과제 목록 조회
-    @Override
-    public List<AssignmentListVO> selectListByCourse(int courseNo) {
-        return assignmentDao.selectListByCourse(courseNo);
-    }
-
-    // 특정 강사가 등록한 과제 목록 조회
-    @Override
-    public List<AssignmentListVO> selectListByEmployee(int employeeNo) {
-        return assignmentDao.selectListByEmployee(employeeNo);
-    }
+	public List<AssignmentListVO> selectRecentListByCourse(int courseNo) {
+    	return assignmentDao.selectRecentListByCourse(courseNo);
+	}
 
     // 학생이 수강 중인 강의의 과제 목록 조회
     @Override
     public List<StudentAssignmentListVO> selectListByStudent(int studentNo) {
         return assignmentDao.selectListByStudent(studentNo);
     }
+    
+    //강사 페이지네이션+ 검색 + 과제 목록
+    @Override
+	public PageResponseVO<AssignmentListVO> selectManageList(AssignmentSearchVO search, int employeeNo, boolean tutor) {
+		//강사는 본인 과제만
+    	if (tutor){
+    		search.setEmployeeNo(employeeNo);
+    	}
+    	//원장/관리자는 전체 
+    	else {
+    		search.setEmployeeNo(null);
+    	}
+    	
+    	List<AssignmentListVO> assignmentList = assignmentDao.selectManageSearchList(search);
+    	
+    	int totalCount = assignmentDao.selectManageCount(search);
+    	
+    	return new PageResponseVO<>(
+    			assignmentList,
+    			totalCount,
+    			search
+    	);
+	}
+    
+    //학생/학부모 페이지네이션 + 검색 + 과제목록
+    @Override
+	public PageResponseVO<StudentAssignmentListVO> selectStudentList(AssignmentStudentSearchVO search, int studentNo) {
+		//로그인한 학생 번호 세팅
+    	search.setStudentNo(studentNo);
+    	
+    	//현재 페이지 과제 목록
+    	List<StudentAssignmentListVO> assignmentList =
+    			assignmentDao.selectStudentSearchList(search);
+    	
+    	//검색조건에 해당하는 전체 개수
+    	int totalCount = assignmentDao.selectStudentCount(search);
+    	
+    	return new PageResponseVO<>(
+    			assignmentList,
+    			totalCount,
+    			search
+    	);
+	}
 
     // 과제 수정
     @Override
@@ -252,15 +286,25 @@ public class AssignmentServiceImpl implements AssignmentService {
 	
 	//학부모용 : 자녀 과제 목록 조회
 	@Override
-	public List<StudentAssignmentListVO> selectListByParentStudent(
-			int parentNo,
-			int studentNo
-	){
-		//자신의 자녀인지 확인
-		checkParentStudent(parentNo, studentNo);
-		
-		//기존 학생 과제 목록 조회 재사용
-		return assignmentDao.selectListByStudent(studentNo);
+	public PageResponseVO<StudentAssignmentListVO> selectListByParentStudent(
+	        AssignmentStudentSearchVO search,
+	        int parentNo,
+	        int studentNo) {
+	    //학부모-자녀 관계 검증
+	    checkParentStudent(parentNo, studentNo);
+
+	    //조회할 학생번호 세팅
+	    search.setStudentNo(studentNo);
+
+	    List<StudentAssignmentListVO> list = assignmentDao.selectStudentSearchList(search);
+
+	    int totalCount = assignmentDao.selectStudentCount(search);
+
+	    return new PageResponseVO<>(
+	            list,
+	            totalCount,
+	            search
+	    );
 	}
 	
 	// 학부모용 : 자녀 과제 상세 조회

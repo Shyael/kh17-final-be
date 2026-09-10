@@ -6,6 +6,25 @@
 
 <mapper namespace="mapper.tutor">
 
+	<!-- ==================== 강사 검색 조건 ==================== -->
+	<sql id="tutorSearchCondition">
+	    <where>
+	        <!-- 강사 이름 검색 -->
+	        <if test="tutorName != null and tutorName != ''">
+	            and a.account_name like '%' || #{tutorName} || '%'
+	        </if>
+	        <!-- 담당 과목 검색 -->
+	        <if test="academySubjectNo != null">
+	            and exists (
+	                select 1
+	                from tutor_subject ts
+	                where ts.tutor_no = t.tutor_no
+	                and ts.academy_subject_no = #{academySubjectNo}
+	            )
+	        </if>
+	    </where>
+	</sql>
+
 	<!-- ==================== 강사 기본정보 ==================== -->
 
 	<!-- 강사 번호 생성 -->
@@ -62,47 +81,42 @@
 
 	<!-- ==================== 강사 목록 ==================== -->
 
-
-	<!-- 전체 강사 목록 -->
-	<select id="selectList" resultType="TutorListVO">
-		select
-			t.tutor_no,
-			t.employee_no,
-			a.account_name,
-			a.account_phone,
-			t.tutor_tagline
-		from tutor t
-		join employee e
-			on t.employee_no = e.employee_no
-		join account a
-			on e.account_no = a.account_no
-		order by t.tutor_no asc
-	</select>
-
-
-	<!-- 과목별 강사 목록 -->
-	<select id="selectListBySubject" resultType="TutorListVO">
-		select
-			t.tutor_no,
-			t.employee_no,
-			a.account_name,
-			a.account_phone,
-			t.tutor_tagline
-		from tutor t
-		join employee e
-			on t.employee_no = e.employee_no
-		join account a
-			on e.account_no = a.account_no
-		where exists (
-			select 1
-			from tutor_subject ts
-			where ts.tutor_no = t.tutor_no
-			and ts.academy_subject_no = #{academySubjectNo}
-		)
-		order by t.tutor_no asc
+	<!-- 강사 검색 + 페이지네이션 -->
+	<select id="selectSearchList" resultType="TutorListVO">
+	    select *
+	    from (
+	        select inner_table.*, ROWNUM rn
+	        from (
+	            select
+	                t.tutor_no,
+	                t.employee_no,
+	                a.account_name,
+	                a.account_phone,
+	                t.tutor_tagline
+	            from tutor t
+	            join employee e
+	                on t.employee_no = e.employee_no
+	            join account a
+	                on e.account_no = a.account_no
+	            <include refid="tutorSearchCondition"/>
+	            order by t.tutor_no desc
+	        ) inner_table
+	        where ROWNUM <![CDATA[ <= ]]> #{endRow}
+	    )
+	    where rn <![CDATA[ >= ]]> #{beginRow}
 	</select>
 	
-
+	<!-- 강사 검색 결과 전체 개수 -->
+	<select id="selectCount" resultType="int">
+	    select count(*)
+	    from tutor t
+	    join employee e
+	        on t.employee_no = e.employee_no
+	    join account a
+	        on e.account_no = a.account_no
+	    <include refid="tutorSearchCondition"/>
+	</select>
+	
 	<!-- ==================== 강사 상세 ==================== -->
 
 

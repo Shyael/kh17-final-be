@@ -10,6 +10,7 @@ import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
+import com.kh.khedu.vo.course.StudentCourseListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 public interface CourseService {
@@ -32,4 +33,12 @@ public interface CourseService {
 	//강좌 검색 조회
 	PageResponseVO<CourseListVO> selectList(CourseSearchVO search);
 	
+	//학생 본인 수강중인 강의목록
+	List<StudentCourseListVO> selectListByStudent(int studentNo);
+	
+	//학부모용 학생 수강중인 강의목록
+	List<StudentCourseListVO> selectListByParentStudent(
+	        int parentNo,
+	        int studentNo
+	);
 }

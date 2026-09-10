@@ -5,6 +5,85 @@
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
   
 <mapper namespace="mapper.assignment">
+	<!-- ==================== 강사용 과제 검색 조건 ==================== -->
+	<sql id="assignmentManageSearchCondition">
+	    <where>
+	        <!-- 강사일 때만 본인 과제 -->
+	        <if test="employeeNo != null">
+	            and ass.employee_no = #{employeeNo}
+	        </if>
+	
+	        <!-- 특정 강의 -->
+	        <if test="courseNo != null">
+	            and ass.course_no = #{courseNo}
+	        </if>
+	
+	        <!-- 과제 제목 -->
+	        <if test="assignmentTitle != null and assignmentTitle != ''">
+	            and ass.assignment_title like '%' || #{assignmentTitle} || '%'
+	        </if>
+	
+	        <!-- 과제 상태 -->
+	        <if test="assignmentStatus != null and assignmentStatus != ''">
+	            and ass.assignment_status = #{assignmentStatus}
+	        </if>
+	
+	    </where>
+	</sql>
+	
+	<!-- ==================== 학생용 과제 검색 조건 ==================== -->
+	<sql id="assignmentStudentSearchCondition">
+	    <where>
+	
+	        <!-- 로그인한 학생 + 현재 수강중인 강의 -->
+	        and sc.student_no = #{studentNo}
+	        and sc.student_course_status = '수강중'
+	
+	        <!-- 특정 강의 -->
+	        <if test="courseNo != null">
+	            and ass.course_no = #{courseNo}
+	        </if>
+	
+	        <!-- 과제 제목 검색 -->
+	        <if test="assignmentTitle != null and assignmentTitle != ''">
+	            and ass.assignment_title
+	                like '%' || #{assignmentTitle} || '%'
+	        </if>
+	
+	        <!-- 과제 상태 검색 -->
+	        <if test="assignmentStatus != null and assignmentStatus != ''">
+	            and ass.assignment_status = #{assignmentStatus}
+	        </if>
+	
+	        <!-- 제출 상태 -->
+	        <if test="submitStatus != null and submitStatus != ''">
+	
+	            <choose>
+	
+	                <!-- 미제출 -->
+	                <when test="submitStatus == '미제출'">
+	                    and s.submit_no is null
+	                </when>
+	
+	                <!-- 제출했지만 피드백 전 -->
+	                <when test="submitStatus == '제출완료'">
+	                    and s.submit_no is not null
+	                    and s.submit_comment is null
+	                </when>
+	
+	                <!-- 피드백 완료 -->
+	                <when test="submitStatus == '채점완료'">
+	                    and s.submit_no is not null
+	                    and s.submit_comment is not null
+	                </when>
+	
+	            </choose>
+	
+	        </if>
+	
+	    </where>
+	</sql>
+	
 	<!-- ==================== 과제 정보 ==================== -->
 	
 	<!-- 과제 번호 생성 -->
@@ -62,49 +141,6 @@
 	    where ass.assignment_no = #{assignmentNo}
 	</select>
 
-	<!-- 전체 과제 목록 -->
-	<select id="selectList" resultType="AssignmentListVO">
-	    select
-	        ass.assignment_no,
-	        ass.course_no,
-	        c.course_title,
-	        ass.employee_no,
-	        acc.account_name,
-	        ass.assignment_title,
-	        ass.assignment_status,
-	        ass.assignment_due_date,
-	        ass.assignment_wtime
-	    from assignment ass
-	    join course c
-	        on ass.course_no = c.course_no
-	    join employee e
-	        on ass.employee_no = e.employee_no
-	    join account acc
-	        on e.account_no = acc.account_no
-	    order by ass.assignment_no desc
-	</select>
-	
-	<!-- 특정 강사가 등록한 과제 목록 -->
-	<select id="selectListByEmployee" resultType="AssignmentListVO">
-	    select
-	        ass.assignment_no,
-	        ass.course_no,
-	        c.course_title,
-	        ass.assignment_title,
-	        ass.assignment_status,
-	        ass.assignment_due_date,
-	        ass.assignment_wtime
-	
-	    from assignment ass
-	
-	    join course c
-	        on ass.course_no = c.course_no
-	
-	    where ass.employee_no = #{employeeNo}
-	
-	    order by ass.assignment_no desc
-	</select>
-	
 	<!-- 학생용 : 현재 수강중인 강의의 전체 과제 + 제출여부 -->
 	<select id="selectListByStudent" resultType="StudentAssignmentListVO">
 	    select
@@ -149,35 +185,127 @@
 	             ass.assignment_no desc
 	</select>
 
-    <!-- 특정 강의의 과제 목록 -->
-	<select id="selectListByCourse" resultType="AssignmentListVO">
-	    select
-	        ass.assignment_no,
-	        ass.course_no,
-	        c.course_title,
+	<!-- 특정 강의의 최근 과제 5개 -->
+	<select id="selectRecentListByCourse"
+	        parameterType="int"
+	        resultType="AssignmentListVO">
 	
-	        ass.employee_no,
-	        acc.account_name,
+	    select *
+	    from (
+	        select
+	            ass.assignment_no,
+	            ass.course_no,
+	            c.course_title,
+	            ass.assignment_title,
+	            ass.assignment_status,
+	            ass.assignment_due_date,
+	            ass.assignment_wtime
+	        from assignment ass
+	        join course c
+	            on ass.course_no = c.course_no
+	        where ass.course_no = #{courseNo}
+	        order by ass.assignment_wtime desc,
+	                 ass.assignment_no desc
+	    )
+	    where ROWNUM <![CDATA[ <= ]]> 5
 	
-	        ass.assignment_title,
-	        ass.assignment_status,
-	        ass.assignment_due_date,
-	        ass.assignment_wtime
+	</select>
 	
+	<!-- 강사용 과제 목록 + 페이지네이션 -->
+	<select id="selectManageSearchList" resultType="AssignmentListVO">
+	    select *
+	    from (
+	        select inner_table.*, ROWNUM rn
+	        from (
+	            select
+	                ass.assignment_no,
+	                ass.course_no,
+	                c.course_title,
+	                ass.assignment_title,
+	                ass.assignment_status,
+	                ass.assignment_due_date,
+	                ass.assignment_wtime
+	            from assignment ass
+	            join course c
+	                on ass.course_no = c.course_no
+	            <include refid="assignmentManageSearchCondition"/>
+	            order by ass.assignment_no desc
+	        ) inner_table
+	        where ROWNUM <![CDATA[ <= ]]> #{endRow}
+	    )
+	    where rn <![CDATA[ >= ]]> #{beginRow}
+	</select>
+	
+	<!-- 강사용 과제 검색 결과 개수 -->
+	<select id="selectManageCount" resultType="int">
+	    select count(*)
 	    from assignment ass
+	    <include refid="assignmentManageSearchCondition"/>
+	</select>
 	
-	    join course c
-	        on ass.course_no = c.course_no
+	<!-- ==================== 학생용 과제 목록 + 페이지네이션 ==================== -->
+	<select id="selectStudentSearchList" resultType="StudentAssignmentListVO">
+	    select *
+	    from (
+	        select inner_table.*, ROWNUM rn
+	        from (
+	            select
+	                ass.assignment_no,
+	                ass.course_no,
+	                c.course_title,
+	                acc.account_name,
+	                ass.assignment_title,
+	                ass.assignment_status,
+	                ass.assignment_due_date,
+	                ass.assignment_wtime,
 	
-	    join employee e
-	        on ass.employee_no = e.employee_no
+	                s.submit_no,
+	                s.submit_comment,
+	                s.submit_wtime,
+	                s.submit_etime
 	
-	    join account acc
-	        on e.account_no = acc.account_no
+	            from assignment ass
 	
-	    where ass.course_no = #{courseNo}
+	            join course c
+	                on ass.course_no = c.course_no
 	
-	    order by ass.assignment_no desc
+	            join employee e
+	                on ass.employee_no = e.employee_no
+	
+	            join account acc
+	                on e.account_no = acc.account_no
+	
+	            join student_course sc
+	                on ass.course_no = sc.course_no
+	
+	            left join assignment_submit s
+	                on ass.assignment_no = s.assignment_no
+	                and s.student_no = #{studentNo}
+	
+	            <include refid="assignmentStudentSearchCondition"/>
+	
+	            order by
+	                ass.assignment_due_date asc,
+	                ass.assignment_no desc
+	
+	        ) inner_table
+	
+	        where ROWNUM <![CDATA[ <= ]]> #{endRow}
+	    )
+	
+	    where rn <![CDATA[ >= ]]> #{beginRow}
+	</select>
+	
+	<!-- ==================== 학생용 과제 검색 결과 개수 ==================== -->
+	<select id="selectStudentCount" resultType="int">
+	    select count(*)
+	    from assignment ass
+	    join student_course sc
+	        on ass.course_no = sc.course_no
+	    left join assignment_submit s
+	        on ass.assignment_no = s.assignment_no
+	        and s.student_no = #{studentNo}
+	    <include refid="assignmentStudentSearchCondition"/>
 	</select>
 
     <!-- 과제 수정 -->

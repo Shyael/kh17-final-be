@@ -124,4 +124,22 @@
 			<!-- 공통 검색 조건 include -->
 			<include refid="courseSearchCondition" />
 	</select>
+	
+	<!-- 학생이 현재 수강 중인 강의 목록 -->
+	<select id="selectListByStudent" resultType="StudentCourseListVO">
+	    select
+	        c.course_no,
+	        c.course_title
+	
+	    from student_course sc
+	
+	    join course c
+	        on sc.course_no = c.course_no
+	
+	    where sc.student_no = #{studentNo}
+	      and sc.student_course_status = '수강중'
+	
+	    order by c.course_title asc
+	
+	</select>
 </mapper>
