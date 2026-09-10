@@ -36,7 +36,7 @@ public class PageResponseVO<T> { //<T> 어떤 VO/DTO를 넣을지는 나중에 �
 		
 		// 2) 하단 페이지 네비게이션 블록 크기 (예 : 한 번에 [1] ~ [10] 표시)
 		int blockSize = 10;
-		// 페이지 블록의 마지막 페이지 번호 계산 
+		// 현재 페이지가 속한 블록의 마지막 페이지 
 		// page가 23이면 23/10 = 2.3 -> 올림 -> 3 -> 3*blocksize = 30 
 		// 즉, 3번째 블록의 마지막 블록의 숫자를 보여줌 (30)
 		this.endBlock = (int) Math.ceil((double) this.page / blockSize) * blockSize;
@@ -50,5 +50,11 @@ public class PageResponseVO<T> { //<T> 어떤 VO/DTO를 넣을지는 나중에 �
 		// 3) 이전 / 다음 버튼 노출 여부
 		this.prev = this.startBlock > 1;
 		this.next = this.endBlock < this.totalPages;
+		
+		//전체 페이지가 10페이지 이하라면 이전/다음 버튼 없음
+		if(this.totalPages <= 10) {
+			this.prev = false;
+			this.next = false;
+		}
 	}
 }
