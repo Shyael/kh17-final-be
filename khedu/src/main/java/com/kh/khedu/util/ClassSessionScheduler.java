@@ -1,5 +1,6 @@
 package com.kh.khedu.util;
 
+
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -17,6 +18,8 @@ import com.kh.khedu.dao.ScheduleDao;
 import com.kh.khedu.dto.ClassSessionDto;
 import com.kh.khedu.dto.ScheduleDto;
 
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 @Component
 public class ClassSessionScheduler {
 	
@@ -24,13 +27,15 @@ public class ClassSessionScheduler {
 	private ClassSessionDao classSessionDao;
 	@Autowired
 	private ScheduleDao scheduleDao;
+	@Autowired
+    private SessionSchedulerService sessionSchedulerService;
 	
-	//매일 새벽 00:05tlfgod
+	//매일 새벽 00:05실행
 	@Scheduled(cron = "0 5 0 * * *")
 	@Transactional
 	public void processClassSessions() {
 		//[방어 2] 강사가 깜빡하고 안 누른 지난 세션 일괄 자동 '종료'
-		classSessionDao.autoClosdedExpriedSessions();
+		classSessionDao.autoCloseExpiredSessions();
 		
 		//[누락 보충] 서버 장애 등으로 생성되지 못한 세션 보충 생성
 		// 진행중인 강좌, 강사가 최소 1회 이상 수업시작을 눌러 실제 개강이 확정된 스케줄만 대상, 
@@ -87,4 +92,17 @@ public class ClassSessionScheduler {
 			}
 		}
 	}
+	
+	/**
+     * 매 10분마다 실행 (0분, 10분, 20분, 30분, 40분, 50분)
+     * 종료 시각(session_end)이 지났으나 종료되지 않은 세션을 자동 마감
+     */
+    @Scheduled(cron = "0 0/10 * * * *")
+    public void autoCloseSessions() {
+        try {
+            sessionSchedulerService.closeExpiredSessions();
+        } catch (Exception e) {
+            log.error("[스케줄러 오류] 세션 자동 마감 중 예외 발생: {}", e.getMessage(), e);
+        }
+    }
 }

@@ -3,6 +3,7 @@ package com.kh.khedu.dao;
 import java.util.List;
 
 import com.kh.khedu.dto.AttemptDto;
+import com.kh.khedu.vo.attendance.AttendanceStudentResponseVO;
 
 public interface AttemptDao {
     // 응시 번호 시퀀스 생성

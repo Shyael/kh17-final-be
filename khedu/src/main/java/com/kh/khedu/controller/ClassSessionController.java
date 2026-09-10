@@ -3,7 +3,9 @@ package com.kh.khedu.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,17 +32,25 @@ public class ClassSessionController {
 	//세션 시작
 	@ApiResponse(responseCode = "200", description = "세션 자동 생성 성공")
 	@PostMapping("/start")
-	public void startClass(@RequestBody ClassSessionStartRequestVO request) {
-		classSessionService.StartClass(request);
+	public void startClass(
+			@CurrentUser TokenParseResponseVO parseVO,
+			@RequestBody ClassSessionStartRequestVO request) {
+		classSessionService.StartClass(request, parseVO);
 	}
 	
 	//세션 종료
 	@ApiResponse(responseCode = "200", description = "세션 자동 종료 성공")
-	@PostMapping("/end")
-	public void endClass(@RequestBody ClassSessionEndRequestVO request) {
-		classSessionService.EndClass(request);
-	}
-	
+	@PostMapping("/end/{sessionNo}")
+    public ResponseEntity<String> endClass(
+            @PathVariable int sessionNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+        
+        ClassSessionEndRequestVO request = new ClassSessionEndRequestVO();
+        request.setSessionNo(sessionNo);
+
+        String resultMessage = classSessionService.EndClass(request, parseVO);
+        return ResponseEntity.ok(resultMessage);
+    }
 	/**
      * 수업 세션 사후 등록
      * - 원장/데스크/관리자: 모든 스케줄 등록 가능

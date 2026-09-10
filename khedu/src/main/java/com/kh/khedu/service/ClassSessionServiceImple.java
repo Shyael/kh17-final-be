@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kh.khedu.dao.AttendanceDao;
 import com.kh.khedu.dao.ClassSessionDao;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.ScheduleDao;
@@ -34,11 +35,18 @@ public class ClassSessionServiceImple implements ClassSessionService {
 	private ClassSessionDao classSessionDao;
 	@Autowired
 	private CourseDao courseDao;
+	@Autowired
+	private AttendanceDao attendanceDao;
 	
 	// classSession 시작
 	@Override
 	@Transactional
-	public void StartClass(ClassSessionStartRequestVO request) {
+	public void StartClass(ClassSessionStartRequestVO request, TokenParseResponseVO parseVO) {
+		
+		// [0] 직원 계정 1차 검증
+		if (!AccountType.EMPLOYEE.getDescription().equals(parseVO.getAccountType())) {
+			throw new WhoAreYouException("직원 전용 기능입니다");
+		}
 		
 		// [1] scheduleNo로 Schedule 조회
 		int scheduleNo = request.getScheduleNo();
@@ -47,6 +55,13 @@ public class ClassSessionServiceImple implements ClassSessionService {
 		// [2] Schedule 존재 여부 확인
 		if(scheduleDto == null) {
 			throw new TargetNotfoundException("해당 스케줄이 존재하지 않습니다");
+		}
+		// [2-1] 강사(TUTOR) 권한 사용자인 경우 본인 강좌 스케줄인지 대조 (ADMIN/DESK는 프리패스)
+		if (parseVO.getRoleNames() != null && parseVO.getRoleNames().contains("TUTOR")) {
+			CourseDto courseDto = courseDao.selectOneByScheduleNo(scheduleNo);
+			if (courseDto == null || courseDto.getEmployeeNo() != parseVO.getNoType()) {
+				throw new WhoAreYouException("본인이 담당하는 강좌의 수업만 시작할 수 있습니다");
+			}
 		}
 		
 		// [3] 오늘이 수업 요일인지 확인
@@ -72,7 +87,7 @@ public class ClassSessionServiceImple implements ClassSessionService {
 			throw new TargetNotfoundException("해당 수업 세션이 이미 존재합니다");
 		}
 		
-		// [6] ClassSessionDto 생성
+		// [6] ClassSessionDto 생성 (DB DEFAULT 값으로 '진행중' 처리)
 		int sessionNo = classSessionDao.sequence();
 		ClassSessionDto classSessionDto = ClassSessionDto.builder()
 					.sessionNo(sessionNo)
@@ -84,6 +99,9 @@ public class ClassSessionServiceImple implements ClassSessionService {
 		
 		// [7] ClassSession 등록
 		classSessionDao.insert(classSessionDto);
+		
+		// [7-1] 세션 생성 즉시 수강생 출석부 '미출결' 생성
+		attendanceDao.initAttendance(sessionNo, scheduleDto.getCourseNo());
 		
 		// [8] 첫 수업 여부 확인 (개강일 등록)
 		if(scheduleDto.getScheduleOpen() == null) {
@@ -100,7 +118,11 @@ public class ClassSessionServiceImple implements ClassSessionService {
 	// classSession 종료
 	@Override
 	@Transactional
-	public void EndClass(ClassSessionEndRequestVO request) {
+	public String EndClass(ClassSessionEndRequestVO request, TokenParseResponseVO parseVO) {
+		// [0] 직원 계정 1차 검증
+		if (!AccountType.EMPLOYEE.getDescription().equals(parseVO.getAccountType())) {
+			throw new WhoAreYouException("직원 전용 기능입니다");
+		}
 		
 		// [1] sessionNo로 해당 ClassSession 조회
 		int sessionNo = request.getSessionNo();
@@ -108,14 +130,21 @@ public class ClassSessionServiceImple implements ClassSessionService {
 		if(classSessionDto == null) {
 			throw new TargetNotfoundException("해당 수업 세션이 존재하지 않습니다");
 		}
+		// [1-1] 강사(TUTOR) 권한 사용자인 경우 본인 세션인지 대조 (ADMIN/DESK는 프리패스)
+		if (parseVO.getRoleNames() != null && parseVO.getRoleNames().contains("TUTOR")) {
+			CourseDto courseDto = courseDao.selectOneByScheduleNo(classSessionDto.getScheduleNo());
+			if (courseDto == null || courseDto.getEmployeeNo() != parseVO.getNoType()) {
+				throw new WhoAreYouException("본인이 담당하는 수업 세션만 종료할 수 있습니다");
+			}
+		}
 		
 		// [2] 강좌가 진행중인지 확인
 		if(!ClassSessionDto.STATUS_RUNNING.equals(classSessionDto.getSessionStatus())) {
 			throw new WhoAreYouException("현재 진행중인 수업 세션이 아닙니다(이미 종료되었거나 취소됨)");
 		}
 		
-		// [3] ClassSession 상태를 '종료'로 변경
-		classSessionDao.updateSessionStatus(sessionNo, ClassSessionDto.STATUS_CLOSED);
+		// [3] ClassSession 상태를 '종료'로 변경 및 종료시각 갱신
+		classSessionDao.updateSessionToEnd(sessionNo, ClassSessionDto.STATUS_CLOSED);
 		
 		// [4] 연관된 Schedule 정보 조회
 		ScheduleDto scheduleDto = scheduleDao.selectOneByScheduleNo(classSessionDto.getScheduleNo());
@@ -139,6 +168,10 @@ public class ClassSessionServiceImple implements ClassSessionService {
 				}
 			}
 		}
+		
+		// [7] 미출결 수강생 일괄 결석 처리
+		int absentCount = attendanceDao.updateAbsentForUncheckedStudents(sessionNo);
+		return "수업 세션이 성공적으로 종료되었습니다. (결석 처리: " + absentCount + "명)";
 	}
 
 	/*
@@ -160,7 +193,6 @@ public class ClassSessionServiceImple implements ClassSessionService {
 		}
 
 		// [2] 강사(TUTOR) 권한을 가진 사용자인 경우 본인 수업인지 대조
-		// selectOneByScheduleNo를 사용하여 바로 Course 정보 조회
 		if (parseVO.getRoleNames() != null && parseVO.getRoleNames().contains("TUTOR")) {
 			CourseDto courseDto = courseDao.selectOneByScheduleNo(request.getScheduleNo());
 			if (courseDto == null || courseDto.getEmployeeNo() != parseVO.getNoType()) {
@@ -190,7 +222,11 @@ public class ClassSessionServiceImple implements ClassSessionService {
 							? request.getSessionStatus() : ClassSessionDto.STATUS_CLOSED)
 				.build();
 		
-		classSessionDao.insert(sessionDto);
+		// insertByAdmin 호출
+		classSessionDao.insertByAdmin(sessionDto);
+
+		// [추가] 사후 등록된 세션에도 출석부 생성
+		attendanceDao.initAttendance(sessionNo, scheduleDto.getCourseNo());
 
 		// 첫 수업 누락 건 사후 등록 시 개강일 보정
 		if (scheduleDto.getScheduleOpen() == null) {
@@ -220,6 +256,7 @@ public class ClassSessionServiceImple implements ClassSessionService {
 			}
 		}
 		
-		classSessionDao.updateStatusByAdmin(request.getSessionNo(), request.getSessionStatus());
+		// [수정] updateStatusOnly 호출 (종료시각 SYSTIMESTAMP 오염 방지)
+		classSessionDao.updateStatusOnly(request.getSessionNo(), request.getSessionStatus());
 	}
 }

@@ -4,12 +4,13 @@ package com.kh.khedu.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CommonsApiResponse;
@@ -17,15 +18,17 @@ import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.payroll.EmployeeAttendanceDao;
 import com.kh.khedu.error.AdminChecker;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.service.attendance.AttendanceService;
 import com.kh.khedu.service.attendance.EmployeeAttendanceService;
 import com.kh.khedu.service.workschedule.EmployeeWorkScheduleService;
+import com.kh.khedu.vo.attendance.AttendanceUpdateByAdminVO;
+import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.AdminAttendanceSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceAbsentToNormalRequestVO;
-
 import com.kh.khedu.vo.payroll.request.AttendanceLeaveRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToNormalRequestVO;
@@ -48,14 +51,18 @@ public class EmployeeAttendanceRestController {
     @Autowired
     private EmployeeAttendanceService employeeAttendanceService;
 
-    @Autowired
-    private EmployeeWorkScheduleService employeeWorkScheduleService;
-   @Autowired
-   private AdminChecker adminChecker;
+	@Autowired
+	private EmployeeWorkScheduleService employeeWorkScheduleService;
+	@Autowired
+	private AdminChecker adminChecker;
 
-   @Autowired
-   private EmployeeAttendanceDao employeeAttendanceDao;
-    
+	@Autowired
+	private EmployeeAttendanceDao employeeAttendanceDao;
+	
+	// 학생출결
+	@Autowired
+	private AttendanceService attendanceService;
+
 
 
     @ApiResponse(
@@ -265,5 +272,32 @@ public class EmployeeAttendanceRestController {
     			 ,request.getEndDate());
      }
     
+     
+     /*
+      * ========================================
+      * 학생 출결쪽
+      * ==============================================
+      * */
+     
+     @ApiResponse(responseCode = "200", description = "수강생 출결 상태 수동 정정 (강사/관리자)")
+     @PatchMapping("/{attendanceNo}")
+     public ResponseEntity<String> updateAttendanceState(
+             @PathVariable int attendanceNo,
+             @RequestBody AttendanceUpdateByAdminVO request,
+             @CurrentUser TokenParseResponseVO parseVO) {
+         
+         request.setAttendanceNo(attendanceNo);
+         attendanceService.updateAttendanceByAdmin(request, parseVO);
+         return ResponseEntity.ok("출결 상태가 [" + request.getAttendanceState() + "](으)로 변경되었습니다");
+     }
+     
+     @GetMapping("/session/{sessionNo}")
+     public ResponseEntity<SessionAttendanceDetailVO> getSessionAttendance(
+             @PathVariable int sessionNo,
+             @CurrentUser TokenParseResponseVO parseVO) {
+         
+         SessionAttendanceDetailVO response = attendanceService.getSessionAttendanceDetail(sessionNo, parseVO);
+         return ResponseEntity.ok(response);
+     }
 
 }
