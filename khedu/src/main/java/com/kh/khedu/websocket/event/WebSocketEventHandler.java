@@ -70,7 +70,7 @@ public class WebSocketEventHandler {
 		
 		WebSocketV3SystemVO response = WebSocketV3SystemVO.builder()
 					//.content("["+parseVO.getAccountNickname()+"] 님이 입장하셨습니다")
-					.content("["+parseVO.getAccountId()+"] 님이 입장하셨습니다")
+					.content("["+parseVO.getAccountNo()+"] 님이 입장하셨습니다")
 					.level("primary")
 					.time(LocalDateTime.now())
 				.build();
@@ -92,7 +92,7 @@ public class WebSocketEventHandler {
 		
 		WebSocketV3SystemVO response = WebSocketV3SystemVO.builder()
 				//.content("["+parseVO.getAccountNickname()+"] 님이 퇴장하셨습니다")
-				.content("["+parseVO.getAccountId()+"] 님이 퇴장하셨습니다")
+				.content("["+parseVO.getAccountNo()+"] 님이 퇴장하셨습니다")
 				.level("primary")
 				.time(LocalDateTime.now())
 			.build();
@@ -119,9 +119,9 @@ public class WebSocketEventHandler {
 //		if(destination.equals("/public/users")) {
 //			simpMessagingTemplate.convertAndSend("/public/users", flashService.list());
 //		}
-		if(destination.equals("/private/users/"+parseVO.getAccountId())) {
+		if(destination.equals("/private/users/"+parseVO.getAccountNo())) {
 			simpMessagingTemplate.convertAndSend(
-				"/private/users/"+parseVO.getAccountId(),
+				"/private/users/"+parseVO.getAccountNo(),
 				flashService.list()
 			);
 		}

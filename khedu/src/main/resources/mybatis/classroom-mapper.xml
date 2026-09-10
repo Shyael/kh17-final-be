@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.classroom">
+	
+	<!-- 강좌 등록시 강의실 조회용 -->
+	<select id="classroomListWhenRegister" resultType="classroomWhenRegisterVO">
+		select  
+			classroom_no,
+			classroom_name,
+			classroom_capacity,
+			classroom_status
+		from classroom
+		where classroom_status in ('사용가능', '사용중')
+		order by classroom_no
+	</select>
+	
+	<!-- 강좌 등록 조건에 맞는 사용 강의 강의실 조회 -->
+	<select id="selectAvailableClassroomList" resultType="ClassroomWhenRegisterVO">
+		select 
+			c.classroom_no,
+			c.classroom_name,
+			c.classroom_capacity,
+			c.classroom_status
+		from classroom c
+		where c.classroom_status in ('사용가능', '사용중')
+		<!-- 수용 인원 -->
+		and c.classroom_capacity >= #{courseLimit}
+		<!-- 기존 수업과 충돌하지 않는 강의실 -->
+		<if test="schedules != null and schedules.size() > 0">
+			and not exists (
+				select 1
+				from schedule s
+				where s.classroom_no = c.classroom_no
+				and (
+					<foreach collection="schedules" item="schedule" separator=" or ">
+						(
+							s.schedule_week = #{schedule.scheduleWeek}
+
+                            and s.schedule_start <![CDATA[ < ]]>
+                                #{schedule.scheduleEnd}
+
+                            and s.schedule_end <![CDATA[ > ]]>
+                                #{schedule.scheduleStart}
+
+                            and (
+                                s.schedule_open is null
+                                or #{schedule.scheduleClose} is null
+                                or s.schedule_open <![CDATA[ <= ]]>
+                                   #{schedule.scheduleClose}
+                            )
+
+                            and (
+                                s.schedule_close is null
+                                or #{schedule.scheduleOpen} is null
+                                or s.schedule_close <![CDATA[ >= ]]>
+                                   #{schedule.scheduleOpen}
+                            )
+						)
+					</foreach>
+				)
+			)
+		</if>
+		order by c.classroom_no asc
+	</select>
+		
+	<!-- 강의실 확인(존재, 사용가능, 정원수용)  -->
+	<select id="checkClassroom" resultType="int">
+		select count(*)
+		from classroom
+		where classroom_no = #{classroomNo}
+		
+		and classroom_status = '사용가능'
+		and classroom_capacity >= #{courseLimit}
+	</select>
+	
+</mapper>

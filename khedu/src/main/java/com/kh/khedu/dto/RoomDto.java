@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 public class RoomDto {
 	private int roomNo;
 	private int roomOwner;
+	private String roomType;
 	private Timestamp roomCtime;
 }

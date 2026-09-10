@@ -11,4 +11,5 @@ public interface AcademySubjectDao {
 	AcademySubjectDto selectOne(int academySubjectNo);
 	boolean update(AcademySubjectDto academySubjectDto);
 	boolean delete(int academySubjectNo);
+	List<AcademySubjectDto> subjectList();
 }

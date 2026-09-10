@@ -218,5 +218,5 @@
 	from employee
 	where employee_no = #{employeeNo}
 </select>
-	
+
 </mapper>

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,9 +15,13 @@ import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.MessageDao;
 import com.kh.khedu.dao.RoomDao;
 import com.kh.khedu.dto.RoomDto;
+import com.kh.khedu.error.GetOutException;
+import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.vo.room.RoomDetailResponseVO;
 import com.kh.khedu.vo.room.RoomListResponseVO;
 import com.kh.khedu.vo.room.RoomListVO;
+import com.kh.khedu.vo.room.RoomUserVO;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -62,34 +67,65 @@ public class RoomRestController {
 					.rooms(rooms)
 				.build();
 	}
-	/*
-	//방 상세 정보
-	@GetMapping("/{roomNo}")
-	public RoomDetailResponseVO detail(@PathVariable int roomNo,
-						@CurrentUser TokenParseResponseVO parseVO) {
-		//방이 있는지 검사 → 404
-		RoomDto roomDto = roomDao.selectOne(roomNo);
-		if(roomDto == null) throw new TargetNotfoundException();
-		
-		//참여자 중에 사용자가 존재하는지 검사 → 403
-		//List<String> members = roomDao.getMembers(roomNo);//id만
-		//if(!members.contains(parseVO.getAccountId())) throw new GetOutException();
-		
-		List<RoomUserVO> users = roomDao.getMemberInfo(roomNo);//id, 등급, 닉네임
-		if(users.stream()
-			.map(user->user.getAccountId())
-			.noneMatch(accountId->accountId.equals(parseVO.getAccountId())) 
-		) {
-			throw new GetOutException();
-		}
-		
-		//응답 생성 및 반환
-		return RoomDetailResponseVO.builder()
-					.room(roomDto)//방정보
-					.users(users)//유저목록
-				.build();
-	}
 	
+	//방 상세 정보
+	@GetMapping({"/{roomNo}", "/check"})
+	public RoomDetailResponseVO detail(@PathVariable(value = "roomNo", required = false) Integer roomNo,
+						@CurrentUser TokenParseResponseVO parseVO) {
+		//check로 들어왔다면 토큰정보로 방 검색
+		log.debug("parseVO = {}", parseVO);
+		if(roomNo == null) {
+			int accountNo = parseVO.getAccountNo();
+			RoomDto checkDto = roomDao.selectOneForCheck(accountNo);
+			//생성된 방이 없다면 생성부터
+			if(checkDto == null) {
+				RoomDto insertDto = new RoomDto().builder()
+							.roomNo(roomDao.sequence())
+							.roomOwner(accountNo)
+							.roomType("상담")
+						.build();
+				roomDao.insert(insertDto);
+				
+				List<RoomUserVO> users = roomDao.getMemberInfo(insertDto.getRoomNo());
+				//응답 생성 및 반환
+				return RoomDetailResponseVO.builder()
+							.room(insertDto)//방정보
+							.users(users)//유저목록
+						.build();
+			} 
+			else {
+				List<RoomUserVO> users = roomDao.getMemberInfo(checkDto.getRoomNo());
+				//응답 생성 및 반환
+				return RoomDetailResponseVO.builder()
+							.room(checkDto)//방정보
+							.users(users)//유저목록
+						.build();
+			}
+		} else {
+			//방이 있는지 검사 → 404
+			RoomDto roomDto = roomDao.selectOne(roomNo);
+			if(roomDto == null) throw new TargetNotfoundException();
+			
+			//참여자 중에 사용자가 존재하는지 검사 → 403
+			List<Integer> members = roomDao.getMembers(roomNo);
+			if(!members.contains(parseVO.getAccountNo())) throw new GetOutException();
+			
+			List<RoomUserVO> users = roomDao.getMemberInfo(roomNo);
+			if(users.stream()
+				.map(user->user.getAccountNo())
+				.noneMatch(accountNo->accountNo.equals(parseVO.getAccountNo()))
+			) {
+				throw new GetOutException();
+			}
+			
+			//응답 생성 및 반환
+			return RoomDetailResponseVO.builder()
+						.room(roomDto)//방정보
+						.users(users)//유저목록
+					.build();
+		}
+	}
+	/*
 	//방 참여 관련
 	@PostMapping("/enter")
 	public RoomEnterResponseVO enter(

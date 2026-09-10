@@ -72,4 +72,5 @@ public interface TutorService {
 	//이미지 삭제
 	void deleteImage(int tutorNo);
 
+	
 }
