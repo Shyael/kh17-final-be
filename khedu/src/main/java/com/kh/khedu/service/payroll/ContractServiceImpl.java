@@ -214,10 +214,16 @@ public class ContractServiceImpl implements ContractService {
 			throw new GetOutException();
 		}
 		
-		if(contractDto.getDailyWorkHours()<15) contractDto.setWeeklyHolidayDay(null);
-		
-		validateWrittenBreakTimes(contractDto.getDailyWorkHours(), contractDto.getWrittenBreakMinutes(), contractDto.getWeeklyWorkHours());
+		if (contractDto.getWeeklyWorkHours() < 15) {
+		    contractDto.setWeeklyHolidayDay(null);
+		}
 
+		
+		validateWrittenBreakTimes(
+		        contractDto.getDailyWorkHours(),
+		        contractDto.getWeeklyWorkHours(),
+		        contractDto.getWrittenBreakMinutes()
+		);
 		// [6] 최초 등록 상태는 서명대기
 		contractDto.setContractStatus("pending");
 
@@ -295,9 +301,15 @@ public class ContractServiceImpl implements ContractService {
 			throw new GetOutException();
 		}
 		
-		if(currentContract.getDailyWorkHours()<15||currentContract.getWeeklyHolidayDay()==null) currentContract.setWeeklyHolidayDay(null);
+		if (currentContract.getWeeklyWorkHours() < 15) {
+		    currentContract.setWeeklyHolidayDay(null);
+		}
 		
-		validateWrittenBreakTimes(currentContract.getDailyWorkHours(), currentContract.getWrittenBreakMinutes(),currentContract.getWeeklyWorkHours());
+		validateWrittenBreakTimes(
+		        currentContract.getDailyWorkHours(),
+		        currentContract.getWeeklyWorkHours(),
+		        currentContract.getWrittenBreakMinutes()
+		);
 		
 		request.setContractNo(contractNo);
 		
@@ -863,11 +875,13 @@ public class ContractServiceImpl implements ContractService {
 
 	    validateWrittenBreakTimes(
 	            newContractDto.getDailyWorkHours(),
+	            newContractDto.getWeeklyWorkHours(),
 	            newContractDto.getWrittenBreakMinutes()
-	            ,newContractDto.getWeeklyWorkHours()
 	    );
 
-	    if(newContractDto.getDailyWorkHours()<15) newContractDto.setWeeklyHolidayDay(null);
+	    if (newContractDto.getWeeklyWorkHours() < 15) {
+	        newContractDto.setWeeklyHolidayDay(null);
+	    }
 
 	    // [8] 근로조건 변경은 미래부터 적용
 	    Timestamp current =

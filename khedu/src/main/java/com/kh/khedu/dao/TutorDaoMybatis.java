@@ -12,6 +12,8 @@ import com.kh.khedu.dto.TutorDto;
 import com.kh.khedu.vo.tutor.TutorDetailVO;
 import com.kh.khedu.vo.tutor.TutorEmployeeVO;
 import com.kh.khedu.vo.tutor.TutorListVO;
+import com.kh.khedu.vo.tutor.TutorSearchRequestVO;
+import com.kh.khedu.vo.tutor.TutorSubjectVO;
 
 @Repository
 public class TutorDaoMybatis implements TutorDao {
@@ -84,5 +86,21 @@ public class TutorDaoMybatis implements TutorDao {
 	public Integer selectImage(int tutorNo) {
 		return sqlSession.selectOne("mapper.tutor.selectImage",tutorNo);
 	}
+
+	@Override
+	public int checkTutorSubject(int employeeNo, int academySubjectNo) {
+		Map<String, Object> param = new HashMap<>();
+		
+		param.put("employeeNo", employeeNo);
+		param.put("academySubjectNo", academySubjectNo);
+		
+		return sqlSession.selectOne("mapper.tutor.checkTutorSubject", param);
+	}
+
+	@Override
+	public List<TutorSubjectVO> tutorListBySubject() {
+		return sqlSession.selectList("mapper.tutor.tutorListBySubject");
+	}
+
 
 }

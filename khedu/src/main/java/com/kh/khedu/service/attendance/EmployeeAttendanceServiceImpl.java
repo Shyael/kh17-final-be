@@ -1,9 +1,11 @@
 package com.kh.khedu.service.attendance;
 
 import java.sql.Timestamp;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class EmployeeAttendanceServiceImpl
         implements EmployeeAttendanceService {
+
+    private static final double WEEKLY_WORK_LIMIT = 52.0;
 
     @Autowired
     private EmployeeAttendanceDao employeeAttendanceDao;
@@ -169,8 +173,22 @@ public class EmployeeAttendanceServiceImpl
       if(todaySchedule==null) throw new GetOutException();
 
 
-        
+   // 휴무일은 출근 불가
+      if ("dayOff".equals(
+              todaySchedule.getScheduledDayType())) {
+
+          throw new GetOutException();
+      }
+
+
+      // 주 52시간 초과 가능성 확인
+      validateWeeklyWorkLimitBeforeClockIn(
+              employeeNo,
+              todaySchedule
+      );  
      
+      ContractDto contract = contractDao.find(todaySchedule.getContractNo());
+      
 
 
         // 오늘 이미 근태가 생성되었는지 확인
@@ -192,7 +210,7 @@ public class EmployeeAttendanceServiceImpl
                       .clockOut(
                               null)
                       .breakMinutes(
-                              0.0)
+                            contract.getWrittenBreakMinutes())
                       .attendanceType(
                               "normal")
                       .nightHours(
@@ -473,6 +491,16 @@ public class EmployeeAttendanceServiceImpl
                 actualWorkHours;
     }
 
+    // =========================
+    // 실제 주간 근로시간 확인
+    // =========================
+
+    warnWeeklyActualWorkLimit(
+         employeeDetailVO.getEmployeeNo(),
+         workDate,
+         scheduleDto.getWorkScheduleNo(),
+         actualWorkHours
+    		);
 
     // 실제 근태 퇴근 반영
     attendanceDto.setClockOut(
@@ -1684,5 +1712,231 @@ public class EmployeeAttendanceServiceImpl
         }
     }
     
+ // =====================================================
+ // 출근 전 주 52시간 검증
+ //
+ // KH EDU 단위기간:
+ // 월요일 00:00 ~ 다음 월요일 00:00 미만
+ // =====================================================
+ private void validateWeeklyWorkLimitBeforeClockIn(
+         int employeeNo,
+         EmployeeWorkScheduleDto todaySchedule) {
+
+
+     LocalDate workDate =
+             todaySchedule
+                     .getScheduledWorkDate()
+                     .toLocalDateTime()
+                     .toLocalDate();
+
+
+     // 현재까지 실제 근로시간
+     double weeklyActualWorkHours =
+             findWeeklyActualWorkHours(
+                     employeeNo,
+                     workDate,
+                     todaySchedule.getWorkScheduleNo()
+             );
+
+
+     // 이미 52시간을 채웠다면
+     // 추가 출근 자체 불가
+     if (weeklyActualWorkHours
+             >= WEEKLY_WORK_LIMIT) {
+
+         throw new GetOutException();
+     }
+
+
+     // =========================
+     // 오늘 예정근로시간
+     // =========================
+
+     if (todaySchedule.getScheduledClockIn() == null
+             || todaySchedule.getScheduledClockOut() == null) {
+
+         throw new GetOutException();
+     }
+
+
+     LocalDateTime scheduledClockIn =
+             todaySchedule
+                     .getScheduledClockIn()
+                     .toLocalDateTime();
+
+
+     LocalDateTime scheduledClockOut =
+             todaySchedule
+                     .getScheduledClockOut()
+                     .toLocalDateTime();
+
+
+     if (!scheduledClockOut.isAfter(
+             scheduledClockIn)) {
+
+         throw new GetOutException();
+     }
+
+
+     // 오늘 스케줄에 적용되는 계약
+     ContractDto contractDto =
+             contractDao.find(
+                     todaySchedule.getContractNo()
+             );
+
+
+     if (contractDto == null) {
+
+         throw new TargetNotfoundException();
+     }
+
+
+     double breakMinutes =
+             contractDto.getWrittenBreakMinutes() == null
+                     ? 0
+                     : contractDto.getWrittenBreakMinutes();
+
+
+     double scheduledWorkMinutes =
+             Duration.between(
+                     scheduledClockIn,
+                     scheduledClockOut)
+                     .toMinutes()
+             - breakMinutes;
+
+
+     if (scheduledWorkMinutes < 0) {
+
+         throw new GetOutException();
+     }
+
+
+     double todayScheduledWorkHours =
+             scheduledWorkMinutes / 60.0;
+
+
+     // 현재 실제 누적 +
+     // 오늘 예정근무를 하면 52시간 초과
+     if (weeklyActualWorkHours
+             + todayScheduledWorkHours
+             > WEEKLY_WORK_LIMIT) {
+
+         throw new GetOutException();
+     }
+ }
+
+
+ // =====================================================
+ // 주간 실제 근로시간 조회
+ //
+ // 현재 수정/퇴근 처리 대상 스케줄은 제외 가능
+ // =====================================================
+ private double findWeeklyActualWorkHours(
+         int employeeNo,
+         LocalDate targetDate,
+         Long excludeWorkScheduleNo) {
+
+
+     LocalDate weekStart =
+             targetDate.with(
+                     TemporalAdjusters.previousOrSame(
+                             DayOfWeek.MONDAY
+                     )
+             );
+
+
+     LocalDate weekEnd =
+             weekStart.plusDays(7);
+
+
+     Timestamp weekStartDate =
+             Timestamp.valueOf(
+                     weekStart.atStartOfDay()
+             );
+
+
+     Timestamp weekEndDate =
+             Timestamp.valueOf(
+                     weekEnd.atStartOfDay()
+             );
+
+
+     List<EmployeeWorkScheduleDto> weeklyScheduleList =
+             employeeWorkScheduleDao.findByPeriod(
+                     employeeNo,
+                     weekStartDate,
+                     weekEndDate
+             );
+
+
+     double weeklyActualWorkHours = 0;
+
+
+     for (EmployeeWorkScheduleDto scheduleDto
+             : weeklyScheduleList) {
+
+
+         // 현재 처리 중인 일정은 제외
+         // 이후 새 actualWorkHours를 직접 더하기 위함
+         if (excludeWorkScheduleNo != null
+                 && scheduleDto.getWorkScheduleNo()
+                         == excludeWorkScheduleNo.longValue()) {
+
+             continue;
+         }
+
+
+         if (scheduleDto.getActualWorkHours()
+                 == null) {
+
+             continue;
+         }
+
+
+         weeklyActualWorkHours +=
+                 scheduleDto.getActualWorkHours();
+     }
+
+
+     return weeklyActualWorkHours;
+ }
+
+
+ // =====================================================
+ // 실제 근로 결과 52시간 초과 확인
+ //
+ // 실제로 발생한 근로는 삭제하거나 저장 거부하지 않음
+ // =====================================================
+ private void warnWeeklyActualWorkLimit(
+         int employeeNo,
+         LocalDate targetDate,
+         long workScheduleNo,
+         double currentActualWorkHours) {
+
+
+     double otherActualWorkHours =
+             findWeeklyActualWorkHours(
+                     employeeNo,
+                     targetDate,
+                     workScheduleNo
+             );
+
+
+     double weeklyActualWorkHours =
+             otherActualWorkHours
+             + currentActualWorkHours;
+
+
+     if (weeklyActualWorkHours
+             > WEEKLY_WORK_LIMIT) {
+
+         log.warn(
+                 "주 52시간 초과 - employeeNo={}, workDate={}, weeklyActualWorkHours={}",
+                 employeeNo,
+                 targetDate,
+                 weeklyActualWorkHours
+         );
+     }
+ }
     
 }

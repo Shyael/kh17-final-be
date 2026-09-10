@@ -17,7 +17,7 @@ public class EmployeeWorkScheduleDto {
     private Long workScheduleNo;
 
     // 적용 근로계약 번호
-    private Long contractNo;
+    private long contractNo;
 
     // 예정 근무 날짜
     private Timestamp scheduledWorkDate;

@@ -131,132 +131,28 @@ public class Calculater {
 		// =========================
 
 		double totalWorkHours = 0;
-
 		double totalOvertimeHours = 0;
-
 		double totalNightHours = 0;
-
 		double totalHolidayHours = 0;
 
+		// 실제시간은 주간 한도로 제한하지 않고 급여월 전체를 합산한다.
+		// null은 기존 계약별 계산과 동일하게 합산에서 제외한다.
+		for (EmployeeWorkScheduleDto scheduleDto : scheduleList) {
 
-		// =========================
-		// 연장근로시간
-		// 입사일부터 날짜 7개 = 1주
-		// 현재 KH EDU 기준 주 12시간까지만 반영
-		// =========================
-
-		int dayCount = 0;
-
-		double weeklyOvertimeHours = 0;
-
-
-		for (LocalDate date = hireDate;
-				date.isBefore(end);
-				date = date.plusDays(1)) {
-
-
-			dayCount++;
-
-
-			for (EmployeeWorkScheduleDto scheduleDto
-					: scheduleList) {
-
-
-				LocalDate workDate =
-						scheduleDto
-								.getScheduledWorkDate()
-								.toLocalDateTime()
-								.toLocalDate();
-
-
-				if (!workDate.equals(date)) {
-
-					continue;
-				}
-
-
-				if (scheduleDto.getActualOvertimeHours()
-						!= null) {
-
-
-					weeklyOvertimeHours +=
-							scheduleDto
-									.getActualOvertimeHours();
-				}
+			if (scheduleDto.getActualWorkHours() != null) {
+				totalWorkHours += scheduleDto.getActualWorkHours();
 			}
 
-
-			// 7일 완료
-			if (dayCount == 7) {
-
-
-				if (weeklyOvertimeHours > 12) {
-
-					weeklyOvertimeHours = 12;
-				}
-
-
-				totalOvertimeHours +=
-						weeklyOvertimeHours;
-
-
-				dayCount = 0;
-
-				weeklyOvertimeHours = 0;
-			}
-		}
-
-
-		// 월 마지막에 7일이 완성되지 않은 구간
-		if (dayCount > 0) {
-
-
-			if (weeklyOvertimeHours > 12) {
-
-				weeklyOvertimeHours = 12;
+			if (scheduleDto.getActualOvertimeHours() != null) {
+				totalOvertimeHours += scheduleDto.getActualOvertimeHours();
 			}
 
-
-			totalOvertimeHours +=
-					weeklyOvertimeHours;
-		}
-
-
-		// =========================
-		// 일반 / 야간 / 휴일 총 시간
-		// =========================
-
-		for (EmployeeWorkScheduleDto scheduleDto
-				: scheduleList) {
-
-
-			if (scheduleDto.getActualWorkHours()
-					!= null) {
-
-
-				totalWorkHours +=
-						scheduleDto
-								.getActualWorkHours();
+			if (scheduleDto.getActualNightHours() != null) {
+				totalNightHours += scheduleDto.getActualNightHours();
 			}
 
-
-			if (scheduleDto.getActualNightHours()
-					!= null) {
-
-
-				totalNightHours +=
-						scheduleDto
-								.getActualNightHours();
-			}
-
-
-			if (scheduleDto.getActualHolidayHours()
-					!= null) {
-
-
-				totalHolidayHours +=
-						scheduleDto
-								.getActualHolidayHours();
+			if (scheduleDto.getActualHolidayHours() != null) {
+				totalHolidayHours += scheduleDto.getActualHolidayHours();
 			}
 		}
 
