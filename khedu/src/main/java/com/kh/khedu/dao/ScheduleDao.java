@@ -27,5 +27,6 @@ public interface ScheduleDao {
 	boolean updateOpen(int scheduleNo, LocalDate today);
 
 	List<ScheduleDto> selectActiveSchedules();
-		
+	//강좌넘버로 해당하는 schedule목록 불러오기
+	List<ScheduleDto> selectListByCourseNo(int courseNo);
 }

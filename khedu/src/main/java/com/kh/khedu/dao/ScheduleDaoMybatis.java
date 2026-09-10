@@ -66,5 +66,11 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 	public List<ScheduleDto> selectActiveSchedules() {
 		return sqlSession.selectList("mapper.schedule.selectActiveSchedules");
 	}
+	
+	//강좌번호로 해당하는 스케줄목록 불러오기
+	@Override
+	public List<ScheduleDto> selectListByCourseNo(int courseNo) {
+		return sqlSession.selectList("mapper.schedule.selectListByCourseNo", courseNo);
+	}
 
 }

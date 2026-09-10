@@ -1,6 +1,8 @@
 package com.kh.khedu.service.course;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.beans.BeanUtils;
@@ -9,20 +11,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.khedu.dao.AcademySubjectDao;
+import com.kh.khedu.dao.ClassSessionDao;
 import com.kh.khedu.dao.ClassroomDao;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.GradeDao;
 import com.kh.khedu.dao.ScheduleDao;
 import com.kh.khedu.dao.TutorDao;
+import com.kh.khedu.dto.ClassSessionDto;
 import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ScheduleDto;
+import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.error.AlreadyExistsException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.error.WhoAreYouException;
+import com.kh.khedu.service.attendance.AttendanceService;
 import com.kh.khedu.util.PageResponseVO;
+import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
-import com.kh.khedu.vo.course.CourseDetailVO;
+import com.kh.khedu.vo.course.CourseDetailResponseVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
@@ -44,7 +52,10 @@ public class CourseServiceImpl implements CourseService {
 	private AcademySubjectDao academySubjectDao;
 	@Autowired
 	private GradeDao gradeDao;
-	
+	@Autowired
+	private ClassSessionDao classSessionDao;
+	@Autowired
+	private AttendanceService attendanceService;
 	
 	//강좌 등록화면 진입 시 최초 조회
 	@Override
@@ -241,8 +252,62 @@ public class CourseServiceImpl implements CourseService {
 	
 	//강좌 상세
 	@Override
-	public CourseDetailVO getCourseDetail(int courseNo) {
-		return courseDao.selectCourseDetail(courseNo);
+	public CourseDetailResponseVO getCourseDetail(int courseNo, TokenParseResponseVO parseVO) {
+		// [0] 직원 계정 1차 검증
+        if (!AccountType.EMPLOYEE.getDescription().equals(parseVO.getAccountType())) {
+            throw new WhoAreYouException("직원 전용 기능입니다");
+        }
+
+        // [1] 강좌 정보 조회
+        CourseDto course = courseDao.selectOneByCourseNo(courseNo);
+        if (course == null) {
+            throw new TargetNotfoundException("해당 강좌가 존재하지 않습니다");
+        }
+
+        // [1-1] 강사(TUTOR) 권한일 경우 본인 강좌인지 검증 (ADMIN/DESK는 프리패스)
+        List<String> roles = parseVO.getRoleNames();
+        boolean isManager = roles != null && (roles.contains("ADMIN") || roles.contains("DESK"));
+        if (!isManager && roles != null && roles.contains("TUTOR")) {
+            if (course.getEmployeeNo() != parseVO.getNoType()) {
+                throw new WhoAreYouException("본인이 담당하는 강좌만 열람할 수 있습니다");
+            }
+        } else if (!isManager) {
+            throw new WhoAreYouException("강좌를 조회할 권한이 없습니다");
+        }
+		
+        // [1-2] 강사 이름 및 스케줄 목록 조회
+        String tutorName = courseDao.selectTutorNameByEmployeeNo(course.getEmployeeNo());
+        List<ScheduleDto> scheduleList = scheduleDao.selectListByCourseNo(courseNo);
+        
+        // [2] 오늘 날짜에 해당하는 세션 및 출결 현황 탐색
+        ClassSessionDto todaySession = null;
+        SessionAttendanceDetailVO attendanceDetail = null;
+        
+        LocalDate today = LocalDate.now();
+        for (ScheduleDto schedule : scheduleList) {
+            LocalTime startTime = LocalTime.parse(schedule.getScheduleStart());
+            Timestamp sessionStart = Timestamp.valueOf(today.atTime(startTime));
+
+            // 오늘 날짜 + 시작 시간으로 등록된 세션이 있는지 확인
+            ClassSessionDto session = classSessionDao.selectTodaySession(schedule.getScheduleNo(), sessionStart);
+            if (session != null) {
+                todaySession = session;
+                // 세션이 존재하면 앞서 구현해 둔 출석부 상세 조회 로직 호출
+                attendanceDetail = attendanceService.getSessionAttendanceDetail(session.getSessionNo(), parseVO);
+                break;
+            }
+        }
+        
+     // [3] 통합 응답 객체 생성 (3, 4번 과제/시험은 빈 리스트 유지)
+        return CourseDetailResponseVO.builder()
+                .courseInfo(course)
+                .tutorName(tutorName)
+                .scheduleList(scheduleList)
+                .todaySession(todaySession)
+                .attendanceDetail(attendanceDetail)
+                //.assignmentList(Collections.emptyList()) // 과제 팀원 영역 (비워둠)
+                //.examList(Collections.emptyList())       // 시험 팀원 영역 (비워둠)
+                .build();
 	}
 
 }

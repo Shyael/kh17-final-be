@@ -53,12 +53,21 @@
 		select * from course where course_no = #{courseNo}
 	</select>
 	
+	<!-- 강사 사번(employee_no)로 강사 이름 조회 -->
+	<select id="selectTutorNameByEmployeeNo" resultType="String">
+		select a.account_name
+		from employee e
+		join account a on e.account_no = a.account_no
+		where e.employee_no = #{employeeNo}
+	</select>
+	
 	<!-- courseStatus를 모집중 -> 진행중으로 수정 -->
 	<update id="updateStatus">
 		update course
 		set course_status = #{status}
 		where course_no = #{courseNo}
 	</update>
+	
 	
 	<!-- 
 		검색 기능 구현을 위한 필요 구문 [1] [2] [3] 참조

@@ -33,5 +33,7 @@ public interface CourseDao {
 	CourseDto selectOneByCourseNo(int courseNo);
 	//scheduleNo로 강좌 조회
 	CourseDto selectOneByScheduleNo(int scheduleNo);
-
+	
+	//강사 사번(employee_no)으로 강사 이름 조회
+	String selectTutorNameByEmployeeNo(int employeeNo);
 }

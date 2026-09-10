@@ -79,4 +79,10 @@ public class CourseDaoMybatis implements CourseDao {
 		return sqlSession.selectOne("mapper.course.selectOneByScheduleNo", scheduleNo);
 	}
 
+	//강사 사번(employee_no)으로 강사 이름 조회
+	@Override
+	public String selectTutorNameByEmployeeNo(int employeeNo) {
+		return sqlSession.selectOne("mapper.course.selectTutorNameByEmployeeNo", employeeNo);
+	}
+
 }

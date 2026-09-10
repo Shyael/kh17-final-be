@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +20,7 @@ import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
+import com.kh.khedu.vo.course.CourseDetailResponseVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
@@ -76,11 +78,22 @@ public class CourseRestController {
 	
 	
 	// 로그인한 강사의 진행중인 강의 목록 조회
-	@Operation(summary = "내가 수업중인 강의 목록 조회")
+	@ApiResponse(responseCode = "200", description = "내가 수업중인 강의 목록 조회 성공")
 	@GetMapping("/tutor")
 	public List<CourseDto> selectListByEmployee(
 	        @CurrentUser TokenParseResponseVO parseVO) {
 	    return courseDao.selectTeachingListByEmployee(
 	            parseVO.getNoType());
 	}
+	
+	//강좌 상세정보
+	@ApiResponse(responseCode = "200", description = "강좌 상세페이지 조회 성공")
+	@GetMapping("/{courseNo}")
+    public ResponseEntity<CourseDetailResponseVO> getCourseDetail(
+            @PathVariable int courseNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+        
+        CourseDetailResponseVO response = courseService.getCourseDetail(courseNo, parseVO);
+        return ResponseEntity.ok(response);
+    }
 }

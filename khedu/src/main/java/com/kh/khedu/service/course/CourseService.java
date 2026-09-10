@@ -6,7 +6,7 @@ import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
-import com.kh.khedu.vo.course.CourseDetailVO;
+import com.kh.khedu.vo.course.CourseDetailResponseVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
@@ -27,9 +27,8 @@ public interface CourseService {
 	List<CourseListVO> getCourseList();
 	
 	//강좌 상세
-	CourseDetailVO getCourseDetail(int courseNo);
+	CourseDetailResponseVO getCourseDetail(int courseNo, TokenParseResponseVO parseVO);
 	
 	//강좌 검색 조회
 	PageResponseVO<CourseListVO> selectList(CourseSearchVO search);
-	
 }
