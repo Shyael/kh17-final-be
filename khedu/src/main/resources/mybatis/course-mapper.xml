@@ -142,4 +142,23 @@
 	    order by c.course_title asc
 	
 	</select>
+	
+	<!-- 관리용 전체 강의 목록 : 원장/데스크 -->
+	<select id="selectManageCourseList" resultType="CourseSimpleListVO">
+	    select
+	        course_no,
+	        course_title
+	    from course
+	    order by course_title asc
+	</select>
+	
+	<!-- 관리용 본인 담당 강의 목록 : 강사 -->
+	<select id="selectManageCourseListByEmployee" resultType="CourseSimpleListVO">
+	    select
+	        course_no,
+	        course_title
+	    from course
+	    where employee_no = #{employeeNo}
+	    order by course_title asc
+	</select>
 </mapper>

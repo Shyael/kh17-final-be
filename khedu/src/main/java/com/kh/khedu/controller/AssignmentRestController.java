@@ -44,26 +44,21 @@ public class AssignmentRestController {
     // 과제 등록
     @Operation(summary = "과제 등록")
     @ApiResponse(responseCode = "200", description = "과제 등록 성공")
-    @PostMapping(
-            value = "/",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-        )
+    @PostMapping(value = "/" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public int insert(
-    		@RequestPart("assignment") AssignmentDto assignmentDto,
+            @RequestPart("assignment") AssignmentDto assignmentDto,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @CurrentUser TokenParseResponseVO parseVO
+            ) throws IllegalStateException, IOException {
 
-            @RequestPart(value = "files", required = false) 
-    		List<MultipartFile> files,
+        boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
 
-            @CurrentUser
-            TokenParseResponseVO parseVO
-    	) throws IllegalStateException, IOException {
-    	
-    	
-        // 로그인한 강사번호 설정
-        assignmentDto.setEmployeeNo(parseVO.getNoType());
-        
-    	
-        return assignmentService.insert(assignmentDto, files);
+        return assignmentService.insert(
+                assignmentDto,
+                files,
+                parseVO.getNoType(), // 현재 로그인 직원번호
+                tutor
+        );
     }
     
     // 과제 상세 조회
@@ -136,8 +131,7 @@ public class AssignmentRestController {
         assignmentDto.setAssignmentNo(assignmentNo);
         
         // 강사 여부
-        boolean tutor =
-                parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
+        boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
 
         return assignmentService.update(
                 assignmentDto,
@@ -156,8 +150,7 @@ public class AssignmentRestController {
             @PathVariable int assignmentNo,
             @CurrentUser TokenParseResponseVO parseVO) {
     	
-        boolean tutor =
-                parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
+        boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
 
         return assignmentService.delete(
                 assignmentNo,
@@ -175,8 +168,7 @@ public class AssignmentRestController {
             @PathVariable int attachNo,
             @CurrentUser TokenParseResponseVO parseVO) {
 
-        boolean tutor =
-                parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
+        boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
 
         assignmentService.deleteFile(
                 assignmentNo,

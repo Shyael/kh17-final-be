@@ -11,6 +11,7 @@ import com.kh.khedu.vo.course.CourseCreateRequestVO;
 import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
+import com.kh.khedu.vo.course.CourseSimpleListVO;
 import com.kh.khedu.vo.course.StudentCourseListVO;
 
 @Repository
@@ -61,6 +62,17 @@ public class CourseDaoMybatis implements CourseDao {
 	@Override
 	public int selectCount(CourseSearchVO search) {
 		return sqlSession.selectOne("mapper.course.selectCount", search);
+	}
+
+	
+	@Override
+	public List<CourseSimpleListVO> selectManageCourseList() {
+	    return sqlSession.selectList("mapper.course.selectManageCourseList");
+	}
+
+	@Override
+	public List<CourseSimpleListVO> selectManageCourseListByEmployee(int employeeNo) {
+	    return sqlSession.selectList("mapper.course.selectManageCourseListByEmployee",employeeNo);
 	}
 
 	

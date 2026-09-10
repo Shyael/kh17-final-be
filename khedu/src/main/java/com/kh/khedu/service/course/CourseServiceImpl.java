@@ -28,6 +28,7 @@ import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
+import com.kh.khedu.vo.course.CourseSimpleListVO;
 import com.kh.khedu.vo.course.StudentCourseListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
@@ -282,6 +283,16 @@ public class CourseServiceImpl implements CourseService {
 	    checkParentStudent(parentNo, studentNo);
 
 	    return courseDao.selectListByStudent(studentNo);
+	}
+	
+	@Override
+	public List<CourseSimpleListVO> selectManageCourseList(
+	        int employeeNo,
+	        boolean tutor) {
+	    if(tutor) {
+	        return courseDao.selectManageCourseListByEmployee(employeeNo);
+	    }
+	    return courseDao.selectManageCourseList();
 	}
 
 }

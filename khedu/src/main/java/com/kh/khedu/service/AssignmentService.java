@@ -15,10 +15,12 @@ import com.kh.khedu.vo.assignment.StudentAssignmentListVO;
 
 public interface AssignmentService {
     // 과제 등록
-    int insert(
-		AssignmentDto assignmentDto,
-		List<MultipartFile> files
-    ) throws IllegalStateException, IOException;
+	int insert(
+	        AssignmentDto assignmentDto,
+	        List<MultipartFile> files,
+	        int loginEmployeeNo,
+	        boolean tutor
+	) throws IllegalStateException, IOException;
 
     // 과제 상세 조회
     AssignmentDetailVO selectOne(int assignmentNo);

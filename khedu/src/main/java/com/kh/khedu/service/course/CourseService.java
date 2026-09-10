@@ -10,6 +10,7 @@ import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
+import com.kh.khedu.vo.course.CourseSimpleListVO;
 import com.kh.khedu.vo.course.StudentCourseListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
@@ -40,5 +41,10 @@ public interface CourseService {
 	List<StudentCourseListVO> selectListByParentStudent(
 	        int parentNo,
 	        int studentNo
+	);
+	//강사인지 다른 직원인지 체크
+	List<CourseSimpleListVO> selectManageCourseList(
+	        int employeeNo,
+	        boolean tutor
 	);
 }

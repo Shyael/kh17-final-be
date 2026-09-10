@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.kh.khedu.dao.AssignmentDao;
 import com.kh.khedu.dao.AssignmentSubmitDao;
 import com.kh.khedu.dao.AttachDao;
+import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dto.AssignmentDto;
 import com.kh.khedu.dto.AttachDto;
@@ -22,6 +24,7 @@ import com.kh.khedu.vo.assignment.AssignmentListVO;
 import com.kh.khedu.vo.assignment.AssignmentSearchVO;
 import com.kh.khedu.vo.assignment.AssignmentStudentSearchVO;
 import com.kh.khedu.vo.assignment.StudentAssignmentListVO;
+import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 @Service
@@ -42,6 +45,9 @@ public class AssignmentServiceImpl implements AssignmentService {
     
     @Autowired
     private ParentStudentDao parentStudentDao;
+    
+    @Autowired
+    private CourseDao courseDao;
     
     //공통 메소드
     // 과제 수정/삭제 권한 확인
@@ -87,27 +93,61 @@ public class AssignmentServiceImpl implements AssignmentService {
     // 과제 등록
     @Override
     public int insert(
-    		AssignmentDto assignmentDto,
-    		List<MultipartFile> files
-    		) throws IllegalStateException, IOException {
-    	//시퀀스번호 생성
+            AssignmentDto assignmentDto,
+            List<MultipartFile> files,
+            int loginEmployeeNo,
+            boolean tutor
+            ) throws IllegalStateException, IOException {
+
+        //선택한 강의 조회
+        CourseDetailVO course = courseDao.selectCourseDetail(assignmentDto.getCourseNo());
+
+        if(course == null) {
+            throw new TargetNotfoundException("존재하지 않는 강의입니다.");
+        }
+
+        //선택한 강의의 담당 강사 번호
+        int courseEmployeeNo = course.getEmployeeNo();
+
+        //강사는 본인 담당 강의에만 과제 등록 가능
+        if(tutor && courseEmployeeNo != loginEmployeeNo) {
+            throw new AccessDeniedException(
+                    "본인이 담당하는 강의에만 과제를 등록할 수 있습니다."
+            );
+        }
+
+        //중요
+        //로그인한 직원번호가 아니라 강의 담당 강사번호 저장
+        assignmentDto.setEmployeeNo(courseEmployeeNo);
+
+        //과제 시퀀스번호 생성
         int assignmentNo = assignmentDao.sequence();
-        
+
         assignmentDto.setAssignmentNo(assignmentNo);
 
+        //DB 등록
         assignmentDao.insert(assignmentDto);
-        
+
+
         //과제 파일 등록
         if(files != null && files.size() > 0) {
-        	for(MultipartFile file : files) {
-        		if(!file.isEmpty()) {
-        			//attach 테이블 + 실제 파일 저장
-        			int attachNo = attachService.save(file);
-        			//assignment_file연결
-        			assignmentDao.connect(assignmentNo, attachNo);
-        		}
-        	}
+
+            for(MultipartFile file : files) {
+
+                if(!file.isEmpty()) {
+
+                    //attach 테이블 + 실제 파일 저장
+                    int attachNo = attachService.save(file);
+
+                    //assignment_file 연결
+                    assignmentDao.connect(
+                            assignmentNo,
+                            attachNo
+                    );
+                }
+            }
         }
+
         return assignmentNo;
     }
 

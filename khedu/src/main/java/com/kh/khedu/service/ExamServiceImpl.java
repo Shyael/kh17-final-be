@@ -5,11 +5,13 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.khedu.dao.AttachDao;
+import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.ExamDao;
 import com.kh.khedu.dao.QuestionDao;
 import com.kh.khedu.dao.QuestionOptionDao;
@@ -19,10 +21,13 @@ import com.kh.khedu.dto.QuestionDto;
 import com.kh.khedu.dto.QuestionOptionDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.util.PageResponseVO;
+import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamDraftRequestVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamSearchVO;
 import com.kh.khedu.vo.exam.ExamStatisticsVO;
 import com.kh.khedu.vo.exam.QuestionDraftVO;
 import com.kh.khedu.vo.exam.QuestionManageDetailVO;
@@ -30,6 +35,7 @@ import com.kh.khedu.vo.exam.QuestionOptionDraftVO;
 import com.kh.khedu.vo.exam.QuestionStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
 import com.kh.khedu.vo.exam.StudentExamListVO;
+import com.kh.khedu.vo.exam.StudentExamSearchVO;
 
 @Service
 @Transactional
@@ -49,6 +55,9 @@ public class ExamServiceImpl implements ExamService {
 	
 	@Autowired
 	private AttachService attachService;
+	
+	@Autowired
+	private CourseDao courseDao;
 	
 	//공통 메소드
 	//권한검사
@@ -130,19 +139,44 @@ public class ExamServiceImpl implements ExamService {
 	
 	//시험등록
 	@Override
-	public int insert(ExamDto examDto) {
-		//시험 번호 생성
-		int examNo = examDao.sequence();
-		
-		examDto.setExamNo(examNo);
-		
-		//최초 등록은 무조건 작성중
-		examDto.setExamStatus("작성중");
-		
-		//시험등록
-		examDao.insert(examDto);
-		
-		return examNo;
+	@Transactional
+	public int insert(
+	        ExamDto examDto,
+	        int loginEmployeeNo,
+	        boolean tutor) {
+
+	    //선택한 강의 조회
+	    CourseDetailVO course = courseDao.selectCourseDetail(examDto.getCourseNo());
+
+	    if(course == null) {
+	        throw new TargetNotfoundException("존재하지 않는 강의입니다.");
+	    }
+
+	    //선택한 강의의 담당 강사 번호
+	    int courseEmployeeNo = course.getEmployeeNo();
+
+	    //강사는 본인 담당 강의에만 시험 등록 가능
+	    if(tutor && courseEmployeeNo != loginEmployeeNo) {
+	        throw new AccessDeniedException(
+	                "본인이 담당하는 강의에만 시험을 등록할 수 있습니다."
+	        );
+	    }	
+
+	    //원장/데스크가 생성해도 강의 담당 강사 번호 저장
+	    examDto.setEmployeeNo(courseEmployeeNo);
+
+	    //신규 시험은 무조건 작성중
+	    examDto.setExamStatus("작성중");
+
+	    //시험 번호 생성
+	    int examNo = examDao.sequence();
+
+	    examDto.setExamNo(examNo);
+
+	    //시험 등록
+	    examDao.insert(examDto);
+
+	    return examNo;
 	}
 
 	//시험 단일 조회
@@ -236,27 +270,54 @@ public class ExamServiceImpl implements ExamService {
 		return exam;
 	}
 
-	//전체 시험 목록 조회
-	@Override
-	public List<ExamListVO> selectList() {
-		return examDao.selectList();
-	}
-
 	//특정 강의의 시험 목록 조회
 	@Override
 	public List<ExamListVO> selectListByCourse(int courseNo) {
 		return examDao.selectListByCourse(courseNo);
 	}
-
-	//특정 강사가 등록한 시험 목록 조회
-	@Override
-	public List<ExamListVO> selectListByEmployee(int employeeNo) {
-		return examDao.selectListByEmployee(employeeNo);
-	}
 	
 	@Override
 	public List<StudentExamListVO> selectListByStudent(int studentNo) {
 		return examDao.selectListByStudent(studentNo);
+	}
+	
+	@Override
+	public PageResponseVO<ExamListVO> selectManageList(ExamSearchVO search, int employeeNo, boolean tutor) {
+		//튜터는 본인이 등록한 시험만 조회
+	    if(tutor) {
+	        search.setEmployeeNo(employeeNo);
+	    }
+	    //관리자는 전체 시험 조회
+	    else {
+	        search.setEmployeeNo(null);
+	    }
+
+	    List<ExamListVO> list = examDao.selectManageSearchList(search);
+
+	    int totalCount = examDao.selectManageCount(search);
+	    
+	    return new PageResponseVO<>(
+	            list,
+	            totalCount,
+	            search
+	    );
+	}
+
+	@Override
+	public PageResponseVO<StudentExamListVO> selectStudentList(StudentExamSearchVO search, int studentNo) {
+		//클라이언트가 studentNo를 보내는 것이 아니라
+	    //로그인 토큰의 학생번호를 서버에서 강제 지정
+	    search.setStudentNo(studentNo);
+
+	    List<StudentExamListVO> list = examDao.selectStudentSearchList(search);
+
+	    int totalCount = examDao.selectStudentCount(search);
+
+	    return new PageResponseVO<>(
+	            list,
+	            totalCount,
+	            search
+	    );
 	}
 
 	//시험 수정
@@ -681,5 +742,7 @@ public class ExamServiceImpl implements ExamService {
 		
 		return statistics;
 	}
+
+	
 
 }
