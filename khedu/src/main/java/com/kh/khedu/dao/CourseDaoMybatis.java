@@ -10,6 +10,7 @@ import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
 import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseListVO;
+import com.kh.khedu.vo.course.CourseSearchVO;
 
 @Repository
 public class CourseDaoMybatis implements CourseDao {
@@ -46,5 +47,14 @@ public class CourseDaoMybatis implements CourseDao {
 		return sqlSession.selectOne("mapper.course.detail", courseNo);
 	}
 
+	@Override
+	public List<CourseListVO> selectSearchList(CourseSearchVO search) {
+		return sqlSession.selectList("mapper.course.searchList", search);
+	}
+	
+	@Override
+	public int selectCount(CourseSearchVO search) {
+		return sqlSession.selectOne("mapper.course.selectCount", search);
+	}
 
 }

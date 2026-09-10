@@ -18,12 +18,14 @@ import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.error.AlreadyExistsException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
 import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
+import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.schedule.ScheduleCreateRequestVO;
 
@@ -218,7 +220,24 @@ public class CourseServiceImpl implements CourseService {
 	public List<CourseListVO> getCourseList() {
 		return courseDao.selectCourseList();
 	}
-	
+
+	//강좌 검색조회
+	@Override
+	public PageResponseVO<CourseListVO> selectList(CourseSearchVO search) {
+		
+		// 현재 페이지의 강좌 목록 조회
+		List<CourseListVO> list = courseDao.selectSearchList(search);
+		
+		// 검색 조건에 해당하는 전체 강좌 수
+		int totalCount = courseDao.selectCount(search);
+		
+		//페이지 정보까지 계산하여 반환
+		return new PageResponseVO<>(
+				list,
+				totalCount,
+				search
+		);
+	}
 	
 	//강좌 상세
 	@Override

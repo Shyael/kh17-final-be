@@ -77,7 +77,7 @@ public class JwtService {
 				.accountNo(((Long)jwt.getClaim("accountNo")).intValue())
 				.accountId(jwt.getClaimAsString("accountId"))
 				.accountType(jwt.getClaimAsString("accountType"))
-				.accountType(jwt.getClaimAsString("accountType"))
+				.accountName(jwt.getClaimAsString("accountName"))
 				.roleNames(jwt.getClaim("roleNames"))
 				.noType(((Long) jwt.getClaim("noType")).intValue())
 			.build();

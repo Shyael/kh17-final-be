@@ -5,22 +5,23 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CurrentUser;
-import com.kh.khedu.dao.AcademySubjectDao;
 import com.kh.khedu.dao.CourseDao;
-import com.kh.khedu.dao.GradeDao;
-import com.kh.khedu.dao.TutorDao;
 import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.service.course.CourseService;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
+import com.kh.khedu.vo.course.CourseListVO;
+import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,10 +57,21 @@ public class CourseRestController {
 	}
 	
 	//사용가능 강의실 판단
+	@ApiResponse(responseCode = "200", description = "사용 가능")
 	@PostMapping("/available-classrooms")
 	public List<ClassroomWhenRegisterVO> getAvailableClassrooms(
 			@RequestBody AvailableClassroomRequestVO request){
 		return courseService.getAvailAbleClassrooms(request);
+	}
+	
+	
+	// 강좌 조회
+	@ApiResponse(responseCode = "200", description = "조회 성공")
+	@GetMapping("/list")
+	public PageResponseVO<CourseListVO> courseList(
+			@Valid @ModelAttribute CourseSearchVO search
+	){
+		return courseService.selectList(search);
 	}
 	
 	
