@@ -10,4 +10,5 @@ public interface AttendanceService {
 
 	//관리자 : 세션의 출결학생 조회
 	SessionAttendanceDetailVO getSessionAttendanceDetail(int sessionNo, TokenParseResponseVO parseVO);
+	
 }
