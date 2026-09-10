@@ -12,6 +12,10 @@ import lombok.NoArgsConstructor;
 @Schema(name = "강의정보 DTO")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class CourseDto {
+	public static final String STATUS_RECRUITING = "모집중";
+	public static final String STATUS_RUNNING = "진행중";
+	public static final String STATUS_CLOSED = "종강";
+	
     private int courseNo;
     @Schema(description = "1.담당 강사 번호")
     private int employeeNo;

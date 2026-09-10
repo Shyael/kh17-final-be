@@ -29,4 +29,5 @@ public interface StudentDao {
 	StudentDto selectOne(int accountNo);
 	boolean updateAll(StudentDto studentDto);
 	boolean approveStudent(int studentNo);
+	StudentDto selectOneByNoAndPhone(int studentNo, String studentPhone);
 }

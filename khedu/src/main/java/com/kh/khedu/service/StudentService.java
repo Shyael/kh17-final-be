@@ -13,11 +13,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.AccountRolesDao;
+import com.kh.khedu.dao.AttendanceDao;
+import com.kh.khedu.dao.ClassSessionDao;
 import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.StudentDao;
 import com.kh.khedu.dao.StudentLinkDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.dto.AccountRolesDto;
+import com.kh.khedu.dto.AttendanceDto;
+import com.kh.khedu.dto.ClassSessionDto;
 import com.kh.khedu.dto.StudentDto;
 import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.enums.RoleType;
@@ -31,6 +35,7 @@ import com.kh.khedu.vo.parentStudent.StudentParentDetailVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.ChangeStudentRequestVO;
 import com.kh.khedu.vo.student.ChangeStudentResponseVO;
+import com.kh.khedu.vo.student.StudentAttendanceCheckVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentDetailVO;
 import com.kh.khedu.vo.student.StudentJoinRequestVO;
@@ -59,6 +64,10 @@ public class StudentService {
 	private StudentLinkDao studentLinkDao;
 	@Autowired
 	private ParentStudentDao parentStudentDao;
+	@Autowired
+	private ClassSessionDao classSessionDao;
+	@Autowired
+	private AttendanceDao attendanceDao;
 	
 	//학생 정보 등록
 	@Transactional
@@ -296,5 +305,50 @@ public class StudentService {
         // 성공/실패 여부에 따른 예외 처리 추가 가능
         studentDao.approveStudent(studentNo);
     }
+	
+	/* =========================================
+	 * 학생 출결
+	 * =========================================== */
+	@Transactional
+	public String checkAttendanceByStudent(StudentAttendanceCheckVO request) {
+	    // 1. 학생 번호 + 휴대폰 번호로 일치하는 학생 검증 (StudentDto 반환)
+	    StudentDto student = studentDao.selectOneByNoAndPhone(request.getStudentNo(), request.getStudentPhone());
+	    if (student == null) {
+	        throw new TargetNotfoundException("학생 정보 또는 연락처가 일치하지 않습니다.");
+	    }
+
+	    // 2. 이 학생이 수강 중이면서 + 현재 시각 기준 진행 중인 class_session 조회
+	    ClassSessionDto currentSession = classSessionDao.selectCurrentRunningSessionByStudent(student.getStudentNo());
+	    if (currentSession == null) {
+	        throw new TargetNotfoundException("현재 출석 가능한 진행 중인 수업이 없습니다.");
+	    }
+
+	    // 3. 해당 세션의 출석부 레코드 조회 (사전 생성된 '미출결' 데이터)
+	    AttendanceDto attendance = attendanceDao.selectBySessionAndStudent(currentSession.getSessionNo(), student.getStudentNo());
+	    if (attendance == null) {
+	        throw new TargetNotfoundException("해당 강좌의 수강생 명단에 없습니다.");
+	    }
+
+	    // 4. 이미 처리된 상태인지 확인 (출석 또는 지각 완료 시 재처리 방지)
+	    String currentState = attendance.getAttendanceState();
+	    if ("출석".equals(currentState) || "지각".equals(currentState)) {
+	        return "이미 [" + currentState + "] 처리되었습니다.";
+	    }
+
+	    // 5. 지각 판별 (수업 시작 시각 기준 10분 초과 시 '지각', 이내면 '출석')
+	    Timestamp now = new Timestamp(System.currentTimeMillis());
+	    long sessionStartTimeMillis = currentSession.getSessionStart().getTime();
+	    long lateThresholdMillis = sessionStartTimeMillis + (10 * 60 * 1000); // 시작 시각 + 10분
+
+	    String targetState = (now.getTime() > lateThresholdMillis) ? "지각" : "출석";
+
+	    // 6. 출결 갱신
+	    attendanceDao.updateAttendanceState(attendance.getAttendanceNo(), targetState, now);
+	    
+	    // 7. 학생 이름 조회 후 응답 반환
+	    String studentName = accountDao.selectOneByStudentNo(student.getStudentNo());
+	    return studentName + " 학생, [" + targetState + "] 완료되었습니다.";
+	}
+	
 
 }

@@ -100,4 +100,35 @@
 		and s.schedule_end > #{schedule.scheduleStart}
 		]]> 
 	</select>
+	
+	<!-- scheduleNo로 schedule 조회  -->
+	<select id="selectOneByScheduleNo" resultType="ScheduleDto">
+		select * from schedule where schedule_no = #{scheduleNo}
+	</select>
+	
+	<!-- schedule_open을 오늘 날짜로 변경 -->
+	<update id="updateOpen">
+		update schedule
+		set schedule_open = #{today}
+		where schedule_no = #{scheduleNo}
+	</update>
+	
+	<!-- 진행중 schedule가져오기 -->
+	<select id="selectActiveSchedules" resultType="ScheduleDto">
+		select 
+			s.schedule_no,
+			s.course_no,
+			s.classroom_no,
+			s.schedule_week,
+			s.schedule_start,
+			s.schedule_end,
+			s.schedule_open,
+			s.schedule_close
+		from schedule s
+		join course c on s.course_no = c.course_no
+		where c.course_status = '진행중'
+		and s.schedule_open is not null
+		and (s.schedule_close is null or s.schedule_close >= CURRENT_DATE)
+		order by s.schedule_no asc
+	</select>
 </mapper>

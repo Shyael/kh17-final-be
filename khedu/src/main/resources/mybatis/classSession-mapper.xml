@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.classSession">
+	
+	<!-- ScheduleNo로 classSession내용 찾기 -->
+	<select id="selectTodaySession" resultType="ClassSessionDto">
+		select * from class_session 
+		where schedule_no = #{scheduleNo}
+		and session_start = #{sessionStart}
+	</select>
+	
+	<!-- classSessionNo생성 -->
+	<select id="sequence" resultType="int">
+		select session_seq.nextval from dual
+	</select>
+	<!-- classSession 등록 -->
+	<insert id="insert">
+		insert into class_session (
+			session_no,
+			schedule_no,
+			classroom_no,
+			session_start,
+			session_end
+		)
+		values(
+			#{sessionNo},
+			#{scheduleNo},
+			#{classroomNo},
+			#{sessionStart},
+			#{sessionEnd}
+		)
+	</insert>
+	
+	<!-- classSession 등록 -->
+	<insert id="insertByAdmin">
+		insert into class_session (
+			session_no,
+			schedule_no,
+			classroom_no,
+			session_start,
+			session_end,
+			session_status
+		)
+		values(
+			#{sessionNo},
+			#{scheduleNo},
+			#{classroomNo},
+			#{sessionStart},
+			#{sessionEnd},
+			#{sessionStatus}
+		)
+	</insert>
+	
+	<!-- sessionNo로 session조회 -->
+	<select id="selectOneBySessionNo" resultType="ClassSessionDto">
+		select * from class_session
+		where session_no = #{sessionNo}
+	</select>
+	
+	<!-- session_status의 상태를 종료로 변경 -->
+	<update id="updateSessionStatus">
+		update class_session
+		set session_status = #{statusClosed}
+		where session_no = #{sessionNo}
+	</update>
+	
+	<!-- 수업이 만료되었는데, 진행중 상태를 스케줄러로 자동 종료로 전환 -->
+	<update id="autoCloseExpiredSessions">
+	update class_session
+	set session_status = '종료'
+	where session_status = '진행중'
+	and session_end &lt; CURRENT_TIMESTAMP
+	</update>
+
+	<!-- 관리자용 세션 제어 -->
+	<update id="updateStatusByAdmin">
+		update class_session
+		set session_status = #{sessionStatus}
+		where session_no = #{sessionNo}
+	</update>	
+
+</mapper>

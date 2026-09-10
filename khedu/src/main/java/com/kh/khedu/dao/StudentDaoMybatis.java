@@ -1,13 +1,14 @@
 package com.kh.khedu.dao;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.StudentDto;
-import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentListResponseVO;
@@ -83,6 +84,14 @@ public class StudentDaoMybatis implements StudentDao {
 	@Override
 	public boolean approveStudent(int studentNo) {
 		return sqlSession.update("mapper.student.approveStudent", studentNo) > 0;
+	}
+
+	@Override
+	public StudentDto selectOneByNoAndPhone(int studentNo, String studentPhone) {
+	    Map<String, Object> param = new HashMap<>();
+	    param.put("studentNo", studentNo);
+	    param.put("studentPhone", studentPhone);
+	    return sqlSession.selectOne("mapper.student.selectOneByNoAndPhone", param);
 	}
 
 }

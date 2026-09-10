@@ -29,7 +29,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
-@Tag(name = "강좌 정보 관리 서비스")
+@Tag(name = "강좌 정보 관리")
 @RestController
 @RequestMapping("/api/employee/course")
 public class CourseRestController {

@@ -1,6 +1,8 @@
 package com.kh.khedu.dao;
 
+import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
@@ -32,7 +34,7 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 		Map<String, Object> param = new HashMap<>();
 		
 		param.put("employeeNo", employeeNo);
-		param.put("request", request);
+		param.put("schedule", request);
 		
 		return sqlSession.selectOne("mapper.schedule.checkTutorScheduleConflict", param);
 	}
@@ -44,6 +46,25 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 		param.put("classroomNo", classroomNo);
 		param.put("request", request);
 		return sqlSession.selectOne("mapper.schedule.checkClassroomScheduleConflict", param);
+	}
+	
+	//스케줄 no로 스케줄 정보 확인
+	@Override
+	public ScheduleDto selectOneByScheduleNo(int scheduleNo) {
+		return sqlSession.selectOne("mapper.schedule.selectOneByScheduleNo", scheduleNo);
+	}
+	
+	//schedule_open의 날짜를 오늘로 변경
+	@Override
+	public boolean updateOpen(int scheduleNo, LocalDate today) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("scheduleNo", scheduleNo);
+		param.put("today", today);
+		return sqlSession.update("mapper.schedule.updateOpen", param) > 0;
+	}
+	@Override
+	public List<ScheduleDto> selectActiveSchedules() {
+		return sqlSession.selectList("mapper.schedule.selectActiveSchedules");
 	}
 
 }

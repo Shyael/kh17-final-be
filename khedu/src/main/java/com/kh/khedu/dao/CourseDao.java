@@ -26,4 +26,12 @@ public interface CourseDao {
 	List<CourseListVO> selectSearchList(CourseSearchVO search);	
 	//검색 목록의 개수 조회
 	int selectCount(CourseSearchVO search);
+	
+	//course_status를 모집중 -> 진행중으로 변경
+	boolean updateStatus(int courseNo, String status);
+	//courseNo로 강좌 조회
+	CourseDto selectOneByCourseNo(int courseNo);
+	//scheduleNo로 강좌 조회
+	CourseDto selectOneByScheduleNo(int scheduleNo);
+
 }

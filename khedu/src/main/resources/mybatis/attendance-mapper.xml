@@ -282,4 +282,24 @@
 
 </select>
 
+
+	<!-- 
+	-==================================================================
+	학생 근태
+	===================================================================
+	 -->
+	 <!-- 세션 번호랑 학생 번호로 수강생 명단 조회 -->
+	<select id="selectBySessionAndStudent" resultType="AttendanceDto">
+	    select * from attendance 
+	    where class_session_no = #{classSessionNo}
+	      and student_no = #{studentNo}
+	</select>
+	
+	<!-- 학생 출결 상태 및 출결 시각 갱신 -->
+	<update id="updateAttendanceState">
+	    UPDATE attendance
+	    SET attendance_state = #{attendanceState},
+	        attendance_at = #{attendanceAt}
+	    WHERE attendance_no = #{attendanceNo}
+	</update>
 </mapper>

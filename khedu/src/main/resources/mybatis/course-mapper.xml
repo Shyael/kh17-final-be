@@ -42,6 +42,23 @@
 			#{courseType}
 		)
 	</insert>
+	<!-- scheduleNo로 강좌 조회 -->
+	<select id="selectOneByScheduleNo" resultType="CourseDto">
+		select c.* from course c 
+		join schedule s on c.course_no = s.course_no
+		where s.schedule_no = #{scheduleNo}
+	</select>
+	<!-- courseNo로 강좌 조회 -->
+	<select id="selectOneByCourseNo" resultType="CourseDto">
+		select * from course where course_no = #{courseNo}
+	</select>
+	
+	<!-- courseStatus를 모집중 -> 진행중으로 수정 -->
+	<update id="updateStatus">
+		update course
+		set course_status = #{status}
+		where course_no = #{courseNo}
+	</update>
 	
 	<!-- 
 		검색 기능 구현을 위한 필요 구문 [1] [2] [3] 참조

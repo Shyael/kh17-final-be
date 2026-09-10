@@ -120,5 +120,38 @@
         set student_academic_status = '재원' 
         where student_no = #{studentNo}
     </update>
+    
+    <!-- 관리자 -->
+    <select id="selectCurrentRunningSessionByStudent" resultType="com.kh.khedu.dto.ClassSessionDto">
+    SELECT *
+	FROM (
+	        SELECT 
+	            cs.session_no,
+	            cs.schedule_no,
+	            cs.classroom_no,
+	            cs.session_start,
+	            cs.session_end,
+	            cs.session_status
+	        FROM class_session cs
+	        JOIN schedule s ON cs.schedule_no = s.schedule_no
+	        JOIN course c ON s.course_no = c.course_no
+	        JOIN registration r ON c.course_no = r.course_no
+	        WHERE r.student_no = #{studentNo}
+	          AND r.registration_status = '수강중'
+	          AND cs.session_status = '진행중'
+	          AND CURRENT_TIMESTAMP BETWEEN (cs.session_start - INTERVAL '30' MINUTE) AND cs.session_end
+	        ORDER BY cs.session_start ASC
+	    )
+    WHERE ROWNUM = 1
+	</select>
+	
+    <!-- 학생번호와 폰넘버로 학생 찾기 -->
+	<select id="selectOneByNoAndPhone" resultType="StudentDto">
+	    select s.*
+	    from student s 
+	    join account a on s.account_no = a.account_no
+	    where a.account_phone = #{studentPhone}
+	      and s.student_no = #{studentNo}
+	</select>
 	
 </mapper>
