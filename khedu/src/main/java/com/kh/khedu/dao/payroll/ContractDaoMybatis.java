@@ -12,9 +12,11 @@ import org.springframework.stereotype.Repository;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.util.SignatureEncryptor;
 import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractListSearchVO;
 import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 import com.kh.khedu.vo.payroll.response.ContractFindOrdinaryEmployeeVO;
+import com.kh.khedu.vo.payroll.response.ContractHistoryResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractSearchResponseVO;
 
 @Repository
@@ -386,5 +388,23 @@ public class ContractDaoMybatis implements ContractDao {
 		
 		return sqlSession.selectList("mapper.payroll.findOrdinaryEmployeeNoList",params);
 		
+	}
+	
+	@Override
+	public List<ContractHistoryResponseVO> selectSearchList(
+	        ContractListSearchVO search) {
+
+	    return sqlSession.selectList(
+	            "mapper.payroll.selectSearchList",
+	            search);
+	}
+
+	@Override
+	public int selectCount(
+	        ContractListSearchVO search) {
+
+	    return sqlSession.selectOne(
+	            "mapper.payroll.selectCount",
+	            search);
 	}
 }

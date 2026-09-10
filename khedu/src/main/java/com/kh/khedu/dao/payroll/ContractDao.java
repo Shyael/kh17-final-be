@@ -5,9 +5,11 @@ import java.util.List;
 
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractListSearchVO;
 import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 import com.kh.khedu.vo.payroll.response.ContractFindOrdinaryEmployeeVO;
+import com.kh.khedu.vo.payroll.response.ContractHistoryResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractSearchResponseVO;
 
 public interface ContractDao {
@@ -129,4 +131,10 @@ public interface ContractDao {
 				String employeeType,
 				Timestamp targetDate
 		);
+		
+		List<ContractHistoryResponseVO> selectSearchList(
+		        ContractListSearchVO search);
+
+		int selectCount(
+		        ContractListSearchVO search);
 }

@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.khedu.annotation.CommonsApiResponse;
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.error.AdminChecker;
+import com.kh.khedu.error.YouAreNotAdminException;
 import com.kh.khedu.service.payroll.ContractService;
 import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.ContractAddRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
-import com.kh.khedu.vo.payroll.request.ContractEmployeeSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployerSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractExtendRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractListSearchVO;
@@ -54,15 +54,35 @@ import jakarta.validation.Valid;
 
 @CommonsApiResponse
 @RestController
-@RequestMapping("/api/employee/contract")
-public class ContractController {
+@RequestMapping("/api/employee/admin/contract")
+public class AdminContractController {
 
 	@Autowired
 	private ContractService contractService;
 	
+	@Autowired
+	private AdminChecker adminChecker;
 
-	
+	// 계약 대상 데스크 직원 인적사항 조회
+	@GetMapping("/desk/{employeeNo}")
+	public ContractEmployeeDeskResponseVO findDeskPersonInfo(
+	        @PathVariable int employeeNo,
+	        @CurrentUser TokenParseResponseVO parseVO) {
+		System.out.println("findDeskPersonInfo 진입");
+		System.out.println(parseVO);
+		System.out.println("employeeNo = " + employeeNo);
+	    return contractService.findDeskPersonInfo(employeeNo, parseVO);
+	}
 
+
+	// 계약 대상 강사 직원 인적사항 조회
+	@GetMapping("/teacher/{employeeNo}")
+	public ContractEmployeeTeacherResponseVO findTeacherPersonInfo(
+	        @PathVariable int employeeNo,
+	        @CurrentUser TokenParseResponseVO parseVO) {
+
+	    return contractService.findTeacherPersonInfo(employeeNo, parseVO);
+	}
 	
 	//계약 조회
 	
@@ -72,9 +92,25 @@ public class ContractController {
 	}
 	
 
+	// 신규 근로계약 작성 //권한 설정 완
+	@PostMapping("/add")
+	public ContractAddResponseVO add(
+			@Valid @RequestBody ContractAddRequestVO request
+			,@CurrentUser TokenParseResponseVO parseVO) {
 	
+		return contractService.add(request,parseVO);
+	}
 
-	
+
+	// 양측 서명 완료 전 계약 수정 //권한 설정 완
+	@PatchMapping("/editBefore/{contractNo}")
+	public ContractUpdateDraftResponseVO updateDraft(
+			@PathVariable long contractNo,
+			@Valid @RequestBody ContractUpdateDraftRequestVO request,
+			@CurrentUser TokenParseResponseVO parseVO) {
+
+	return contractService.updateDraft(contractNo, request, parseVO);
+	}
 
 	//서명 전 작성 된 정보 불러오기
 		@PatchMapping("recallBefore/{contractNo}")
@@ -87,22 +123,22 @@ public class ContractController {
 			    );
 		}
 
-	// 을(직원) 서명 //권한 설정 완
-	@PatchMapping("/{contractNo}/employeeSign")
-	public void employeeSign(
+
+
+	// 갑(원장) 서명 //권한 설정 완
+	@PatchMapping("/{contractNo}/employerSign")
+	public void employerSign(
 			@PathVariable long contractNo,
-			@Valid @RequestBody ContractEmployeeSignRequestVO request,
+			@Valid @RequestBody ContractEmployerSignRequestVO request,
 			@CurrentUser TokenParseResponseVO parseVO) {
 
-		contractService.employeeSign(
+		contractService.employerSign(
 				contractNo,
 				request,
 				parseVO
 		);
 	}
 
-
-	
 
 	// 직원의 현재 근로계약 조회
 	@GetMapping("/{employeeNo}/current")
@@ -141,10 +177,29 @@ public class ContractController {
 	}
 
 
-	
+	// 체결 후 근로조건 변경
+	@PostMapping("/{contractNo}/changeWorkCondition")
+	public ContractChangeConditionResponseVO changeWorkCondition(
+			@PathVariable long contractNo,
+			@Valid @RequestBody ContractChangeConditionRequestVO request
+			,@CurrentUser TokenParseResponseVO parseVO) {
+
+		return contractService.changeWorkCondition(
+				contractNo,
+				request
+				,parseVO
+		);
+	}
 
 	
-	
+	//근로계약 종료(도중 퇴사)
+	@PatchMapping("/{contractNo}/exit")
+	public void exitContract(
+			@PathVariable long contractNo
+			,@CurrentUser TokenParseResponseVO parseVO) {
+		contractService.exitContract(contractNo,parseVO);
+	}
+
 
 	// 계약 서명정보 조회
 	@GetMapping("/{contractNo}/findSignature")
@@ -158,8 +213,76 @@ public class ContractController {
 		);
 	}
 	
+	//단순 기간 연장
+	@PatchMapping("/{contractNo}/extend")
+	public ContractExtendResponseVO extendContract(
+	        @PathVariable long contractNo,
+	        @Valid @RequestBody ContractExtendRequestVO request,
+	        @CurrentUser TokenParseResponseVO parseVO) {
+
+	    request.setContractNo(contractNo);
+
+	    return contractService.extendContract(
+	            request,
+	            parseVO
+	    );
+	}
 	
 	
 	
+	// 관리자 계약 검색
+	@ApiResponse(
+	    responseCode = "200",
+	    description = "계약 검색 성공"
+	)
+	@GetMapping(
+	    value = "/search",
+	    produces = MediaType.APPLICATION_JSON_VALUE
+	)
+	public List<ContractSearchResponseVO> contractSearch(
+	        ContractSearchRequestVO request,
+	        @CurrentUser TokenParseResponseVO parseVO) {
+
+	    return contractService.contractSearch(
+	            request,
+	            parseVO
+	    );
+	}
+	
+	//작성 전 취소
+		@ApiResponse(
+		    responseCode = "200",
+		    description = "계약 삭제 성공"
+		)
+	
+	@DeleteMapping("/{contractNo}")
+	public void cancelContract(
+			@PathVariable long contractNo,
+			TokenParseResponseVO parseVO) {
+
+		contractService.cancelContract(
+				contractNo,
+				parseVO
+		);
+	}
+	
+		//목록 불러오기
+		@ApiResponse(
+				responseCode="200",
+				description = "계약 목록 불러오기 성공"
+				)
+		@GetMapping("/contractList")
+		public PageResponseVO<ContractHistoryResponseVO> selectList(
+		        @ModelAttribute ContractListSearchVO search,
+		       @CurrentUser TokenParseResponseVO parseVO) {
+			boolean isAdmin = adminChecker.AdminCheck(parseVO);
+			if(isAdmin == false) throw new YouAreNotAdminException();
+			
+			
+		    return contractService.selectList(
+		            search,
+		            parseVO);
+		}
+		
 	
 }

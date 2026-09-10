@@ -57,5 +57,5 @@ public interface EmployeeAttendanceService {
             AttendanceAbsentToAbsentRequestVO requestVO,
             TokenParseResponseVO parseVO);
     
-    void autoAbsent();
+   
 }

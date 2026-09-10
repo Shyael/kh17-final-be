@@ -122,18 +122,20 @@
 	</update>
 	
 	<!--이름으로 직원 검색  -->
-	<select id="searchByName" resultType="EmployeeSearchByNameVO">
-	Select E.employee_no,
-			A.account_name,
-			A.account_id,
-			A.account_no
-		from employee E
-		join account A
-			on A.account_no = E.account_no
-		where A.account_name like #{accountName} || '%' 
-		order by A.account_name asc,
-			     E.employee_no asc	  
-	</select>
+<select id="searchByName" resultType="EmployeeSearchByNameVO">
+    select
+        E.employee_no,
+        A.account_name,
+        A.account_id,
+        A.account_no
+    from employee E
+    join account A
+        on A.account_no = E.account_no
+    where A.account_name like #{accountName} || '%'
+    order by
+        A.account_name asc,
+        E.employee_no asc
+</select>
 	
 	<!-- 재직 전환 시 계정 활성화 -->
 <update id="changeAccountStatusToY">

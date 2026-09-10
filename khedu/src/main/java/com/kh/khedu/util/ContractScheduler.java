@@ -18,7 +18,6 @@ public class ContractScheduler {
 	,zone ="Asia/Seoul")
 	public void refreshActiveContractStatus() {
 		contractService.refreshActiveContractStatus();
-		
 	}
 	
 	@Scheduled(cron = "0 0 0 * * *"

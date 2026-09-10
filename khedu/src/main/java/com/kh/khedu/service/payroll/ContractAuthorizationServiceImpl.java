@@ -22,8 +22,14 @@ public class ContractAuthorizationServiceImpl implements ContractAuthorizationSe
 	public boolean checkAdmin(TokenParseResponseVO parseVO) {
 
 
-	    return parseVO.getRoleNames() != null
-	            && parseVO.getRoleNames().contains("ADMIN");
+	    if (parseVO == null
+	            || parseVO.getRoleNames() == null) {
+
+	        return false;
+	    }
+
+	    return parseVO.getRoleNames()
+	            .contains("ADMIN");
 	}
 	
 	public boolean checkPartyB(

@@ -15,6 +15,7 @@ import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.util.SignatureEncryptor;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.ContractAddRequestVO;
@@ -22,6 +23,7 @@ import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployeeSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployerSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractExtendRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractListSearchVO;
 import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 import com.kh.khedu.vo.payroll.response.ContractAddResponseVO;
@@ -901,18 +903,18 @@ public class ContractServiceImpl implements ContractService {
 
 
 	    // [9] 기존 계약은 새 계약 시작 시점에 종료
+	    LocalDate previousContractEndDate =
+	            newContractDto
+	                    .getContractStart()
+	                    .toLocalDateTime()
+	                    .toLocalDate()
+	                    .minusDays(1);
+
 	    originDto.setContractEnd(
-	    	    newContractDto.getContractStart()
-	    	);
-
-	    	boolean closeResult =
-	    	        contractDao.closeForConditionChange(
-	    	                originDto
-	    	        );
-
-	    	if (!closeResult)
-	    	    throw new GetOutException();
-
+	            Timestamp.valueOf(
+	                    previousContractEndDate.atStartOfDay()
+	            )
+	    );
 
 	    // [10] 새 계약은 다시 서명대기
 	    newContractDto.setContractStatus(
@@ -1219,4 +1221,41 @@ public class ContractServiceImpl implements ContractService {
 			throw new GetOutException();
 	}
 	
+	
+	@Override
+	@Transactional(readOnly = true)
+	public PageResponseVO<ContractHistoryResponseVO> selectList(
+	        ContractListSearchVO search,
+	        TokenParseResponseVO parseVO) {
+
+
+	    // 계약 전체목록은 원장만
+	    boolean isAdmin =
+	            contractAuthorizationService
+	                    .checkAdmin(parseVO);
+
+
+	    if (isAdmin==false) {
+	        throw new GetOutException();
+	    }
+
+
+	    // 현재 페이지 목록
+	    List<ContractHistoryResponseVO> list =
+	            contractDao.selectSearchList(
+	                    search);
+
+
+	    // 검색조건 전체 개수
+	    int totalCount =
+	            contractDao.selectCount(
+	                    search);
+
+
+	    return new PageResponseVO<>(
+	            list,
+	            totalCount,
+	            search
+	    );
+	}
 }

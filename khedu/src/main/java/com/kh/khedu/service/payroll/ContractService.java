@@ -2,12 +2,14 @@ package com.kh.khedu.service.payroll;
 
 import java.util.List;
 
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.ContractAddRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployeeSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployerSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractExtendRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractListSearchVO;
 import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 import com.kh.khedu.vo.payroll.response.ContractAddResponseVO;
@@ -122,5 +124,9 @@ public interface ContractService {
 			long contractNo,
 			TokenParseResponseVO parseVO
 	);
+	
+	PageResponseVO<ContractHistoryResponseVO> selectList(
+	        ContractListSearchVO search,
+	        TokenParseResponseVO parseVO);
 	
 }

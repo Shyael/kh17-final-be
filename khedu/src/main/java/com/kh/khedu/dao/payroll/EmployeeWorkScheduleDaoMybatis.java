@@ -144,22 +144,36 @@ public class EmployeeWorkScheduleDaoMybatis implements EmployeeWorkScheduleDao {
 		}
 
 		@Override
-		public Double sumScheduledWorkHoursByPeriod(int employeeNo, Timestamp startDate, Timestamp endDate) {
-			Map<String,Object>params = new HashMap<>();
-			params.put("employeeNo", employeeNo);
-			params.put("starDate", startDate);
-			params.put("endDate", endDate);
-			return sqlSession.selectOne("mapper.workSchedule.sumScheduledWorkHoursByPeriod");
-			
+		public Double sumScheduledWorkHoursByPeriod(
+		        int employeeNo,
+		        Timestamp startDate,
+		        Timestamp endDate) {
+
+		    Map<String, Object> params = new HashMap<>();
+		    params.put("employeeNo", employeeNo);
+		    params.put("startDate", startDate);
+		    params.put("endDate", endDate);
+
+		    return sqlSession.selectOne(
+		            "mapper.workSchedule.sumScheduledWorkHoursByPeriod",
+		            params
+		    );
 		}
 
 		@Override
-		public int countScheduledWorkDaysByPeriod(int employeeNo, Timestamp startDate, Timestamp endDate) {
-			Map<String,Object>params = new HashMap<>();
-			params.put("employeeNo", employeeNo);
-			params.put("starDate", startDate);
-			params.put("endDate", endDate);
-			return sqlSession.selectOne("mapper.workSchedule.countScheduledWorkDaysByPeriod");
-		}
+		public int countScheduledWorkDaysByPeriod(
+		        int employeeNo,
+		        Timestamp startDate,
+		        Timestamp endDate) {
 
+		    Map<String, Object> params = new HashMap<>();
+		    params.put("employeeNo", employeeNo);
+		    params.put("startDate", startDate);
+		    params.put("endDate", endDate);
+
+		    return sqlSession.selectOne(
+		            "mapper.workSchedule.countScheduledWorkDaysByPeriod",
+		            params
+		    );
+		}
 }

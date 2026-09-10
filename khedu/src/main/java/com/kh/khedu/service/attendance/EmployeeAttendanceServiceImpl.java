@@ -30,6 +30,7 @@ import com.kh.khedu.vo.payroll.request.AttendanceAbsentToNormalRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceLeaveRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToAbsentRequestVO;
 import com.kh.khedu.vo.payroll.request.AttendanceNormalToNormalRequestVO;
+import com.kh.khedu.vo.payroll.request.WorkScheduleAddRequestVO;
 import com.kh.khedu.vo.payroll.request.WorkScheduleUpdateRequestVO;
 import com.kh.khedu.vo.payroll.response.AttendanceClockInResponseVO;
 import com.kh.khedu.vo.payroll.response.AttendanceClockOutResponseVO;
@@ -106,6 +107,7 @@ public class EmployeeAttendanceServiceImpl
     
     
     @Override
+    @Transactional
     public AttendanceClockInResponseVO clockIn(
             TokenParseResponseVO parseVO) {
 
@@ -121,6 +123,7 @@ public class EmployeeAttendanceServiceImpl
                 employeeAttendanceDao.findByAccountNo(
                         parseVO.getAccountNo());
 
+        System.out.print(employeeDetailVO);
         if (employeeDetailVO == null) {
             throw new TargetNotfoundException();
         }
@@ -164,31 +167,149 @@ public class EmployeeAttendanceServiceImpl
         LocalDateTime now = LocalDateTime.now();
         Timestamp today = Timestamp.valueOf(now.toLocalDate().atStartOfDay());
         
-        EmployeeWorkScheduleDto todaySchedule=
+        EmployeeWorkScheduleDto todaySchedule =
                 employeeWorkScheduleDao.find(
                         employeeVO,
-                        today);
-
-        // 일정 자체가 없으면 출근 불가
-      if(todaySchedule==null) throw new GetOutException();
+                        today
+                );
 
 
-   // 휴무일은 출근 불가
-      if ("dayOff".equals(
-              todaySchedule.getScheduledDayType())) {
-
-          throw new GetOutException();
-      }
+        ContractDto contract;
 
 
-      // 주 52시간 초과 가능성 확인
-      validateWeeklyWorkLimitBeforeClockIn(
-              employeeNo,
-              todaySchedule
-      );  
-     
-      ContractDto contract = contractDao.find(todaySchedule.getContractNo());
-      
+        // =========================
+        // 별도 일정이 없는 일반 근무일
+        // =========================
+
+        if (todaySchedule == null) {
+
+            // 오늘 적용되는 계약 조회
+            Long contractNo =
+                    contractDao.findContractByPeriod(
+                            employeeNo,
+                            today
+                    );
+
+
+            if (contractNo == null) {
+                throw new TargetNotfoundException();
+            }
+
+
+            contract =
+                    contractDao.find(
+                            contractNo
+                    );
+
+
+            if (contract == null) {
+                throw new TargetNotfoundException();
+            }
+
+
+            // 실제 출근 가능한 계약인지 확인
+            if (!"active".equals(
+                    contract.getContractStatus())) {
+
+                throw new GetOutException();
+            }
+
+
+            // 오늘 요일
+            String todayDay =
+                    now.toLocalDate()
+                            .getDayOfWeek()
+                            .name();
+
+
+            // 기본값은 정상 근무일
+            String scheduledDayType =
+                    "workday";
+
+
+            // 계약상 주휴일에 실제 출근했다면
+            // 휴일근로로 기록
+            if (contract.getWeeklyHolidayDay() != null
+                    && contract.getWeeklyHolidayDay()
+                            .equals(todayDay)) {
+
+                scheduledDayType =
+                        "holiday";
+            }
+
+
+         // 자동 스케줄 번호 발급
+            long workScheduleNo =
+                    employeeWorkScheduleDao.sequence();
+
+            // DAO 등록용 요청 객체
+            WorkScheduleAddRequestVO scheduleAddVO =
+                    new WorkScheduleAddRequestVO();
+
+            scheduleAddVO.setWorkScheduleNo(workScheduleNo);
+            scheduleAddVO.setEmployeeNo(employeeNo);
+            scheduleAddVO.setContractNo(contractNo);
+            scheduleAddVO.setScheduledWorkDate(today);
+            scheduleAddVO.setScheduledClockIn(null);
+            scheduleAddVO.setScheduledClockOut(null);
+            scheduleAddVO.setScheduledDayType(scheduledDayType);
+
+            // 스케줄 저장
+            boolean scheduleResult =
+                    employeeWorkScheduleDao.add(scheduleAddVO);
+
+            if (!scheduleResult) {
+                throw new GetOutException();
+            }
+
+            // 저장된 스케줄을 이후 근태 처리에 사용
+            todaySchedule =
+                    employeeWorkScheduleDao.findByNo(workScheduleNo);
+
+            if (todaySchedule == null) {
+                throw new TargetNotfoundException();
+            }
+        }
+
+
+        // =========================
+        // 이미 별도 일정이 있는 경우
+        // =========================
+
+        else {
+
+            contract =
+                    contractDao.find(
+                            todaySchedule.getContractNo()
+                    );
+
+
+            if (contract == null) {
+                throw new TargetNotfoundException();
+            }
+        }
+
+
+        // =========================
+        // 명시적 휴무일이면 출근 불가
+        // =========================
+
+        if ("dayOff".equals(
+                todaySchedule.getScheduledDayType())) {
+
+            throw new GetOutException();
+        }
+
+
+        // =========================
+        // 주 52시간 확인
+        // =========================
+
+        validateWeeklyWorkLimitBeforeClockIn(
+                employeeNo,
+                todaySchedule
+        );
+        
 
 
         // 오늘 이미 근태가 생성되었는지 확인
@@ -345,28 +466,66 @@ public class EmployeeAttendanceServiceImpl
     }
 
 
-    // 출근 ~ 퇴근 전체 시간
+ // 출근 ~ 퇴근 전체 체류시간
     long totalWorkMinutes =
             Duration.between(
                     clockIn,
-                    clockOut)
-                    .toMinutes();
+                    clockOut
+            ).toMinutes();
 
 
-    double breakMinutes =
+    // 계약상 기본 휴게시간
+    double defaultBreakMinutes =
             attendanceDto.getBreakMinutes() == null
                     ? 0
                     : attendanceDto.getBreakMinutes();
 
 
-    // 휴게시간 제외 실제 근무시간
+    // 계약상 하루 소정근로시간
+    double dailyWorkMinutes =
+            contractDto.getDailyWorkHours()
+                    * 60;
+
+
+    // 정상 근무를 완료하기 위해 필요한 전체 체류시간
+    // = 실제 근로시간 + 휴게시간
+    double normalStayMinutes =
+            dailyWorkMinutes
+                    + defaultBreakMinutes;
+
+
+    double breakMinutes;
+
+
+    // 정상 근무시간 이상 체류했다면
+    // 계약상 기본 휴게시간 적용
+    if (totalWorkMinutes >= normalStayMinutes) {
+
+        breakMinutes =
+                defaultBreakMinutes;
+    }
+
+
+    // 중도퇴근 / 조퇴
+    // 휴게시간 발생 여부를 시스템이 알 수 없으므로
+    // 자동 차감하지 않음
+    else {
+
+        breakMinutes =
+                0;
+    }
+
+
+    // 실제 적용 휴게시간 반영
+    attendanceDto.setBreakMinutes(
+            breakMinutes
+    );
+
+
+    // 실제 근로시간
     double actualWorkMinutes =
             totalWorkMinutes
                     - breakMinutes;
-
-    if (actualWorkMinutes < 0) {
-        throw new GetOutException();
-    }
 
 
     double actualWorkHours =
@@ -1331,6 +1490,20 @@ public class EmployeeAttendanceServiceImpl
             AttendanceAbsentRequestVO requestVO,
             TokenParseResponseVO parseVO) {
 
+    	if (requestVO == null || requestVO.getWorkDate() == null) {
+    	    throw new GetOutException();
+    	}
+
+    	requestVO.setWorkDate(
+    	        Timestamp.valueOf(
+    	                requestVO.getWorkDate()
+    	                        .toLocalDateTime()
+    	                        .toLocalDate()
+    	                        .atStartOfDay()
+    	        )
+    	);
+    	
+    	
         // 일정 조회용 직원정보
         EmployeeSearchByNameVO employeeVO =
                 EmployeeSearchByNameVO.builder()
@@ -1339,14 +1512,107 @@ public class EmployeeAttendanceServiceImpl
                         .build();
 
 
-        // 해당 날짜 근무 일정 조회
         EmployeeWorkScheduleDto scheduleDto =
                 employeeWorkScheduleDao.find(
                         employeeVO,
-                        requestVO.getWorkDate());
+                        requestVO.getWorkDate()
+                );
+
+
+        // =========================
+        // 등록된 일정이 없는 경우
+        // 관리자 판단으로 workday 생성
+        // =========================
 
         if (scheduleDto == null) {
-            throw new TargetNotfoundException();
+
+            Long contractNo =
+                    contractDao.findContractByPeriod(
+                            requestVO.getEmployeeNo(),
+                            requestVO.getWorkDate()
+                    );
+
+
+            if (contractNo == null) {
+                throw new TargetNotfoundException();
+            }
+
+
+            ContractDto contract =
+                    contractDao.find(
+                            contractNo
+                    );
+
+
+            if (contract == null) {
+                throw new TargetNotfoundException();
+            }
+
+
+            LocalDate absentDate =
+                    requestVO.getWorkDate()
+                            .toLocalDateTime()
+                            .toLocalDate();
+
+
+            String absentDay =
+                    absentDate
+                            .getDayOfWeek()
+                            .name();
+
+
+            // 계약상 주휴일에는
+            // 결근을 생성할 수 없음
+            if (contract.getWeeklyHolidayDay() != null
+                    && contract.getWeeklyHolidayDay()
+                            .equals(absentDay)) {
+
+                throw new GetOutException();
+            }
+
+         // 자동 스케줄 번호 발급
+            long workScheduleNo =
+                    employeeWorkScheduleDao.sequence();
+
+            // DAO 등록용 요청 객체
+            WorkScheduleAddRequestVO scheduleAddVO =
+                    new WorkScheduleAddRequestVO();
+
+            scheduleAddVO.setWorkScheduleNo(workScheduleNo);
+            scheduleAddVO.setEmployeeNo(requestVO.getEmployeeNo());
+            scheduleAddVO.setContractNo(contractNo);
+            scheduleAddVO.setScheduledWorkDate(requestVO.getWorkDate());
+            scheduleAddVO.setScheduledClockIn(null);
+            scheduleAddVO.setScheduledClockOut(null);
+            scheduleAddVO.setScheduledDayType("workday");
+
+            // 스케줄 저장
+            boolean scheduleResult =
+                    employeeWorkScheduleDao.add(scheduleAddVO);
+
+            if (!scheduleResult) {
+                throw new GetOutException();
+            }
+
+            // 저장된 스케줄을 이후 결근 처리에 사용
+            scheduleDto =
+                    employeeWorkScheduleDao.findByNo(workScheduleNo);
+
+            if (scheduleDto == null) {
+                throw new TargetNotfoundException();
+            }
+        
+        }
+
+
+        // =========================
+        // 휴일 / 휴무일은 결근 불가
+        // =========================
+
+        if (!"workday".equals(
+                scheduleDto.getScheduledDayType())) {
+
+            throw new GetOutException();
         }
 
 
@@ -1632,198 +1898,139 @@ public class EmployeeAttendanceServiceImpl
     }
     
     
- // 자동 결근 처리
-    @Override
-    @Transactional
-    public void autoAbsent() {
-
-        Timestamp now =
-                Timestamp.valueOf(
-                        LocalDateTime.now());
-
-
-        // 예정 퇴근시간이 지났지만
-        // 실제 근태가 없는 근무 일정 조회
-        List<EmployeeWorkScheduleDto> scheduleList =
-                employeeWorkScheduleDao.findAutoAbsentTarget(
-                        now);
+ 
+// =====================================================
+// 출근 전 주 52시간 검증
+//
+// KH EDU 단위기간:
+// 월요일 00:00 ~ 다음 월요일 00:00 미만
+// =====================================================
+private void validateWeeklyWorkLimitBeforeClockIn(
+        int employeeNo,
+        EmployeeWorkScheduleDto todaySchedule) {
 
 
-        for (EmployeeWorkScheduleDto scheduleDto
-                : scheduleList) {
+    LocalDate workDate =
+            todaySchedule
+                    .getScheduledWorkDate()
+                    .toLocalDateTime()
+                    .toLocalDate();
 
 
-            // 결근 근태 생성
-            EmployeeAttendanceDto attendanceDto =
-                    EmployeeAttendanceDto.builder()
-                            .empAttendanceNo(
-                                    employeeAttendanceDao.sequence())
-                            .contractNo(
-                                    scheduleDto.getContractNo())
-                            .workDate(
-                                    scheduleDto.getScheduledWorkDate())
-                            .clockIn(
-                                    null)
-                            .clockOut(
-                                    null)
-                            .breakMinutes(
-                                    0.0)
-                            .attendanceType(
-                                    "absent")
-                            .nightHours(
-                                    0)
-                            .overtimeHours(
-                                    0)
-                            .build();
+    // 현재까지 실제 근로시간
+    double weeklyActualWorkHours =
+            findWeeklyActualWorkHours(
+                    employeeNo,
+                    workDate,
+                    todaySchedule.getWorkScheduleNo()
+            );
 
 
-            boolean attendanceResult =
-                    employeeAttendanceDao.add(
-                            attendanceDto);
+    // 이미 52시간을 채웠다면
+    // 추가 출근 자체 불가
+    if (weeklyActualWorkHours
+            >= WEEKLY_WORK_LIMIT) {
 
-            if (!attendanceResult) {
-                throw new GetOutException();
-            }
-
-
-            // 결근이므로 실제 근무 결과는 전부 0
-            WorkScheduleUpdateRequestVO scheduleUpdateVO =
-                    WorkScheduleUpdateRequestVO.builder()
-                            .workScheduleNo(
-                                    scheduleDto.getWorkScheduleNo())
-                            .actualWorkHours(
-                                    0.0)
-                            .actualOvertimeHours(
-                                    0.0)
-                            .actualNightHours(
-                                    0.0)
-                            .actualHolidayHours(
-                                    0.0)
-                            .build();
-
-
-            boolean scheduleResult =
-                    employeeWorkScheduleDao.update(
-                            scheduleUpdateVO);
-
-            if (!scheduleResult) {
-                throw new GetOutException();
-            }
-        }
+        throw new GetOutException();
     }
-    
- // =====================================================
- // 출근 전 주 52시간 검증
- //
- // KH EDU 단위기간:
- // 월요일 00:00 ~ 다음 월요일 00:00 미만
- // =====================================================
- private void validateWeeklyWorkLimitBeforeClockIn(
-         int employeeNo,
-         EmployeeWorkScheduleDto todaySchedule) {
 
 
-     LocalDate workDate =
-             todaySchedule
-                     .getScheduledWorkDate()
-                     .toLocalDateTime()
-                     .toLocalDate();
+    // 오늘 스케줄에 적용되는 계약
+    ContractDto contractDto =
+            contractDao.find(
+                    todaySchedule.getContractNo()
+            );
 
 
-     // 현재까지 실제 근로시간
-     double weeklyActualWorkHours =
-             findWeeklyActualWorkHours(
-                     employeeNo,
-                     workDate,
-                     todaySchedule.getWorkScheduleNo()
-             );
+    if (contractDto == null) {
+
+        throw new TargetNotfoundException();
+    }
 
 
-     // 이미 52시간을 채웠다면
-     // 추가 출근 자체 불가
-     if (weeklyActualWorkHours
-             >= WEEKLY_WORK_LIMIT) {
+    // =========================
+    // 오늘 예상 근로시간
+    // =========================
 
-         throw new GetOutException();
-     }
+    double todayScheduledWorkHours;
 
 
-     // =========================
-     // 오늘 예정근로시간
-     // =========================
-
-     if (todaySchedule.getScheduledClockIn() == null
-             || todaySchedule.getScheduledClockOut() == null) {
-
-         throw new GetOutException();
-     }
+    // 예정 출퇴근시간이 둘 다 없는 경우
+    // 자동 생성된 기본 workday
+    if (todaySchedule.getScheduledClockIn() == null
+            && todaySchedule.getScheduledClockOut() == null) {
 
 
-     LocalDateTime scheduledClockIn =
-             todaySchedule
-                     .getScheduledClockIn()
-                     .toLocalDateTime();
+        todayScheduledWorkHours =
+                contractDto.getDailyWorkHours();
+    }
 
 
-     LocalDateTime scheduledClockOut =
-             todaySchedule
-                     .getScheduledClockOut()
-                     .toLocalDateTime();
+    // 하나만 null이면 잘못된 스케줄
+    else if (todaySchedule.getScheduledClockIn() == null
+            || todaySchedule.getScheduledClockOut() == null) {
+
+        throw new GetOutException();
+    }
 
 
-     if (!scheduledClockOut.isAfter(
-             scheduledClockIn)) {
+    // 예정시간이 모두 존재하는
+    // 관리자가 직접 등록한 스케줄
+    else {
 
-         throw new GetOutException();
-     }
-
-
-     // 오늘 스케줄에 적용되는 계약
-     ContractDto contractDto =
-             contractDao.find(
-                     todaySchedule.getContractNo()
-             );
+        LocalDateTime scheduledClockIn =
+                todaySchedule
+                        .getScheduledClockIn()
+                        .toLocalDateTime();
 
 
-     if (contractDto == null) {
-
-         throw new TargetNotfoundException();
-     }
-
-
-     double breakMinutes =
-             contractDto.getWrittenBreakMinutes() == null
-                     ? 0
-                     : contractDto.getWrittenBreakMinutes();
+        LocalDateTime scheduledClockOut =
+                todaySchedule
+                        .getScheduledClockOut()
+                        .toLocalDateTime();
 
 
-     double scheduledWorkMinutes =
-             Duration.between(
-                     scheduledClockIn,
-                     scheduledClockOut)
-                     .toMinutes()
-             - breakMinutes;
+        if (!scheduledClockOut.isAfter(
+                scheduledClockIn)) {
+
+            throw new GetOutException();
+        }
 
 
-     if (scheduledWorkMinutes < 0) {
-
-         throw new GetOutException();
-     }
-
-
-     double todayScheduledWorkHours =
-             scheduledWorkMinutes / 60.0;
+        double breakMinutes =
+                contractDto.getWrittenBreakMinutes() == null
+                        ? 0
+                        : contractDto.getWrittenBreakMinutes();
 
 
-     // 현재 실제 누적 +
-     // 오늘 예정근무를 하면 52시간 초과
-     if (weeklyActualWorkHours
-             + todayScheduledWorkHours
-             > WEEKLY_WORK_LIMIT) {
+        double scheduledWorkMinutes =
+                Duration.between(
+                        scheduledClockIn,
+                        scheduledClockOut)
+                        .toMinutes()
+                - breakMinutes;
 
-         throw new GetOutException();
-     }
- }
+
+        if (scheduledWorkMinutes < 0) {
+
+            throw new GetOutException();
+        }
+
+
+        todayScheduledWorkHours =
+                scheduledWorkMinutes / 60.0;
+    }
+
+
+    // 현재 실제 누적 +
+    // 오늘 예상근무를 하면 52시간 초과
+    if (weeklyActualWorkHours
+            + todayScheduledWorkHours
+            > WEEKLY_WORK_LIMIT) {
+
+        throw new GetOutException();
+    }
+}
 
 
  // =====================================================

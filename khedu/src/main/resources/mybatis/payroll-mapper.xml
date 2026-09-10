@@ -410,8 +410,8 @@
 	<select id="findContractListByEmployeeAndPeriod" resultType = "ContractDto">
 	
 	select *
-	from employement_contract
-	and employee_no = #{employeeNo}
+	from employment_contract
+	where employee_no = #{employeeNo}
 	and contract_start <![CDATA[<]]>#{endDate}
 
   	and (
@@ -629,6 +629,145 @@
 </select>
 
 
+
+<select id="selectSearchList"
+        parameterType="ContractListSearchVO"
+        resultType="ContractHistoryResponseVO">
+
+    select *
+    from (
+        select inner_table.*,
+               rownum rn
+        from (
+            select
+                C.contract_no,
+                C.employee_no,
+                C.wage_type,
+                C.base_wage,
+                C.contract_start,
+                C.contract_end,
+                C.contract_status,
+                C.signed_time,
+                C.weekly_holiday_day,
+                A.account_name as accountName
+            from employment_contract C
+            join employee E
+                on E.employee_no = C.employee_no
+            join account A
+                on A.account_no = E.account_no
+	
+	
+			<where>
+
+        <!-- 직원 이름 -->
+        <if test="accountName != null
+                and accountName != ''">
+
+            and A.account_name
+                like '%' || #{accountName} || '%'
+
+        </if>
+
+
+        <!-- 계약 시작일 -->
+        <if test="contractStart != null">
+
+            and C.contract_start
+                = #{contractStart}
+
+        </if>
+
+
+        <!-- 계약 종료일 -->
+        <if test="contractEnd != null">
+
+            and C.contract_end
+                = #{contractEnd}
+
+        </if>
+
+
+        <!-- 직원 상태 -->
+        <if test="employeeStatus != null
+                and employeeStatus != ''">
+
+            and E.employee_status
+                = #{employeeStatus}
+
+        </if>
+
+    </where>
+            
+
+            order by
+                C.contract_start desc,
+                C.contract_no desc
+
+        ) inner_table
+
+        where rownum &lt;= #{endRow}
+    )
+
+    where rn &gt;= #{beginRow}
+
+</select>
+
+
+<select id="selectCount"
+        parameterType="ContractListSearchVO"
+        resultType="int">
+
+    select count(*)
+    from employment_contract C
+    join employee E
+        on E.employee_no = C.employee_no
+    join account A
+        on A.account_no = E.account_no
+
+    <where>
+
+        <!-- 직원 이름 -->
+        <if test="accountName != null
+                and accountName != ''">
+
+            and A.account_name
+                like '%' || #{accountName} || '%'
+
+        </if>
+
+
+        <!-- 계약 시작일 -->
+        <if test="contractStart != null">
+
+            and trunc(C.contract_start)
+                = #{contractStart}
+
+        </if>
+
+
+        <!-- 계약 종료일 -->
+        <if test="contractEnd != null">
+
+            and trunc(C.contract_end)
+                = #{contractEnd}
+
+        </if>
+
+
+        <!-- 직원 상태 -->
+        <if test="employeeStatus != null
+                and employeeStatus != ''">
+
+            and E.employee_status
+                = #{employeeStatus}
+
+        </if>
+
+    </where>
+
+</select>
+
+
 <!-- ======================== 급여 ======================== -->
 
 <!-- 급여번호 생성 -->
@@ -786,14 +925,14 @@
 
 <!-- 급여 공제 수정 -->
 <update id="deductionUpdate">
-	update payroll_deduction
-	set base_amount = #{baseAmount},
-		deduction_rate = #{deductionRate},
-		fixed_deduction_amount = #{fixedDeductionAmount},
-		deduction_amount = #{deductionAmount},
-		deduction_basis_year = #{deductionBasisYear},
-		deduction_note = #{deductionNote}
-	where deduction_no = #{deductionNo}
+    update payroll_deduction
+    set base_amount = #{baseAmount},
+        deduction_rate = #{deductionRate},
+        fixed_deduction_amount = #{fixedDeductionAmount},
+        deduction_amount = #{deductionAmount},
+        deduction_basis_year = #{deductionBasisYear},
+        deduction_note = #{deductionNote}
+    where deduction_no = #{deductionNo}
 </update>
 
 <!-- ======================== 급여 지급 ======================== -->

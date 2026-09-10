@@ -8,15 +8,17 @@ import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 @Component
 public class AdminChecker {
 
-	public void AdminCheck(TokenParseResponseVO parseVO) {
+	public boolean AdminCheck(TokenParseResponseVO parseVO) {
 
-		  boolean isAdmin =
-		            parseVO.getRoleNames()
-		                    .stream()
-		                    .anyMatch("ADMIN"::equals);
 
-		    if (!isAdmin)
-		        throw new YouAreNotAdminException();
+	    if (parseVO == null
+	            || parseVO.getRoleNames() == null) {
+
+	        return false;
+	    }
+
+	    return parseVO.getRoleNames()
+	            .contains("ADMIN");
 	}
 
 // 오토와이어드 하신 다음 클래스 호출 후 어드민 체크 쓰면 됩니다.
