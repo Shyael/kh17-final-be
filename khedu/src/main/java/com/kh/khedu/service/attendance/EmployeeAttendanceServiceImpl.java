@@ -19,6 +19,7 @@ import com.kh.khedu.dao.payroll.EmployeeWorkScheduleDao;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.dto.payroll.EmployeeAttendanceDto;
 import com.kh.khedu.dto.payroll.EmployeeWorkScheduleDto;
+import com.kh.khedu.error.AttendanceTargetChecker;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
@@ -57,6 +58,8 @@ public class EmployeeAttendanceServiceImpl
     @Autowired
     private EmployeeDao employeeDao;
     
+    @Autowired
+    private AttendanceTargetChecker attendanceTargetChecker;
 
     @Override
     @Transactional(readOnly = true)
@@ -115,7 +118,7 @@ public class EmployeeAttendanceServiceImpl
         if (!"직원".equals(
                 parseVO.getAccountType())) throw new GetOutException();
         
-
+        attendanceTargetChecker.check(parseVO);
 
         // 로그인 계정 기준 직원정보 조회
         
@@ -388,6 +391,7 @@ public class EmployeeAttendanceServiceImpl
         throw new GetOutException();
     }
 
+    attendanceTargetChecker.check(parseVO);
 
     // 로그인 계정 기준 직원정보 조회
     EmployeeDetailVO employeeDetailVO =
