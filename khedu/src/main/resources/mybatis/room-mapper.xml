@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.room">
+
+	<!-- 방 생성 -->
+	<select id="roomSequence" resultType="int">
+		select room_seq.nextval from dual
+	</select>
+	<insert id="create">
+		insert into room (
+			room_no, room_owner, room_type
+		)
+		values( 
+			#{roomNo} , #{roomOwner} , #{roomType}
+		)
+	</insert>
+	
+	<!-- 방 참가 -->
+	<select id="roomUserSequence" resultType="int">
+		select room_user_seq.nextval from dual
+	</select>
+	<insert id="createRoomUser">
+		insert into room_user (
+			room_user_no, room_no, account_no
+		)
+		values( 
+			#{roomUserNo} , #{roomNo} , #{accountNo}
+		)
+	</insert>
+	
+	<!-- 방 상세 -->
+	<select id="find" resultType="RoomVO">
+		select	r.*,
+				(
+			        select count(*) 
+			        from message msg 
+			        where msg.message_room = r.room_no
+			          and msg.message_time > NVL(r.last_employee_read_time, to_date('1970-01-01', 'YYYY-MM-DD'))
+			    ) AS unread_cnt
+		  from	room r
+		 where	r.room_no = #{roomNo}
+	</select>
+	<select id="check" resultType="RoomVO">
+		select	r.*,
+				(
+			        select count(*) 
+			        from message msg 
+			        inner join message_chat mc on mc.message_no = msg.message_no
+			        where msg.message_room = r.room_no
+			          and mc.message_sender_no != #{roomOwner}
+			          and msg.message_time > NVL(ru.last_read_time, to_date('1970-01-01', 'YYYY-MM-DD'))
+			    ) AS unread_cnt
+		  from	room r
+		  inner join room_user ru on ru.room_no = r.room_no
+		 where	r.room_owner = #{roomOwner}
+		   and	r.room_type = '상담'
+	</select> 
+	
+	<!-- 상담 채팅방 목록 -->
+	<select id="consultList" resultType="RoomListVO">
+		select 
+		    R.*,
+		    A.account_type,
+		    A.account_name,
+		    M.last_time,
+		    M.last_content,
+		    NVL(U.cnt, 0) cnt,
+		    (
+		        select count(*) 
+		        from message msg 
+		        inner join message_chat mc on mc.message_no = msg.message_no 
+		        where msg.message_room = r.room_no 
+		          and mc.message_sender_no = r.room_owner
+		          and (r.last_employee_read_time is null or msg.message_time > r.last_employee_read_time)
+		    ) as unread_cnt, 
+		    'N' enter
+		from room R 
+		    left join (
+		        select room_no, count(*) cnt 
+		        from room_user 
+		        group by room_no
+		    ) U on R.room_no = U.room_no
+		    inner join (
+		        select
+		        	message_room,
+		        	max(message_time) as last_time,
+		        	max(message_content) keep (dense_rank last order by message_time) as last_content
+		        from message 
+		        group by message_room
+		    ) M on R.room_no = M.message_room
+		    inner join account A on A.account_no = R.room_owner
+		where R.room_type = '상담'
+		order by M.last_time desc
+	</select>
+	<!-- 방 목록(+인원수+참여여부) -->
+	<select id="listUpgrade" resultType="RoomListVO">
+		select 
+		    R.*, 
+		    nvl(U.cnt, 0) cnt, 
+		    nvl2(MY.account_id, 'Y', 'N') enter
+		from room R 
+		    left outer join (
+		        select room_no, count(*) cnt from room_user group by room_no
+		    ) U on R.room_no = U.room_no
+		    left outer join (
+		        select * from room_user where account_no = #{accountNo}
+		    ) MY on R.room_no = MY.room_no
+		order by R.room_no asc
+	</select>
+	
+	<!-- 참여자 명단 조회 -->
+	<select id="member" resultType="int">
+		select 	account_no from room_user
+		 where 	room_no = #{roomNo}
+		order by account_no asc
+	</select>
+	
+	<!-- 참여자 정보(아이디, 등급, 닉네임) 조회 -->
+	<select id="memberInfo" resultType="RoomUserVO">
+		select 
+			ACC.account_no, 
+			ACC.account_name, 
+			ACC.account_type 
+		from room_user RU
+			inner join account ACC on RU.account_no = ACC.account_no
+		where room_no = #{roomNo}
+	</select>
+	
+	<!-- 직원 읽음 처리 -->
+	<update id="readRoomEmployee">
+		update	room
+		   set	last_employee_read_time = systimestamp
+		 where	room_no = #{roomNo}
+	</update>
+	
+	<!-- 채팅 참여자 읽음 처리 -->
+	<update id="readRoomUser">
+		update	room_user
+		   set	last_read_time = systimestamp
+		 where	room_no = #{roomNo}
+		   and	account_no = #{accountNo}
+	</update>
+	
+</mapper>

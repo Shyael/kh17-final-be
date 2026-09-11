@@ -6,7 +6,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.AccountDto;
-import com.kh.khedu.vo.register.AccountVO;
+import com.kh.khedu.vo.account.AccountRegisterVO;
+import com.kh.khedu.vo.account.AccountTypeNoVO;
+import com.kh.khedu.vo.account.FindAccountIdRequestVO;
+import com.kh.khedu.vo.account.FindAccountPasswordRequestVO;
 
 @Repository
 public class AccountDaoMybatis implements AccountDao {
@@ -22,7 +25,7 @@ public class AccountDaoMybatis implements AccountDao {
 	}
 	
 	@Override
-	public void insert(AccountVO accountVO) {
+	public void insert(AccountRegisterVO accountVO) {
 		String orgin = accountVO.getAccountPassword(); 
 		String encrypt = passwordEncdoer.encode(orgin);
 		accountVO.setAccountPassword(encrypt);
@@ -30,8 +33,8 @@ public class AccountDaoMybatis implements AccountDao {
 	}
 
 	@Override
-	public AccountDto selectone(String accountId) {
-		return sqlSession.selectOne("mapper.account.find");
+	public AccountDto selectOne(String accountId) {
+		return sqlSession.selectOne("mapper.account.find", accountId);
 	}
 
 	@Override
@@ -41,9 +44,42 @@ public class AccountDaoMybatis implements AccountDao {
 	}
 
 	@Override
-	public boolean checkAvailablePhone(String accountPhone) {
-		int count = sqlSession.selectOne("mapper.account.checkAccountPhone", accountPhone);
-		return count == 0;
+	public AccountTypeNoVO selectTypeNo(int accountNo) {
+		return sqlSession.selectOne("mapper.account.findCorrectly", accountNo);
 	}
 
+	@Override
+	public boolean updateAccountPassword(AccountDto accountDto) {
+		String orgin = accountDto.getAccountPassword(); 
+		String encrypt = passwordEncdoer.encode(orgin);
+		accountDto.setAccountPassword(encrypt);
+		return sqlSession.update("mapper.account.updateAccountPassword", accountDto) > 0;
+	}
+
+	@Override
+	public AccountDto findAccountId(FindAccountIdRequestVO request) {
+		return sqlSession.selectOne("mapper.account.findAccountId", request);
+	}
+
+	@Override
+	public AccountDto findAccountPassword(FindAccountPasswordRequestVO request) {
+		return sqlSession.selectOne("mapper.account.findPasswordAccount", request);
+	}
+
+	@Override
+	public AccountDto selectOneByAccountNo(int accountNo) {
+		return sqlSession.selectOne("mapper.account.findFromNo", accountNo);
+	}
+	
+	
+	//수정
+	@Override
+	public boolean updateAll(AccountDto accountDto) {
+		return sqlSession.update("mapper.account.updateAll", accountDto) > 0;
+	}
+
+	@Override
+	public String selectOneByStudentNo(int studentNo) {
+		return sqlSession.selectOne("mapper.account.findAccountNameByStudentNo", studentNo);
+	}
 }

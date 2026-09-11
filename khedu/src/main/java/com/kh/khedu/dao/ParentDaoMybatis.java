@@ -1,0 +1,49 @@
+package com.kh.khedu.dao;
+
+import java.util.List;
+
+import org.apache.ibatis.session.SqlSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+import com.kh.khedu.dto.ParentDto;
+import com.kh.khedu.vo.parent.ParentDetailVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
+
+@Repository
+public class ParentDaoMybatis implements ParentDao {
+	
+	@Autowired
+	private SqlSession sqlSession;
+	
+	@Override
+	public int sequence() {
+		return sqlSession.selectOne("mapper.parent.sequence");
+	}
+
+	@Override
+	public void insert(ParentDto parentDto) {
+		sqlSession.insert("mapper.parent.join", parentDto);
+	}
+
+	@Override
+	public ParentStudentVO selectOneRelationByAccountNo(Integer accountNo) {
+		return sqlSession.selectOne("mapper.parent.findParentStudentByAccountNo", accountNo);
+	}
+
+	@Override
+	public ParentDto selectOneByAccountNo(Integer accountNo) {
+		return sqlSession.selectOne("mapper.parent.findByAccountNo", accountNo);
+	}
+	
+	@Override
+	public List<ParentDetailVO> findParentDetailByStudentNo(Integer studentNo) {
+		return sqlSession.selectList("mapper.parent.findParentDetailByStudentNo", studentNo);
+	}
+	
+	@Override
+	public List<ParentDetailVO> searchParents(String keyword) {
+	    return sqlSession.selectList("mapper.parent.searchParents", keyword);
+	}
+
+}

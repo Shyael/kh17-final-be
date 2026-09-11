@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.course">
+	<!-- 특정 강사가 현재 수업중인 강의 목록 -->
+	<select id="selectTeachingListByEmployee" resultType="CourseDto">
+	    select *
+	    from course
+	    where employee_no = #{employeeNo}
+	      and course_status = '진행중'
+	    order by course_no desc
+	</select>
+	
+	<!-- 강좌 등록 -->
+	<select id="sequence" resultType="int">
+		select course_seq.nextval from dual
+	</select>
+	<insert id="add">
+		insert into course(
+			course_no,
+			employee_no,
+			grade_no,
+			course_title,
+			course_subject,
+			course_limit,
+			course_fee,
+			course_info,
+			course_type			
+		) 
+		values(
+			#{courseNo},
+			#{employeeNo},
+			#{gradeNo},
+			#{courseTitle},
+			#{courseSubject},
+			#{courseLimit},
+			#{courseFee},
+			#{courseInfo},
+			#{courseType}
+		)
+	</insert>
+	<!-- scheduleNo로 강좌 조회 -->
+	<select id="selectOneByScheduleNo" resultType="CourseDto">
+		select c.* from course c 
+		join schedule s on c.course_no = s.course_no
+		where s.schedule_no = #{scheduleNo}
+	</select>
+	<!-- courseNo로 강좌 조회 -->
+	<select id="selectOneByCourseNo" resultType="CourseDto">
+		select * from course where course_no = #{courseNo}
+	</select>
+	
+	<!-- 강사 사번(employee_no)로 강사 이름 조회 -->
+	<select id="selectTutorNameByEmployeeNo" resultType="String">
+		select a.account_name
+		from employee e
+		join account a on e.account_no = a.account_no
+		where e.employee_no = #{employeeNo}
+	</select>
+	
+	<!-- courseStatus를 모집중 -> 진행중으로 수정 -->
+	<update id="updateStatus">
+		update course
+		set course_status = #{status}
+		where course_no = #{courseNo}
+	</update>
+	
+	
+	<!-- 강의의 대상 학년 조회 -->
+    <select id="selectCourseGrade" resultType="string">
+        select G.grade_level
+        from course C
+        inner join grade G on C.grade_no = G.grade_no
+        where C.course_no = #{courseNo}
+    </select>
+    
+    <!-- 강의 현재 수강 인원 갱신 -->
+    <update id="updateCourseCurrentCount">
+        update course
+        set course_current_count = (
+            select count(*)
+            from student_course
+            where course_no = #{courseNo}
+              -- 상태가 신청/수강중인 학생만 카운트
+              and student_course_status in ('신청', '수강중')
+        )
+        where course_no = #{courseNo}
+    </update>
+    
+    <!-- courseNo로 학생 번호와 계정 정보 -->
+    <select id="selectCourseStudentList" resultType="CourseStudentListVO">
+	    SELECT 
+	        s.student_no                                       AS studentNo,
+	        ac.account_name                                    AS studentName,
+	        ac.account_phone                                   AS studentPhone,
+	        NVL(sc.student_course_status, '수강중')             AS studentStatus
+	    FROM student_course sc
+	    JOIN student s   ON sc.student_no = s.student_no
+	    JOIN account ac  ON s.account_no = ac.account_no
+	    WHERE sc.course_no = #{courseNo}
+	    ORDER BY ac.account_name ASC
+	</select>
+    
+    
+	<!-- 
+		검색 기능 구현을 위한 필요 구문 [1] [2] [3] 참조
+	 -->
+	
+	<!-- [1] 공통 검색 조건 (목록 조회와 전체 카운트에서 재사용) -->
+	<sql id="courseSearchCondition">
+		<where>
+			<if test="courseTitle != null and courseTitle != ''">
+				and c.course_title like '%' || #{courseTitle} || '%'
+			</if>
+			<if test="courseSubject != null and courseSubject !=''">
+				and c.course_subject = #{courseSubject} 
+			</if>
+			<if test="gradeNo != null">
+				and c.grade_no = #{gradeNo}
+			</if>
+			<if test="courseStatus != null and courseStatus != ''">
+				and c.course_status = #{courseStatus}
+			</if>
+		</where>
+	</sql>
+	
+	
+	<!-- [2] 강좌 검색 조회  -->
+	<select id="searchList" resultType="CourseListVO">
+		select *
+		from (
+			select
+				inner_table.*,
+				ROWNUM AS rn
+			from (
+				select 
+					c.course_no,
+					c.course_title,
+					c.course_subject,
+					g.grade_level,		
+					a.account_name AS tutor_name,
+					c.course_limit,
+					c.course_current_count,
+					(
+					    SELECT LISTAGG(
+					        s.schedule_week
+					        || ' '
+					        || s.schedule_start
+					        || '~'
+					        || s.schedule_end,
+					        '/'
+					    ) WITHIN GROUP (
+					        ORDER BY s.schedule_start
+					    )
+					    FROM schedule s
+					    WHERE s.course_no = c.course_no
+					) AS schedule_info,	
+					c.course_status		
+				from course c
+			    left join employee e
+			        on c.employee_no = e.employee_no
+			    left join account a
+			        on e.account_no = a.account_no
+			    left join grade g
+			        on c.grade_no = g.grade_no
+				<!-- 공통 검색 조건 include -->
+				<include refid="courseSearchCondition" />
+				order by c.course_no desc
+			) inner_table
+			<![CDATA[
+			where ROWNUM <= #{endRow}
+			]]>
+		)
+		<![CDATA[
+		where rn >= #{beginRow}
+		]]>
+	</select>
+	
+	<!-- [3] 총 데이터 건수 조회 (페이지 번호 계산용) -->
+	<select id="selectCount" resultType="int">
+		select count(*)
+		from course c
+			<!-- 공통 검색 조건 include -->
+			<include refid="courseSearchCondition" />
+	</select>
+	
+	<!-- 학생이 현재 수강 중인 강의 목록 -->
+	<select id="selectListByStudent" resultType="StudentCourseListVO">
+	    select
+	        c.course_no,
+	        c.course_title
+	
+	    from student_course sc
+	
+	    join course c
+	        on sc.course_no = c.course_no
+	
+	    where sc.student_no = #{studentNo}
+	      and sc.student_course_status = '수강중'
+	
+	    order by c.course_title asc
+	
+	</select>
+	
+	<!-- 관리용 전체 강의 목록 : 원장/데스크 -->
+	<select id="selectManageCourseList" resultType="CourseSimpleListVO">
+	    select
+	        course_no,
+	        course_title
+	    from course
+	    order by course_title asc
+	</select>
+	
+	<!-- 관리용 본인 담당 강의 목록 : 강사 -->
+	<select id="selectManageCourseListByEmployee" resultType="CourseSimpleListVO">
+	    select
+	        course_no,
+	        course_title
+	    from course
+	    where employee_no = #{employeeNo}
+	    order by course_title asc
+	</select>
+</mapper>

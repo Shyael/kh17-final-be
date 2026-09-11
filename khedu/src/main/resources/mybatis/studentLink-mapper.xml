@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.studentLink">
+	<!-- 시퀀스 생성 -->
+	<select id="sequenceLink" resultType="int">
+		select student_link_seq.nextval from dual
+	</select>
+	
+	
+	<!-- 학생번호로 studentLink만료 -->
+	<update id="expireStudentLink">
+		update student_link
+		set link_expire = systimestamp
+		where student_no = #{studentNo}
+		and link_used_yn = 'N'
+		and link_expire > systimestamp
+	</update>
+	
+	<!-- 연동코드 정보 저장 -->
+	<insert id="insertStudentLink">
+		insert into student_link (
+			student_link_no,
+	        student_no,
+	        link_code,
+	        link_expire,
+	        link_used_yn,
+	        student_link_ctime
+		)
+		values(
+			#{studentLinkNo},
+	        #{studentNo},
+	        #{linkCode},
+	        #{linkExpire},
+	        'N',
+	        SYSTIMESTAMP
+		)
+	</insert>
+	
+	<!-- 연동코드 정보 조회 -->
+	<select id="findByLink" resultType="StudentLinkDto">
+		select * from student_link where link_code = #{linkCode}
+	</select>
+	
+	<!-- 사용된 연동코드 Y처리 -->
+	<update id="updateYN">
+		update student_link
+		set link_used_yn = 'Y'
+		where student_link_no = #{studentLinkNo}
+	</update>
+</mapper>

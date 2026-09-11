@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.classSession">
+	
+	<!-- ScheduleNo로 classSession내용 찾기 -->
+	<select id="selectTodaySession" resultType="ClassSessionDto">
+		select * from class_session 
+		where schedule_no = #{scheduleNo}
+		and session_start = #{sessionStart}
+	</select>
+	
+	<!-- classSessionNo생성 -->
+	<select id="sequence" resultType="int">
+		select session_seq.nextval from dual
+	</select>
+
+	<!-- classSession 등록 (기본 진행중) -->
+	<insert id="insert">
+		insert into class_session (
+			session_no,
+			schedule_no,
+			classroom_no,
+			session_start,
+			session_end
+		)
+		values(
+			#{sessionNo},
+			#{scheduleNo},
+			#{classroomNo},
+			#{sessionStart},
+			#{sessionEnd}
+		)
+	</insert>
+	
+	<!-- 관리자용 classSession 등록 (상태 직접 지정) -->
+	<insert id="insertByAdmin">
+		insert into class_session (
+			session_no,
+			schedule_no,
+			classroom_no,
+			session_start,
+			session_end,
+			session_status
+		)
+		values(
+			#{sessionNo},
+			#{scheduleNo},
+			#{classroomNo},
+			#{sessionStart},
+			#{sessionEnd},
+			#{sessionStatus}
+		)
+	</insert>
+	
+	<!-- sessionNo로 session조회 -->
+	<select id="selectOneBySessionNo" resultType="ClassSessionDto">
+		select * from class_session
+		where session_no = #{sessionNo}
+	</select>
+	
+	<!-- [수정1] 파라미터명 sessionStatus로 통일 및 session_end 업데이트 -->
+	<update id="updateSessionToEnd">
+		update class_session
+		set session_status = #{sessionStatus},
+		 	session_end = SYSTIMESTAMP
+		where session_no = #{sessionNo}
+	</update>
+
+	<!-- [추가1] 관리자용 단순 상태 변경 쿼리 (종료시각 강제덮어쓰기 방지) -->
+	<update id="updateStatusOnly">
+		update class_session
+		set session_status = #{sessionStatus}
+		where session_no = #{sessionNo}
+	</update>
+	
+	<!-- 세션의 담당 강사 사번 조회 (권한 검증용) -->
+	<select id="selectInstructorNoBySessionNo" resultType="Integer">
+	    SELECT c.employee_no
+	    FROM class_session cs
+	    JOIN schedule sc ON cs.schedule_no = sc.schedule_no
+	    JOIN course c ON sc.course_no = c.course_no
+	    WHERE cs.session_no = #{sessionNo}
+	</select>
+	
+	<!-- 수업이 만료되었는데, 진행중 상태를 스케줄러로 자동 종료로 전환 -->
+	<update id="autoCloseExpiredSessions">
+		update class_session
+		set session_status = '종료'
+		where session_status = '진행중'
+		and session_end &lt; CURRENT_TIMESTAMP
+	</update>
+
+	<!-- [추가2] 수강생 기준 현재 진행 중인 세션 조회 (학생 출결용) -->
+	<select id="selectCurrentRunningSessionByStudent" resultType="ClassSessionDto">
+		SELECT cs.*
+		FROM class_session cs
+		JOIN schedule sc ON cs.schedule_no = sc.schedule_no
+		JOIN registration r ON sc.course_no = r.course_no
+		WHERE r.student_no = #{studentNo}
+		  AND cs.session_status = '진행중'
+		  AND SYSDATE BETWEEN cs.session_start AND cs.session_end
+		  AND ROWNUM = 1
+	</select>
+	
+	<!-- 만료된(종료시각이 지난) 진행중 세션 목록 조회 -->
+	<select id="selectExpiredRunningSessions" resultType="ClassSessionDto">
+	    SELECT *
+	    FROM class_session
+	    WHERE session_status = '진행중'
+	      AND session_end &lt; SYSTIMESTAMP
+	</select>
+
+	<!-- 세션 상태 '종료'로 변경 -->
+	<update id="updateSessionStatusToClosed">
+	    UPDATE class_session
+	    SET session_status = '종료'
+	    WHERE session_no = #{sessionNo}
+	</update>
+
+</mapper>

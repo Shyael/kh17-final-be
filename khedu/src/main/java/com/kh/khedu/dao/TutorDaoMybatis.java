@@ -1,0 +1,104 @@
+package com.kh.khedu.dao;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.session.SqlSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+import com.kh.khedu.dto.TutorDto;
+import com.kh.khedu.vo.tutor.TutorDetailVO;
+import com.kh.khedu.vo.tutor.TutorEmployeeVO;
+import com.kh.khedu.vo.tutor.TutorListVO;
+import com.kh.khedu.vo.tutor.TutorSearchRequestVO;
+import com.kh.khedu.vo.tutor.TutorSearchVO;
+import com.kh.khedu.vo.tutor.TutorSubjectVO;
+
+@Repository
+public class TutorDaoMybatis implements TutorDao {
+
+	@Autowired
+	private SqlSession sqlSession;
+
+	@Override
+	public int sequence() {
+		return sqlSession.selectOne("mapper.tutor.sequence");
+	}
+
+	@Override
+	public void insert(TutorDto tutorDto) {
+		sqlSession.insert("mapper.tutor.insert", tutorDto);
+	}
+
+	@Override
+	public TutorDto selectOne(int tutorNo) {
+		return sqlSession.selectOne("mapper.tutor.selectOne", tutorNo);
+	}
+
+	@Override
+	public boolean update(TutorDto tutorDto) {
+		return sqlSession.update("mapper.tutor.update", tutorDto) > 0;
+	}
+
+	@Override
+	public boolean delete(int tutorNo) {
+		return sqlSession.delete("mapper.tutor.delete", tutorNo) > 0;
+	}
+
+	@Override
+	public TutorDetailVO selectDetail(int tutorNo) {
+		return sqlSession.selectOne(
+				"mapper.tutor.selectDetail",
+				tutorNo
+		);
+	}
+
+	@Override
+	public List<TutorEmployeeVO> selectAvailableEmployeeList() {
+		return sqlSession.selectList(
+				"mapper.tutor.selectAvailableEmployeeList"
+		);
+	}
+
+	@Override
+	public void connect(int tutorNo, int attachNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("tutorNo", tutorNo);
+		params.put("attachNo", attachNo);
+		sqlSession.insert("mapper.tutor.connect", params);
+	}
+
+	@Override
+	public Integer selectImage(int tutorNo) {
+		return sqlSession.selectOne("mapper.tutor.selectImage",tutorNo);
+	}
+
+	@Override
+	public int checkTutorSubject(int employeeNo, int academySubjectNo) {
+		Map<String, Object> param = new HashMap<>();
+		
+		param.put("employeeNo", employeeNo);
+		param.put("academySubjectNo", academySubjectNo);
+		
+		return sqlSession.selectOne("mapper.tutor.checkTutorSubject", param);
+	}
+
+	@Override
+	public List<TutorSubjectVO> tutorListBySubject() {
+		return sqlSession.selectList("mapper.tutor.tutorListBySubject");
+	}
+
+	@Override
+	public List<TutorListVO> selectSearchList(TutorSearchVO search) {
+		return sqlSession.selectList("mapper.tutor.selectSearchList", search);
+	}
+
+	@Override
+	public int selectCount(TutorSearchVO search) {
+		return sqlSession.selectOne("mapper.tutor.selectCount", search);
+	}
+
+
+}

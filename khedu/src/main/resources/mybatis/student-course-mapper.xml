@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.studentCourse">
+	<insert id="insert">
+		insert into student_course(
+			course_no, 
+			student_no, 
+			student_course_status
+		)
+		values(
+			#{courseNo}, 
+			#{studentNo}, 
+			'수강중'
+		)	
+	</insert>
+	
+	<update id="update">
+		update student_course set 
+			student_course_status = #{studentCourseStatus} 
+		where student_no = #{studentNo} and course_no = #{courseNo}
+	</update>
+	
+	<!-- 특정 학생의 수강 내역 전체 조회 -->
+    <select id="selectListByStudentNo" resultType="StudentCourseVO">
+        select
+            SC.course_no as courseNo,
+            SC.student_no as studentNo,
+            SC.student_course_status as studentCourseStatus,
+            C.course_title as courseTitle,
+            C.course_subject as courseSubject,
+            C.course_type as courseType,
+            C.course_status as courseStatus
+        from 
+            student_course SC
+        inner join 
+            course C on SC.course_no = C.course_no
+        where 
+            SC.student_no = #{studentNo}
+        order by 
+            SC.course_no desc
+    </select>
+    
+    <!-- 수강 신청 전: 학년(텍스트) 및 시간표 겹침 일괄 검증 -->
+    <select id="checkEnrollmentValidation" resultType="string">
+        select 
+            case 
+                -- 2. 시간표 겹침 검증 (기존과 동일하게 완벽 작동!)
+                when (
+                    select count(*)
+                    from schedule new_sch
+                    inner join schedule old_sch on new_sch.schedule_week = old_sch.schedule_week
+                    inner join student_course sc on old_sch.course_no = sc.course_no
+                    where new_sch.course_no = #{courseNo}
+                      and sc.student_no = #{studentNo}
+                      and sc.student_course_status in ('신청', '수강중')
+                      and new_sch.schedule_start &lt; old_sch.schedule_end
+                      and new_sch.schedule_end &gt; old_sch.schedule_start
+                ) > 0 
+                then 'TIME_CONFLICT'
+                
+                -- 3. 모두 통과하면 환영합니다!
+                else 'OK'
+            end as validation_result
+        from dual
+    </select>
+    
+    <!-- 강의목록 전체 조회 (모집중인 강의만) -->
+    <select id="selectAllCourse" resultType="AvailableCourseVO">
+        select
+            C.course_no as courseNo, 
+            C.course_title as courseTitle, 
+            C.course_subject as courseSubject,
+            G.grade_level as gradeLevel,
+            A.account_name as teacherName
+        from 
+            course C
+        inner join 
+            grade G on C.grade_no = G.grade_no
+        inner join 
+            employee E on C.employee_no = E.employee_no
+        inner join 
+            account A on E.account_no = A.account_no
+        where 
+            C.course_status = '모집중' 
+        order by 
+            C.course_subject desc
+    </select>
+    
+    <!-- 1. 수강 신청 모달용: 시간표가 겹치지 않는 모집중 강의만 조회 -->
+    <select id="selectAvailableCourseList" resultType="AvailableCourseVO">
+        select
+            c.course_no as courseNo, 
+            c.course_title as courseTitle, 
+            c.course_subject as courseSubject,
+            g.grade_level as gradeLevel,
+            a.account_name as teacherName
+        from 
+            course c
+        inner join 
+            grade g on c.grade_no = g.grade_no
+        inner join 
+            employee e on c.employee_no = e.employee_no
+        inner join 
+            account a on e.account_no = a.account_no
+        where 
+            c.course_status = '모집중'
+            and not exists (
+                select 1
+                from schedule target_sch
+                inner join schedule my_sch on target_sch.schedule_week = my_sch.schedule_week
+                inner join student_course sc on my_sch.course_no = sc.course_no
+                where target_sch.course_no = c.course_no
+                  and sc.student_no = #{studentNo}
+                  and sc.student_course_status in ('신청', '수강중')
+                  and target_sch.schedule_start &lt; my_sch.schedule_end
+                  and target_sch.schedule_end &gt; my_sch.schedule_start
+            )
+        order by 
+            c.course_subject desc
+    </select>
+
+    <!-- 2. 수강 취소 (삭제) -->
+    <delete id="cancelCourse">
+        delete from student_course
+        where student_no = #{studentNo} 
+          and course_no = #{courseNo}
+    </delete>
+</mapper>

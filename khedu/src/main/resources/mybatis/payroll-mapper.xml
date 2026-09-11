@@ -1,0 +1,1025 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.payroll">
+
+
+	<!-- 근로계약 번호 생성 -->
+	<select id="contractSequence" resultType="long">
+		select
+		employment_contract_seq.nextval from dual
+	</select>
+
+
+	<!-- 신규 근로계약 등록 -->
+	<insert id="contractAdd">
+		insert into employment_contract(
+		contract_no,
+		employee_no,
+		wage_type,
+		base_wage,
+		daily_work_hours,
+		weekly_work_hours,
+		written_break_minutes,
+		contract_start,
+		contract_end,
+		payday,
+		contract_status,
+		contract_content,
+		weekly_holiday_day
+		)
+		values(
+		#{contractNo},
+		#{employeeNo},
+		#{wageType},
+		#{baseWage},
+		#{dailyWorkHours},
+		#{weeklyWorkHours},
+		#{writtenBreakMinutes},
+		#{contractStart},
+		#{contractEnd},
+		#{payday},
+		#{contractStatus},
+		#{contractContent},
+		#{weeklyHolidayDay}
+		)
+	</insert>
+
+
+	<!-- 계약번호로 근로계약 전체 조회 -->
+	<select id="find" resultType="ContractDto">
+		select *
+		from employment_contract
+		where contract_no = #{contractNo}
+	</select>
+
+
+	<!-- 직원의 현재 계약 조회 -->
+	<select id="findCurrent" resultType="ContractDto">
+		select *
+		from employment_contract
+		where employee_no = #{employeeNo}
+		and
+		contract_status = 'active'
+		and contract_start <![CDATA[ <= ]]>
+		systimestamp
+		and (
+		contract_end is null
+		or contract_end <![CDATA[ >= ]]>
+		systimestamp
+		)
+		order by contract_start desc
+	</select>
+
+
+	<!-- 직원의 과거 계약 조회 -->
+	<select id="findPast" resultType="ContractDto">
+		select *
+		from employment_contract
+		where employee_no = #{employeeNo}
+		and
+		contract_status = 'ended'
+		and contract_end is not null
+		and contract_end <![CDATA[ <= ]]>
+		systimestamp
+		and contract_start <![CDATA[ <= ]]>
+		systimestamp
+		order by contract_start desc
+	</select>
+
+
+	<!-- 직원의 전체 근로계약 조회 -->
+	<select id="findAllByEmployee" resultType="ContractDto">
+		select *
+		from
+		employment_contract
+		where employee_no = #{employeeNo}
+		order by
+		contract_start desc
+	</select>
+
+
+	<!-- 계약의 급여조건 조회 -->
+	<select id="findWageCondition" resultType="ContractDto">
+		select
+		contract_no,
+		wage_type,
+		base_wage
+		from employment_contract
+		where contract_no =
+		#{contractNo}
+	</select>
+
+
+	<!-- 계약의 근로시간 조건 조회 -->
+	<select id="findWorkTimeCondition" resultType="ContractDto">
+		select
+		contract_no,
+		daily_work_hours,
+		weekly_work_hours
+		from employment_contract
+		where contract_no = #{contractNo}
+	</select>
+
+
+	<!-- 계약기간 및 계약상태 조회 -->
+	<select id="findPeriodAndStatus" resultType="ContractDto">
+		select
+		contract_no,
+		contract_start,
+		contract_end,
+		contract_status
+		from employment_contract
+		where contract_no = #{contractNo}
+	</select>
+
+
+	<!-- 급여 지급예정일 조회 -->
+	<select id="findPayday" resultType="int">
+		select payday
+		from
+		employment_contract
+		where contract_no = #{contractNo}
+	</select>
+
+
+	<!-- 계약 서명정보 조회 -->
+	<select id="findSignature"
+        resultType="ContractDto">
+
+    select
+        contract_no,
+        employee_no,
+        contract_start,
+        contract_end,
+        employee_signature,
+        employer_signature,
+        signed_time,
+        contract_status
+
+    from employment_contract
+
+    where contract_no = #{contractNo}
+
+</select>
+
+	<!-- 계약 도중 근로계약 내용 수정 -->
+	<update id="update">
+		update employment_contract
+
+		<set>
+			<if test="wageType != null">
+				wage_type = #{wageType},
+			</if>
+
+			<if test="baseWage != null">
+				base_wage = #{baseWage},
+			</if>
+
+			<if test="dailyWorkHours != null">
+				daily_work_hours = #{dailyWorkHours},
+			</if>
+
+			<if test="weeklyWorkHours != null">
+				weekly_work_hours = #{weeklyWorkHours},
+			</if>
+
+			<if test="contractStart != null">
+				contract_start = #{contractStart},
+			</if>
+
+			<if test="contractEnd != null">
+				contract_end = #{contractEnd},
+			</if>
+
+			<if test="payday != null">
+				payday = #{payday},
+			</if>
+
+			<if test="contractContent != null">
+				contract_content = #{contractContent},
+			</if>
+
+			<if test="writtenBreakMinutes != null">
+				written_break_minutes = #{writtenBreakMinutes}
+			</if>
+			
+			<if test="weeklyHolidayDay != null">
+				weekly_holiday_day = #{weeklyHolidayDay}
+			</if>
+		</set>
+
+		where contract_no = #{contractNo}
+	</update>
+
+
+	<!-- 근로계약 기간 연장 -->
+	<update id="extendContract">
+		update employment_contract
+		set contract_end =
+		#{contractEnd}
+		where contract_no = #{contractNo}
+		and contract_status !=
+		'ended'
+	</update>
+
+
+	<!-- 양측 서명 완료 전 근로계약 내용 수정 -->
+	<update id="updateDraft">
+
+    update employment_contract
+
+    set wage_type = #{wageType},
+        base_wage = #{baseWage},
+        daily_work_hours = #{dailyWorkHours},
+        weekly_work_hours = #{weeklyWorkHours},
+        written_break_minutes = #{writtenBreakMinutes},
+        contract_start = #{contractStart},
+        contract_end = #{contractEnd},
+        payday = #{payday},
+        contract_content = #{contractContent}
+        weekly_holiday_day=#{weeklyHolidayDay}
+
+    where contract_no = #{contractNo}
+      and signed_time is null
+      and (
+            employee_signature is null
+            or employer_signature is null
+          )
+
+</update>
+
+
+	<!-- 을(직원) 서명 -->
+	<!-- 양측 서명 완료 전에는 자신의 서명을 다시 작성할 수 있음 -->
+	<update id="employeeSign">
+		update employment_contract
+		set employee_signature =
+		#{employeeSignature}
+		where contract_no = #{contractNo}
+		and signed_time
+		is null
+	</update>
+
+
+	<!-- 갑(원장) 서명 -->
+	<!-- 양측 서명 완료 전에는 자신의 서명을 다시 작성할 수 있음 -->
+	<update id="employerSign">
+		update employment_contract
+		set employer_signature =
+		#{employerSignature}
+		where contract_no = #{contractNo}
+		and signed_time
+		is null
+	</update>
+
+
+	<!-- 양측 서명 완료 -->
+	<update id="completeSign">
+		update employment_contract
+		set signed_time =
+		systimestamp,
+		contract_status = #{contractStatus}
+		where contract_no =
+		#{contractNo}
+		and employee_signature is not null
+		and employer_signature
+		is not null
+		and signed_time is null
+	</update>
+
+
+	<!-- 시작일이 도래한 체결완료 계약 활성화 -->
+	<update id="activateContracts">
+		update employment_contract
+		set contract_status = 'active'
+		where
+		contract_status = 'scheduled'
+		and signed_time is not null
+		and
+		contract_start <![CDATA[ <= ]]>
+		systimestamp
+		and (
+		contract_end is null
+		or contract_end <![CDATA[ > ]]>
+		systimestamp
+		)
+
+	</update>
+
+
+	<!-- 종료일이 도래한 계약 종료 -->
+	<update id="endContracts">
+		update employment_contract
+		set contract_status = 'ended'
+		where
+		contract_status = 'active'
+		and contract_end is not null
+		and contract_end <![CDATA[ <= ]]>
+		systimestamp
+
+	</update>
+
+	<!--도중 종료 하는 경우 -->
+	<update id="exitContracts">
+
+		update employment_contract
+
+		set contract_status = 'ended',
+		contract_end = systimestamp
+
+		where contract_status = 'active'
+		and contract_no = #{contractNo}
+
+	</update>
+
+	<!-- 계약 대상 직원 정보 조회 -->
+	<select id="findContractEmployeeInfo"
+		resultType="ContractEmployeeInfoVO">
+		select employee_status,
+		employee_type,
+		account_no
+		from
+		employee
+		where employee_no = #{employeeNo}
+	</select>
+
+	<!-- 계약 대상 직원 인적사항 조회 -->
+	<select id="findContractPersonInformation"
+		resultType="ContractEmployeeInfoResponseVO">
+		select account_name,
+		account_phone
+		from account
+		where
+		account_no = #{accountNo}
+	</select>
+
+	<!-- 계약 대상 강사 정보 조회 -->
+	<select id="findContractTeacher" resultType="ContractTeacherVO">
+		select tutor_no
+		from
+		tutor
+		where employee_no = #{employeeNo}
+	</select>
+
+	<!-- 계약 대상 강사 과목 조회 -->
+	<select id="findContractTeacherSubject" resultType="int">
+		select
+		tutor_subject_no
+		from tutor_subject
+		where tutor_no = #{tutorNo}
+		order by
+		tutor_subject_no
+	</select>
+
+	<!-- 로그인 계정번호로 직원번호 조회 -->
+	<select id="findEmployeeNoByAccountNo" resultType="Integer">
+		select
+		employee_no
+		from employee
+		where account_no = #{accountNo}
+	</select>
+
+
+	<!-- 스케줄 날짜로 계약 번호 조회 -->
+	<!-- 해당 직원의 스케줄 날짜 기준 계약 번호 조회 -->
+	<select id="findContractByPeriod" resultType="Long">
+
+		select contract_no
+		from (
+		select contract_no
+		from employment_contract
+		where employee_no = #{employeeNo}
+		and contract_start <![CDATA[<=]]>
+		#{scheduledWorkDate}
+		and (
+		contract_end is null
+		or contract_end >=
+		#{scheduledWorkDate}
+		)
+		order by contract_start desc
+		)
+		where rownum = 1
+
+	</select>
+	
+	
+	<select id="findContractListByEmployeeAndPeriod" resultType = "ContractDto">
+	
+	select *
+	from employment_contract
+	where employee_no = #{employeeNo}
+	and contract_start <![CDATA[<]]>#{endDate}
+
+  	and (
+        contract_end is null
+        or contract_end >= #{startDate}
+      )
+	
+	</select>
+
+
+	<!-- 기간 내 계약 직원번호 목록 조회 -->
+	<select id="findEmployeeNoByPeriod"
+        resultType="int">
+
+	select distinct employee_no
+	from employment_contract
+	where contract_start <![CDATA[ < ]]> #{endDate}
+	and (
+		contract_end is null
+		or contract_end >= #{startDate}
+	)
+
+	</select>
+	<select id="findContractByEmployeeNo" resultType="ContractDto">
+
+		select * from
+		employment_contract where employee_no = #{employee_no}
+
+	</select>
+
+
+	<!-- 직원의 진행중인 근로계약 조회 -->
+	<select id="findOpenContract" resultType="ContractDto">
+
+		select *
+		from (
+
+		select *
+		from employment_contract
+
+		where employee_no = #{employeeNo}
+
+		and contract_status in (
+		'pending',
+		'scheduled',
+		'active'
+		)
+
+		order by contract_start desc
+
+		)
+
+		where rownum = 1
+
+	</select>
+	
+	
+<!-- 근로조건 변경으로 기존 계약 종료일 설정 -->
+<update id="closeForConditionChange">
+
+    update employment_contract
+
+    set contract_end = #{contractEnd}
+
+    where contract_no = #{contractNo}
+      and contract_status = 'active'
+      and signed_time is not null
+
+</update>
+
+<!-- 계약 검색 -->
+<select id="contractSearch"
+        resultType="ContractSearchResponseVO">
+
+    select
+        C.*,
+        A.account_id,
+        A.account_name,
+        A.account_phone
+
+    from employment_contract C
+
+    join employee E
+        on E.employee_no = C.employee_no
+
+    join account A
+        on A.account_no = E.account_no
+
+
+    <where>
+
+        <if test="employeeNo != null">
+            and E.employee_no = #{employeeNo}
+        </if>
+
+        <if test="accountId != null and accountId != ''">
+            and A.account_id like #{accountId} || '%'
+        </if>
+
+        <if test="accountName != null and accountName != ''">
+            and A.account_name like #{accountName} || '%'
+        </if>
+
+        <if test="accountPhone != null and accountPhone != ''">
+            and A.account_phone
+                like '%' || #{accountPhone} || '%'
+        </if>
+
+    </where>
+
+    order by
+        A.account_name asc,
+        E.employee_no asc,
+        C.contract_start desc
+
+</select>
+
+
+<!-- 직원의 계속되는 계약 개수 -->
+<select id="countContinuingContract"
+        resultType="int">
+
+	select count(*)
+	from employment_contract
+	where employee_no = #{employeeNo}
+	and contract_status in (
+		'active',
+		'scheduled'
+	)
+
+</select>
+
+<!-- 직원 퇴사 처리 -->
+<update id="resignEmployee">
+
+	update employee
+	set employee_status = '퇴사'
+	where employee_no = #{employeeNo}
+
+</update>
+
+
+<!-- 종료일이 도래한 계약 조회 -->
+<select id="findContractsToEnd"
+        resultType="ContractDto">
+
+	select *
+	from employment_contract
+	where contract_status = 'active'
+	and contract_end is not null
+	and contract_end <![CDATA[ <= ]]> systimestamp
+
+</select>
+
+
+<!-- 양측 서명 전 근로계약 취소 -->
+<delete id="cancelContract">
+
+	delete from employment_contract
+
+	where contract_no = #{contractNo}
+
+	and contract_status = 'pending'
+
+	and employee_signature is null
+
+	and employer_signature is null
+
+	and signed_time is null
+
+</delete>
+
+
+<!-- 동종업무 통상근로자 후보 조회 -->
+<select id="findOrdinaryEmployeeNoList"
+        resultType="int">
+
+	select distinct
+		E.employee_no
+		C.weelkly_work_hours
+
+	from employee E
+
+		inner join employment_contract C
+			on E.employee_no = C.employee_no
+
+	where E.employee_type = #{employeeType}
+
+	and C.contract_start <![CDATA[ <= ]]> #{targetDate}
+
+	and (
+		C.contract_end is null
+		or C.contract_end <![CDATA[ >= ]]> #{targetDate}
+	)
+
+	and C.weekly_work_hours = (
+
+		select max(C2.weekly_work_hours)
+
+		from employee E2
+
+			inner join employment_contract C2
+				on E2.employee_no = C2.employee_no
+
+		where E2.employee_type = #{employeeType}
+
+		and C2.contract_start <![CDATA[ <= ]]> #{targetDate}
+
+		and (
+			C2.contract_end is null
+			or C2.contract_end <![CDATA[ >= ]]> #{targetDate}
+		)
+	)
+
+</select>
+
+
+
+<select id="selectSearchList"
+        parameterType="ContractListSearchVO"
+        resultType="ContractHistoryResponseVO">
+
+    select *
+    from (
+        select inner_table.*,
+               rownum rn
+        from (
+            select
+                C.contract_no,
+                C.employee_no,
+                C.wage_type,
+                C.base_wage,
+                C.contract_start,
+                C.contract_end,
+                C.contract_status,
+                C.signed_time,
+                C.weekly_holiday_day,
+                A.account_name as accountName
+            from employment_contract C
+            join employee E
+                on E.employee_no = C.employee_no
+            join account A
+                on A.account_no = E.account_no
+	
+	
+			<where>
+
+        <!-- 직원 이름 -->
+        <if test="accountName != null
+                and accountName != ''">
+
+            and A.account_name
+                like '%' || #{accountName} || '%'
+
+        </if>
+
+
+        <!-- 계약 시작일 -->
+        <if test="contractStart != null">
+
+            and C.contract_start
+                = #{contractStart}
+
+        </if>
+
+
+        <!-- 계약 종료일 -->
+        <if test="contractEnd != null">
+
+            and C.contract_end
+                = #{contractEnd}
+
+        </if>
+
+
+        <!-- 직원 상태 -->
+        <if test="employeeStatus != null
+                and employeeStatus != ''">
+
+            and E.employee_status
+                = #{employeeStatus}
+
+        </if>
+
+    </where>
+            
+
+            order by
+                C.contract_start desc,
+                C.contract_no desc
+
+        ) inner_table
+
+        where rownum &lt;= #{endRow}
+    )
+
+    where rn &gt;= #{beginRow}
+
+</select>
+
+
+<select id="selectCount"
+        parameterType="ContractListSearchVO"
+        resultType="int">
+
+    select count(*)
+    from employment_contract C
+    join employee E
+        on E.employee_no = C.employee_no
+    join account A
+        on A.account_no = E.account_no
+
+    <where>
+
+        <!-- 직원 이름 -->
+        <if test="accountName != null
+                and accountName != ''">
+
+            and A.account_name
+                like '%' || #{accountName} || '%'
+
+        </if>
+
+
+        <!-- 계약 시작일 -->
+        <if test="contractStart != null">
+
+            and trunc(C.contract_start)
+                = #{contractStart}
+
+        </if>
+
+
+        <!-- 계약 종료일 -->
+        <if test="contractEnd != null">
+
+            and trunc(C.contract_end)
+                = #{contractEnd}
+
+        </if>
+
+
+        <!-- 직원 상태 -->
+        <if test="employeeStatus != null
+                and employeeStatus != ''">
+
+            and E.employee_status
+                = #{employeeStatus}
+
+        </if>
+
+    </where>
+
+</select>
+
+
+<!-- ======================== 급여 ======================== -->
+
+<!-- 급여번호 생성 -->
+<select id="payrollSequence" resultType="long">
+	select payroll_seq.nextval from dual
+</select>
+
+<!-- 직원 + 연도 + 월을 이용해 급여 조회 -->
+<select id="payrollFindByEmployeeAndPeriod"
+		resultType="PayrollDto">
+	select *
+	from payroll
+	where employee_no = #{employeeNo}
+		and payroll_year = #{payrollYear}
+		and payroll_month = #{payrollMonth}
+</select>
+
+<!-- 급여 등록 -->
+<insert id="payrollAdd">
+	insert into payroll (
+		payroll_no,
+		employee_no,
+		payroll_year,
+		payroll_month,
+		total_work_hours,
+		total_overtime_hours,
+		total_night_hours,
+		total_holiday_hours,
+		base_pay,
+		week_holiday_pay,
+		overtime_pay,
+		night_pay,
+		holiday_pay,
+		gross_pay,
+		total_deduction,
+		net_pay,
+		payroll_status,
+		calculated_at,
+		confirmed_at
+	)
+	values (
+		#{payrollNo},
+		#{employeeNo},
+		#{payrollYear},
+		#{payrollMonth},
+		#{totalWorkHours},
+		#{totalOvertimeHours},
+		#{totalNightHours},
+		#{totalHolidayHours},
+		#{basePay},
+		#{weekHolidayPay},
+		#{overtimePay},
+		#{nightPay},
+		#{holidayPay},
+		#{grossPay},
+		#{totalDeduction},
+		#{netPay},
+		#{payrollStatus},
+		#{calculatedAt},
+		#{confirmedAt}
+	)
+</insert>
+
+<!-- 급여번호를 이용해 급여 조회 -->
+<select id="payrollFind"
+		resultType="PayrollDto">
+	select *
+	from payroll
+	where payroll_no = #{payrollNo}
+</select>
+
+<!-- 계산된 급여결과 수정 -->
+<update id="payrollUpdateCalculation">
+	update payroll
+	set total_work_hours = #{totalWorkHours},
+		total_overtime_hours = #{totalOvertimeHours},
+		total_night_hours = #{totalNightHours},
+		total_holiday_hours = #{totalHolidayHours},
+		base_pay = #{basePay},
+		week_holiday_pay = #{weekHolidayPay},
+		overtime_pay = #{overtimePay},
+		night_pay = #{nightPay},
+		holiday_pay = #{holidayPay},
+		gross_pay = #{grossPay},
+		total_deduction = #{totalDeduction},
+		net_pay = #{netPay},
+		calculated_at = #{calculatedAt}
+	where payroll_no = #{payrollNo}
+</update>
+
+<!-- 급여상태 변경 -->
+<update id="payrollChangeStatus">
+	update payroll
+	set payroll_status = #{payrollStatus},
+		confirmed_at = #{confirmedAt}
+	where payroll_no = #{payrollNo}
+</update>
+
+<!-- 직원번호를 이용해 급여목록 조회 -->
+<select id="payrollFindAllByEmployee"
+		resultType="PayrollDto">
+	select *
+	from payroll
+	where employee_no = #{employeeNo}
+	order by payroll_year desc, payroll_month desc
+</select>
+
+
+
+
+
+
+<!-- ======================== 급여 공제 ======================== -->
+
+<!-- 공제번호 생성 -->
+<select id="deductionSequence" resultType="long">
+	select payroll_deduction_seq.nextval from dual
+</select>
+
+<!-- 공제항목 등록 -->
+<insert id="deductionAdd">
+	insert into payroll_deduction (
+		deduction_no,
+		payroll_no,
+		deduction_type,
+		base_amount,
+		deduction_rate,
+		fixed_deduction_amount,
+		deduction_amount,
+		deduction_basis_year,
+		deduction_note
+	)
+	values (
+		#{deductionNo},
+		#{payrollNo},
+		#{deductionType},
+		#{baseAmount},
+		#{deductionRate},
+		#{fixedDeductionAmount},
+		#{deductionAmount},
+		#{deductionBasisYear},
+		#{deductionNote}
+	)
+</insert>
+
+<!-- 급여번호를 이용해 공제목록 조회 -->
+<select id="deductionFindAllByPayroll"
+		resultType="PayrollDeductionDto">
+	select *
+	from payroll_deduction
+	where payroll_no = #{payrollNo}
+	order by deduction_no
+</select>
+
+
+<!-- 급여 공제 수정 -->
+<update id="deductionUpdate">
+    update payroll_deduction
+    set base_amount = #{baseAmount},
+        deduction_rate = #{deductionRate},
+        fixed_deduction_amount = #{fixedDeductionAmount},
+        deduction_amount = #{deductionAmount},
+        deduction_basis_year = #{deductionBasisYear},
+        deduction_note = #{deductionNote}
+    where deduction_no = #{deductionNo}
+</update>
+
+<!-- ======================== 급여 지급 ======================== -->
+
+<!-- 지급내역번호 생성 -->
+<select id="paymentSequence" resultType="long">
+	select payroll_payment_seq.nextval from dual
+</select>
+
+<!-- 지급 / 취소 이력 등록 -->
+<insert id="paymentAdd">
+	insert into payroll_payment (
+		payroll_payment_no,
+		payroll_no,
+		payment_amount,
+		payment_at,
+		payment_method,
+		payment_note,
+		payment_status,
+		cancel_target_payment_no
+	)
+	values (
+		#{payrollPaymentNo},
+		#{payrollNo},
+		#{paymentAmount},
+		#{paymentAt},
+		#{paymentMethod},
+		#{paymentNote},
+		#{paymentStatus},
+		#{cancelTargetPaymentNo}
+	)
+</insert>
+
+<!-- 지급내역번호를 이용해 지급내역 조회 -->
+<select id="paymentFind"
+		resultType="PayrollPaymentDto">
+	select *
+	from payroll_payment
+	where payroll_payment_no = #{payrollPaymentNo}
+</select>
+
+<!-- 급여번호를 이용해 전체 지급이력 조회 -->
+<select id="paymentFindAllByPayroll"
+		resultType="PayrollPaymentDto">
+	select *
+	from payroll_payment
+	where payroll_no = #{payrollNo}
+	order by payment_at desc, payroll_payment_no desc
+</select>
+
+<!-- 급여번호를 이용해 취소된 지급내역 조회 -->
+<select id="paymentFindCancelledByPayroll"
+		resultType="PayrollPaymentDto">
+	select p.*
+	from payroll_payment p
+	where p.payroll_no = #{payrollNo}
+		and p.payment_status = 'paid'
+		and exists (
+			select 1
+			from payroll_payment c
+			where c.cancel_target_payment_no = p.payroll_payment_no
+				and c.payment_status = 'cancelled'
+		)
+	order by p.payment_at desc, p.payroll_payment_no desc
+</select>
+
+
+
+<select id="paymentFindNotCancelledByPayroll"
+		resultType="PayrollPaymentDto">
+	select P.*
+	from payroll_payment P
+	where P.payroll_no = #{payrollNo}
+	and P.payment_status = 'paid'
+	and P.payment_amount > nvl(
+		(
+			select sum(C.payment_amount)
+			from payroll_payment C
+			where C.payment_status = 'cancelled'
+			and C.cancel_target_payment_no = P.payroll_payment_no
+		),
+		0
+	)
+</select>
+
+
+
+
+
+</mapper>

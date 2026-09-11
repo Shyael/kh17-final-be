@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 //@RestControllerAdvice(annotations = {RestController.class})
-@RestControllerAdvice(basePackages = {"com.kh.spring11.controller"})
+@RestControllerAdvice(basePackages = {"com.kh.khedu.controller"})
 public class ErrorRestController {
 	
 	@ExceptionHandler(TargetNotfoundException.class)
@@ -36,5 +36,15 @@ public class ErrorRestController {
 	public ResponseEntity<String> badRequest(Exception e) {
 		log.debug("e = {}", e.getMessage());
 		return ResponseEntity.status(400).body("requirement mismatch");
+	}
+	
+	@ExceptionHandler(value = {YouAreNotAdminException.class})
+	public ResponseEntity<String> areNotAdmin(){
+		return ResponseEntity.status(403).body("you are not admin");
+	}
+	
+	@ExceptionHandler(value = {YouAreNotMeException.class})
+	public ResponseEntity<String> areNotMyself(){
+		return ResponseEntity.status(403).body("You are not myself");
 	}
 }

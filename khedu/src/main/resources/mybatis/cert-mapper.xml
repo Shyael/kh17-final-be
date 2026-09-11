@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.cert">
+	
+	<!-- 인증번호 등록 -->
+	<insert id="add">
+		insert into cert( cert_email, cert_number)
+		values( #{certEmail}, #{certNumber} )
+	</insert>
+	<!-- 인증번호 갱신 -->
+	<update id="change">
+		update cert
+		set cert_number=#{certNumber},
+			cert_time=systimestamp,
+			cert_yn='N'
+		where cert_email=#{certEmail}
+	</update>
+	
+	<!-- 단일 상세조회 -->
+	<select id="find" resultType="CertDto">
+		select * from cert where cert_email = #{certEmail}
+	</select> 
+	
+	<!--  삭제 -->
+	<delete id="delete">
+		delete cert where 
+	</delete>
+	
+	<!-- 사용  -->
+	<update id="use">
+		update cert
+		set cert_yn = 'Y'
+		where cert_email = #{certEmail}
+	</update>
+</mapper>

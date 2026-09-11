@@ -17,28 +17,93 @@
 			account_id,
 			account_password,
 			account_name,
-			account_phone
+			account_phone,
+			account_birth,
+			account_status,
+			account_type
 		)
 		values (
 			#{accountNo},
 			#{accountId},
 			#{accountPassword},
 			#{accountName},
-			#{accountPhone}
+			#{accountPhone},
+			#{accountBirth},
+			COALESCE(#{accountStatus}, 'N'),
+			#{accountType}
 		)
 		
 	</insert>
 	
-	<!-- 회원 상세  -->
+	<!-- 회원 상세(accountId)  -->
 	<select id="find" resultType="AccountDto">
 		select * from account where account_id = #{accountId}
 	</select>
-	
-	<!-- 존재 유무 판단(아이디(=이메일), 핸드폰) -->
-	<select id="checkAccountId" resultType="int">
-		select * count(*) from account where account_id = #{accountId}
+	<!-- 회원 상세(accountNo) -->
+	<select id="findFromNo" resultType="AccountDto">
+		select * from account where account_no = #{accountNo}
 	</select>
-	<select id="checkAccountPhone" resultType="int">
-		select * count(*) from account where account_phone = #{accountPhone}
+	
+	<!-- 존재 유무 판단(아이디(=이메일)) -->
+	<select id="checkAccountId" resultType="int">
+		select count(*) from account where account_id = #{accountId}
+	</select>
+	
+	<!-- accountNo를 통해 직원, 학생, 학부모 정보 찾기 -->
+	<select id="findCorrectly" resultType="AccountTypeNoVO">
+		SELECT
+		    a.account_no,
+		    a.account_type,
+		    e.employee_no,
+		    s.student_no,
+		    p.parent_no
+		FROM account a
+		LEFT JOIN employee e
+		    ON a.account_no = e.account_no
+		LEFT JOIN student s
+		    ON a.account_no = s.account_no
+		LEFT JOIN parent p
+		    ON a.account_no = p.account_no
+		WHERE a.account_no = #{accountNo}
+	</select>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="updateAccountPassword">
+		update account
+		set
+			account_password = #{accountPassword},
+			account_utime = systimestamp
+		where account_no = #{accountNo}
+	</update>
+	
+	<!-- 아이디 정보 찾기 -->
+	<select id="findAccountId" resultType="AccountDto">
+		select * from account
+		where account_name = #{accountName} 
+		and account_phone = #{accountPhone}
+	</select>
+	
+	<!-- 비밀번호 정보 찾기 -->
+	<select id="findPasswordAccount" resultType="AccountDto">
+		select * from account
+		where account_id = #{accountId} 
+		and account_phone = #{accountPhone}
+		and account_name = #{accountName}
+	</select>
+	
+	<!-- 수정 -->
+	<update id="updateAll">
+		update account
+		set account_name = #{accountName},
+			account_phone = #{accountPhone},
+			account_utime = systimestamp
+		where account_no = #{accountNo}
+	</update>
+	
+	<!-- studentNo로 이름찾기  -->
+	<select id="findAccountNameByStudentNo" resultType = "String">
+		select a.account_name from 
+		account a join student s on a.account_no = s.account_no
+		where s.student_no = #{studentNo}
 	</select>
 </mapper>

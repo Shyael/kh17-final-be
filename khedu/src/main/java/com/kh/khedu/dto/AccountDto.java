@@ -16,7 +16,9 @@ public class AccountDto {
 	private String accountPassword;
 	private String accountName;
 	private String accountPhone;
+	private String accountBirth;
 	private String accountStatus; //차단여부 Y N
-	private Timestamp accountCtime;
+	private Timestamp accountCtime; // 기본값 systimestamp
 	private Timestamp accountUtime;
+	private String accountType; // (직원, 학생, 학부모)
 }

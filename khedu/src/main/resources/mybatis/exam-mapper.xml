@@ -1,0 +1,667 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.exam">
+
+	<sql id="examManageSearchCondition">
+	    <where>
+	        <!-- 튜터일 경우 본인 시험만 -->
+	        <if test="employeeNo != null">
+	            and e.employee_no = #{employeeNo}
+	        </if>
+	
+	        <!-- 특정 강의 -->
+	        <if test="courseNo != null">
+	            and e.course_no = #{courseNo}
+	        </if>
+	
+	        <!-- 시험 제목 -->
+	        <if test="examTitle != null and examTitle != ''">
+	            and e.exam_title like '%' || #{examTitle} || '%'
+	        </if>
+	
+	        <!-- DB 관리 상태 : 작성중 / 공개 / 마감 -->
+	        <if test="examStatus != null and examStatus != ''">
+	            and e.exam_status = #{examStatus}
+	        </if>
+	
+	        <!-- 실제 시험 상태 : 예정 / 응시가능 / 종료 -->
+	        <if test="examPhase != null and examPhase != ''">
+	            <choose>
+	
+	                <!-- 예정 -->
+	                <when test="examPhase == '예정'">
+	                    and e.exam_status != '마감'
+	                    and e.exam_end > systimestamp
+	                    and (
+	                        e.exam_status = '작성중'
+	                        or e.exam_start > systimestamp
+	                    )
+	                </when>
+	
+	                <!-- 응시가능 -->
+	                <when test="examPhase == '응시가능'">
+	                    and e.exam_status = '공개'
+	                    and e.exam_start <![CDATA[ <= ]]> systimestamp
+	                    and e.exam_end > systimestamp
+	                </when>
+	
+	                <!-- 종료 -->
+	                <when test="examPhase == '종료'">
+	                    and (
+	                        e.exam_status = '마감'
+	                        or e.exam_end <![CDATA[ <= ]]> systimestamp
+	                    )
+	                </when>
+	            </choose>
+	        </if>
+	    </where>
+	</sql>
+	
+	<!-- ==================== 학생/학부모 시험 검색 조건 ==================== -->
+	<sql id="examStudentSearchCondition">
+	    <where>
+	        <!-- 로그인 학생 또는 학부모가 선택한 자녀 -->
+	        and sc.student_no = #{studentNo}
+	
+	        <!-- 현재 수강중인 강의 -->
+	        and sc.student_course_status = '수강중'
+	
+	        <!-- 학생에게 작성중 시험은 노출하지 않음 -->
+	        and e.exam_status in ('공개', '마감')
+	
+	        <!-- 특정 강의 -->
+	        <if test="courseNo != null">
+	            and e.course_no = #{courseNo}
+	        </if>
+	
+	        <!-- 시험 제목 -->
+	        <if test="examTitle != null and examTitle != ''">
+	            and e.exam_title like '%' || #{examTitle} || '%'
+	        </if>
+	
+	        <!-- 실제 시험 상태 : 예정 / 응시가능 / 종료 -->
+	        <if test="examPhase != null and examPhase != ''">
+	
+	            <choose>
+	
+	                <!-- 아직 시험 시작 전 -->
+	                <when test="examPhase == '예정'">
+	                    and e.exam_status = '공개'
+	                    and systimestamp <![CDATA[ < ]]> e.exam_start
+	                    and e.exam_end > systimestamp
+	                </when>
+	
+	                <!-- 현재 응시 가능한 시험 -->
+	                <when test="examPhase == '응시가능'">
+	                    and e.exam_status = '공개'
+	                    and e.exam_start <![CDATA[ <= ]]> systimestamp
+	                    and e.exam_end > systimestamp
+	                </when>
+	
+	                <!-- 수동 마감 또는 종료시간 지남 -->
+	                <when test="examPhase == '종료'">
+	                    and (
+	                        e.exam_status = '마감'
+	                        or e.exam_end <![CDATA[ <= ]]> systimestamp
+	                    )
+	                </when>
+	
+	            </choose>
+	
+	        </if>
+	
+	        <!-- 학생 개인 응시 상태 -->
+	        <if test="attemptStatus != null and attemptStatus != ''">
+	
+	            <choose>
+	
+	                <!-- 시험을 한 번도 시작하지 않음 -->
+	                <when test="attemptStatus == '미응시'">
+	                    and att.attempt_no is null
+	                </when>
+	
+	                <!-- 시작했지만 최종 제출하지 않음 -->
+	                <when test="attemptStatus == '응시중'">
+	                    and att.attempt_no is not null
+	                    and att.attempt_submit is null
+	                </when>
+	
+	                <!-- 최종 제출 완료 -->
+	                <when test="attemptStatus == '제출완료'">
+	                    and att.attempt_submit is not null
+	                </when>
+	            </choose>
+	        </if>
+	    </where>
+	</sql>
+
+    <!-- 시험 번호 시퀀스 -->
+    <select id="sequence" resultType="int">
+        select exam_seq.nextval
+        from dual
+    </select>
+
+
+    <!-- 시험 등록 -->
+    <insert id="insert">
+        insert into exam (
+            exam_no,
+            course_no,
+            employee_no,
+            exam_title,
+            exam_info,
+            exam_start,
+            exam_end,
+            exam_limit,
+            exam_status,
+            exam_wtime
+        )
+        values (
+            #{examNo},
+            #{courseNo},
+            #{employeeNo},
+            #{examTitle},
+            #{examInfo},
+            #{examStart},
+            #{examEnd},
+            #{examLimit},
+            #{examStatus},
+            systimestamp
+        )
+    </insert>
+
+
+    <!-- 시험 단일 조회 -->
+    <select id="selectOne" resultType="ExamDto">
+        select *
+        from exam
+        where exam_no = #{examNo}
+    </select>
+    
+    <!-- 시험 상세 조회 -->
+	<select id="selectDetail" resultType="ExamDetailVO">
+	    select
+	        e.exam_no,
+	        e.course_no,
+	        c.course_title,
+	        e.employee_no,
+	        a.account_name,
+	        e.exam_title,
+	        e.exam_info,
+	        e.exam_start,
+	        e.exam_end,
+	        e.exam_limit,
+	        e.exam_status,
+	        e.exam_wtime
+	    from exam e
+	    join course c
+	        on e.course_no = c.course_no
+	    join employee emp
+	        on e.employee_no = emp.employee_no
+	    join account a
+	        on emp.account_no = a.account_no
+	    where e.exam_no = #{examNo}
+	</select>
+	
+	<!-- 학생용 시험 상세 조회 -->
+	<select id="selectDetailByStudent" resultType="StudentExamDetailVO">
+	    select
+	        e.exam_no,
+	        e.course_no,
+	        c.course_title,
+	        e.exam_title,
+	        e.exam_info,
+	        e.exam_start,
+	        e.exam_end,
+	        e.exam_limit,
+	        e.exam_status,
+	        (
+	            select count(*)
+	            from question q
+	            where q.exam_no = e.exam_no
+	        ) as question_count,
+	        (
+	            select nvl(sum(q.question_score), 0)
+	            from question q
+	            where q.exam_no = e.exam_no
+	        ) as total_score,
+	        at.attempt_no,
+	        at.attempt_status,
+	        at.attempt_start,
+	        at.attempt_submit,
+	        at.attempt_score
+	    from exam e
+	    join course c
+	        on e.course_no = c.course_no
+	    left join attempt at
+	        on e.exam_no = at.exam_no
+	        and at.student_no = #{studentNo}
+	    where e.exam_no = #{examNo}
+	        and e.exam_status in ('공개', '마감')
+	        and exists (
+	            select 1
+	            from student_course sc
+	            where sc.course_no = e.course_no
+	                and sc.student_no = #{studentNo}
+	        )
+	</select>
+
+    <!-- 특정 강의의 최근 시험 5개 조회 -->
+	<select id="selectRecentListByCourse" resultType="ExamListVO">
+	    select *
+	    from (
+	        select
+	            e.exam_no,
+	            e.course_no,
+	            c.course_title,
+	            e.employee_no,
+	            a.account_name,
+	            e.exam_title,
+	            e.exam_start,
+	            e.exam_end,
+	            e.exam_limit,
+	            e.exam_status,
+	            e.exam_wtime
+	        from exam e
+	        join course c
+	            on e.course_no = c.course_no
+	        join employee emp
+	            on e.employee_no = emp.employee_no
+	        join account a
+	            on emp.account_no = a.account_no
+	        where e.course_no = #{courseNo}
+	        order by e.exam_wtime desc,
+	                 e.exam_no desc
+	    )
+	    where ROWNUM <![CDATA[ <= ]]> 5
+	</select>
+
+	<!-- 학생 시험 목록 조회 -->
+	<select id="selectListByStudent" resultType="StudentExamListVO">
+	    select
+	        e.exam_no,
+	        e.course_no,
+	        c.course_title,
+	        e.exam_title,
+	        e.exam_start,
+	        e.exam_end,
+	        e.exam_limit,
+	        e.exam_status,
+	
+	        at.attempt_no,
+	        at.attempt_status,
+	        at.attempt_submit,
+	        at.attempt_score
+	
+	    from exam e
+	
+	    join course c
+	        on e.course_no = c.course_no
+	
+	    join student_course cs
+	        on e.course_no = cs.course_no
+	
+	    left join attempt at
+	        on e.exam_no = at.exam_no
+	        and at.student_no = cs.student_no
+	
+	    where cs.student_no = #{studentNo}
+	        and cs.student_course_status = '수강중'
+	        and e.exam_status in ('공개', '마감')
+	
+	    order by e.exam_start desc
+	</select>
+	
+	<!-- 강사/관리자 시험 목록 -->
+	<select id="selectManageSearchList" resultType="ExamListVO">
+	    select *
+	    from (
+	        select inner_table.*, ROWNUM rn
+	        from (
+	            select
+	                e.exam_no,
+	                e.course_no,
+	                c.course_title,
+	                e.employee_no,
+	                a.account_name,
+	                e.exam_title,
+	                e.exam_start,
+	                e.exam_end,
+	                e.exam_limit,
+	                e.exam_status,
+	
+	                case
+	                    when e.exam_status = '마감'
+	                         or systimestamp >= e.exam_end
+	                    then '종료'
+	
+	                    when e.exam_status = '작성중'
+	                         or e.exam_start > systimestamp
+	                    then '예정'
+	
+	                    else '응시가능'
+	                end as exam_phase,
+	
+	                e.exam_wtime
+	
+	            from exam e
+	
+	            join course c
+	                on e.course_no = c.course_no
+	
+	            join employee emp
+	                on e.employee_no = emp.employee_no
+	
+	            join account a
+	                on emp.account_no = a.account_no
+	
+	            <include refid="examManageSearchCondition"/>
+	
+	            order by e.exam_no desc
+	
+	        ) inner_table
+	
+	        where ROWNUM <![CDATA[ <= ]]> #{endRow}
+	    )
+	    where rn <![CDATA[ >= ]]> #{beginRow}
+	</select>	
+	
+	<select id="selectManageCount" resultType="int">
+	    select count(*)
+	    from exam e
+	    <include refid="examManageSearchCondition"/>
+	</select>
+	
+	<!-- 학생/학부모 시험 목록 -->
+	<select id="selectStudentSearchList" resultType="StudentExamListVO">
+	
+	    select *
+	    from (
+	        select inner_table.*, ROWNUM rn
+	        from (
+	            select
+	                e.exam_no,
+	                e.course_no,
+	                c.course_title,
+	                e.exam_title,
+	                e.exam_start,
+	                e.exam_end,
+	                e.exam_limit,
+	                e.exam_status,
+	
+	                case
+					    when e.exam_status = '마감'
+					         or systimestamp >= e.exam_end
+					    then '종료'
+					
+					    when systimestamp <![CDATA[ < ]]> e.exam_start
+					    then '예정'
+					
+					    else '응시가능'
+					end as exam_phase,
+	
+	                att.attempt_no,
+	                att.attempt_status,
+	                att.attempt_submit,
+	                att.attempt_score
+	
+	            from exam e
+	
+	            join course c
+	                on e.course_no = c.course_no
+	
+	            join student_course sc
+	                on e.course_no = sc.course_no
+	
+	            left join attempt att
+	                on e.exam_no = att.exam_no
+	                and att.student_no = #{studentNo}
+	
+	            <include refid="examStudentSearchCondition"/>
+	
+	            order by
+	                e.exam_start desc,
+	                e.exam_no desc
+	
+	        ) inner_table
+	
+	        where ROWNUM <![CDATA[ <= ]]> #{endRow}
+	    )
+	
+	    where rn <![CDATA[ >= ]]> #{beginRow}
+	
+	</select>
+	
+	<select id="selectStudentCount" resultType="int">
+	    select count(*)
+	    from exam e
+	    join student_course sc
+	        on e.course_no = sc.course_no
+	    left join attempt att
+	        on e.exam_no = att.exam_no
+	        and att.student_no = #{studentNo}
+	    <include refid="examStudentSearchCondition"/>
+	</select>
+	
+	
+
+ 
+    <!-- 시험 수정 -->
+    <update id="update">
+        update exam
+        set
+            course_no = #{courseNo},
+            exam_title = #{examTitle},
+            exam_info = #{examInfo},
+            exam_start = #{examStart},
+            exam_end = #{examEnd},
+            exam_limit = #{examLimit},
+            exam_status = #{examStatus}
+        where exam_no = #{examNo}
+    </update>
+
+
+    <!-- 시험 삭제 -->
+    <delete id="delete">
+        delete from exam
+        where exam_no = #{examNo}
+    </delete>
+    
+    <!-- 강사용 시험 응시자 목록 조회 -->
+	<select id="selectAttemptList" resultType="ExamAttemptListVO">
+	    select
+	        at.attempt_no,
+	        sc.student_no,
+	        a.account_name as student_name,
+	        at.attempt_status,
+	        at.attempt_start,
+	        at.attempt_submit,
+	        at.attempt_score
+	
+	    from exam e
+	
+	    join student_course sc
+	        on e.course_no = sc.course_no
+	
+	    join student s
+	        on sc.student_no = s.student_no
+	
+	    join account a
+	        on s.account_no = a.account_no
+	
+	    left join attempt at
+	        on at.exam_no = e.exam_no
+	        and at.student_no = sc.student_no
+	
+	    where e.exam_no = #{examNo}
+	
+	    order by sc.student_no asc
+	
+	</select>
+	
+	<!-- 시험 전체 통계 -->
+	<select id="selectStatistics" resultType="ExamStatisticsVO">
+		select 
+			count(sc.student_no) as totalStudentCount,
+			sum(
+				case
+					when at.attempt_status = '제출완료'
+					then 1
+					else 0
+				end
+			) as submittedCount,
+			
+			 sum(
+	            case
+	                when at.attempt_status = '응시중'
+	                then 1
+	                else 0
+	            end
+	        ) as inProgressCount,
+	
+	        sum(
+	            case
+	                when at.attempt_no is null
+	                then 1
+	                else 0
+	            end
+	        ) as notAttemptedCount,
+			<!-- 평균 -->
+	        round(
+	            avg(
+	                case
+	                    when at.attempt_status = '제출완료'
+	                    then at.attempt_score
+	                end
+	            ),
+	            1
+	        ) as averageScore,
+			<!-- 최고 점수  -->
+	        max(
+	            case
+	                when at.attempt_status = '제출완료'
+	                then at.attempt_score
+	            end
+	        ) as highestScore,
+			<!-- 최저 점수 -->
+	        min(
+	            case
+	                when at.attempt_status = '제출완료'
+	                then at.attempt_score
+	            end
+	        ) as lowestScore
+	
+	    from exam e
+	
+	    join student_course sc
+	        on e.course_no = sc.course_no
+	
+	    left join attempt at
+	        on e.exam_no = at.exam_no
+	        and sc.student_no = at.student_no
+	
+	    where e.exam_no = #{examNo}
+	
+	        <!-- 네가 아까 수정한 실제 수강상태 컬럼명 사용 -->
+	        and sc.student_course_status = '수강중'
+	</select>
+	
+	<!-- 시험 문항별 통계 -->
+	<select id="selectQuestionStatistics" resultType="QuestionStatisticsVO">
+	
+	    select
+	        q.question_no as questionNo,
+	        q.question_order as questionOrder,
+	        q.question_content as questionContent,
+	
+	        sum(
+	            case
+	                when at.attempt_status = '제출완료'
+	                    and aa.is_correct = 'Y'
+	                then 1
+	                else 0
+	            end
+	        ) as correctCount,
+	
+	        sum(
+	            case
+	                when at.attempt_status = '제출완료'
+	                then 1
+	                else 0
+	            end
+	        ) as submittedCount,
+	
+	        case
+	            when sum(
+	                case
+	                    when at.attempt_status = '제출완료'
+	                    then 1
+	                    else 0
+	                end
+	            ) = 0
+	            then 0
+	
+	            else round(
+	                sum(
+	                    case
+	                        when at.attempt_status = '제출완료'
+	                            and aa.is_correct = 'Y'
+	                        then 1
+	                        else 0
+	                    end
+	                )
+	                /
+	                sum(
+	                    case
+	                        when at.attempt_status = '제출완료'
+	                        then 1
+	                        else 0
+	                    end
+	                )
+	                * 100,
+	                1
+	            )
+	        end as correctRate
+	
+	    from question q
+	
+	    join exam e
+	        on q.exam_no = e.exam_no
+	
+	    join student_course sc
+	        on e.course_no = sc.course_no
+	
+	    left join attempt at
+	        on e.exam_no = at.exam_no
+	        and sc.student_no = at.student_no
+	
+	    left join attempt_answer aa
+	        on at.attempt_no = aa.attempt_no
+	        and q.question_no = aa.question_no
+	
+	    where q.exam_no = #{examNo}
+	
+	        <!-- 실제 수강상태 컬럼명으로 맞추기 -->
+	        and sc.student_course_status = '수강중'
+	
+	    group by
+	        q.question_no,
+	        q.question_order,
+	        q.question_content
+	
+	    order by
+	        q.question_order asc
+	
+	</select>
+	
+	<!-- 시험 마감 -->
+	<update id="close" parameterType="int">
+	    update exam
+	    set exam_status = '마감'
+	    where exam_no = #{examNo}
+	</update>
+</mapper>
