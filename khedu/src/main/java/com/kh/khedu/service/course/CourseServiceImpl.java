@@ -24,8 +24,10 @@ import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.error.AlreadyExistsException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
+import com.kh.khedu.service.AssignmentService;
 import com.kh.khedu.service.attendance.AttendanceService;
 import com.kh.khedu.util.PageResponseVO;
+import com.kh.khedu.vo.assignment.AssignmentListVO;
 import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
@@ -56,6 +58,8 @@ public class CourseServiceImpl implements CourseService {
 	private ClassSessionDao classSessionDao;
 	@Autowired
 	private AttendanceService attendanceService;
+	@Autowired
+	private AssignmentService assignmentService;
 	
 	//강좌 등록화면 진입 시 최초 조회
 	@Override
@@ -156,6 +160,11 @@ public class CourseServiceImpl implements CourseService {
 	
 	//등록 시 요청 내부 schedule  검증
 	private void validateRequestSchedules(CourseCreateRequestVO request) {
+		
+		// validateRequestSchedules 메서드 맨 위
+		if (request.getSchedules() == null || request.getSchedules().isEmpty()) {
+		    throw new IllegalArgumentException("최소 하나 이상의 수업 일정을 등록해야 합니다.");
+		}
 		
 		for(int i = 0; i < request.getSchedules().size(); i++) {
 			ScheduleCreateRequestVO a = request.getSchedules().get(i);
@@ -298,14 +307,18 @@ public class CourseServiceImpl implements CourseService {
             }
         }
         
-     // [3] 통합 응답 객체 생성 (3, 4번 과제/시험은 빈 리스트 유지)
+        // [3] 과제 정보 조회
+        List<AssignmentListVO> assignmentList = assignmentService.selectListByCourse(courseNo);
+        // [4] 시험 정보 조회
+        
+        // [3] 통합 응답 객체 생성 (3, 4번 과제/시험은 빈 리스트 유지)
         return CourseDetailResponseVO.builder()
                 .courseInfo(course)
                 .tutorName(tutorName)
                 .scheduleList(scheduleList)
                 .todaySession(todaySession)
                 .attendanceDetail(attendanceDetail)
-                //.assignmentList(Collections.emptyList()) // 과제 팀원 영역 (비워둠)
+                .assignmentList(assignmentList) // 과제 팀원 영역 (비워둠)
                 //.examList(Collections.emptyList())       // 시험 팀원 영역 (비워둠)
                 .build();
 	}
