@@ -447,7 +447,7 @@
 	    <include refid="examStudentSearchCondition"/>
 	</select>
 
-
+ 
     <!-- 시험 수정 -->
     <update id="update">
         update exam
