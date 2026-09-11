@@ -54,7 +54,7 @@ import jakarta.validation.Valid;
 
 @CommonsApiResponse
 @RestController
-@RequestMapping("/api/employee/admin/contract")
+@RequestMapping("/api/admin/contract")
 public class AdminContractController {
 
 	@Autowired
