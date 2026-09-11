@@ -698,81 +698,182 @@ public class ContractServiceImpl implements ContractService {
 		    return response;
 	}
 
-	// 근로계약 연장(기간만) //검수 필
+				
+	// 근로계약 연장
 	@Transactional
 	@Override
-	public ContractExtendResponseVO extendContract(ContractExtendRequestVO request, TokenParseResponseVO parseVO) {
+	public ContractExtendResponseVO extendContract(
+        ContractExtendRequestVO request,
+        TokenParseResponseVO parseVO) {
 
-		//권한은 원장만
-		boolean isAdmin = contractAuthorizationService.checkAdmin(parseVO);
-		
-		if(!isAdmin) throw new GetOutException();
-		
-		 // [2] 기존 계약 조회
-	    ContractDto contractDto =
-	            contractDao.findPeriodAndStatus(
-	                    request.getContractNo()
-	            );
+    // [1] 원장만 가능
+    boolean isAdmin =
+            contractAuthorizationService
+                    .checkAdmin(parseVO);
 
-	    if(contractDto == null)
-	        throw new TargetNotfoundException();
+    if (!isAdmin)
+        throw new GetOutException();
 
 
-	    // [3] 종료된 계약은 연장 불가
-	    if("ended".equals(
-	            contractDto.getContractStatus()
-	    ))
-	        throw new GetOutException();
+    // [2] 기존 계약 전체 조회
+    ContractDto originDto =
+            contractDao.find(
+                    request.getContractNo()
+            );
+
+    if (originDto == null)
+        throw new TargetNotfoundException();
 
 
-	    // [4] 기간의 정함이 없는 계약은 연장 불가
-	    if(contractDto.getContractEnd() == null)
-	        throw new GetOutException();
+    // [3] 체결 완료 계약만 연장 가능
+    if (originDto.getSignedTime() == null)
+        throw new GetOutException();
 
 
-	    // [5] 새 종료일은 기존 종료일보다 뒤여야 함
-	    if(
-	        !request.getContractEnd()
-	                .after(contractDto.getContractEnd())
-	    )
-	        throw new GetOutException();
+    // [4] 종료 계약 연장 불가
+    if (
+        "ended".equals(
+            originDto.getContractStatus()
+        )
+    ) {
+        throw new GetOutException();
+    }
 
 
-	    // [6] DTO에 새 종료일 반영
-	    contractDto.setContractEnd(
-	            request.getContractEnd()
-	    );
+    // [5] 기간의 정함이 없는 계약은 연장 불가
+    if (originDto.getContractEnd() == null)
+        throw new GetOutException();
 
 
-	    // [7] DB 수정
-	    boolean result =
-	            contractDao.extendContract(
-	                    contractDto
-	            );
+    // [6] 새 종료일 확인
+    if (
+        request.getContractEnd() == null
+        ||
+        !request
+            .getContractEnd()
+            .after(
+                originDto.getContractEnd()
+            )
+    ) {
+        throw new GetOutException();
+    }
 
-	    if(result == false)
-	        throw new GetOutException();
+
+    // [7] 이미 다른 진행중 계약 존재 여부
+    ContractDto openContract =
+            contractDao.findOpenContract(
+                    originDto.getEmployeeNo()
+            );
+
+    if (
+        openContract != null
+        &&
+        openContract.getContractNo()
+        != originDto.getContractNo()
+    ) {
+        throw new GetOutException();
+    }
 
 
-	    // [8] 응답 조립
-	    ContractExtendResponseVO response = ContractExtendResponseVO.builder()
-	            .contractNo(
-	                    contractDto.getContractNo()
-	            )
-	            .contractStart(
-	                    contractDto.getContractStart()
-	            )
-	            .contractEnd(
-	                    contractDto.getContractEnd()
-	            )
-	            .contractStatus(
-	                    contractDto.getContractStatus()
-	            )
-	            .build();
-	    
-	    return response;
+    // [8] 연장 계약 시작일
+    LocalDate extensionStartDate =
+            originDto
+                    .getContractEnd()
+                    .toLocalDateTime()
+                    .toLocalDate()
+                    .plusDays(1);
+
+
+    // [9] 새 계약 생성
+    ContractDto newContractDto =
+            new ContractDto();
+
+
+    // 기존 계약조건 복사
+    BeanUtils.copyProperties(
+            originDto,
+            newContractDto
+    );
+
+
+    // [10] 새 계약번호
+    long newContractNo =
+            contractDao.contractSequence();
+
+    newContractDto.setContractNo(
+            newContractNo
+    );
+
+
+    // [11] 연장 기간
+    newContractDto.setContractStart(
+            Timestamp.valueOf(
+                extensionStartDate
+                    .atStartOfDay()
+            )
+    );
+
+    newContractDto.setContractEnd(
+            request.getContractEnd()
+    );
+
+
+    // [12] 새 계약은 서명 대기
+    newContractDto.setContractStatus(
+            "pending"
+    );
+
+
+    // [13] 서명 초기화
+    newContractDto.setEmployeeSignature(
+            null
+    );
+
+    newContractDto.setEmployerSignature(
+            null
+    );
+
+    newContractDto.setSignedTime(
+            null
+    );
+
+
+    // [14] 새 계약 등록
+    contractDao.contractAdd(
+            newContractDto
+    );
+
+
+    // [15] 응답
+    ContractExtendResponseVO response =
+            ContractExtendResponseVO
+                    .builder()
+
+                    .contractNo(
+                        newContractDto
+                            .getContractNo()
+                    )
+
+                    .contractStart(
+                        newContractDto
+                            .getContractStart()
+                    )
+
+                    .contractEnd(
+                        newContractDto
+                            .getContractEnd()
+                    )
+
+                    .contractStatus(
+                        newContractDto
+                            .getContractStatus()
+                    )
+
+                    .build();
+
+
+    return response;
 	}
-
 	// 체결 후 근로조건 변경
 	@Transactional
 	@Override

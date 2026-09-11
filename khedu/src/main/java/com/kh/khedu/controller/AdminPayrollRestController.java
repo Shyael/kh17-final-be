@@ -24,7 +24,7 @@ import com.kh.khedu.vo.payroll.response.PayrollMonthlyListResponseVO;
 import com.kh.khedu.vo.payroll.response.PayrollPaymentResponseVO;
 
 @RestController
-@RequestMapping("/api/employee/admin/payroll")
+@RequestMapping("/api/admin/payroll")
 public class AdminPayrollRestController {
 
 	@Autowired
