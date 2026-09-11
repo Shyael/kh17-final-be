@@ -43,6 +43,26 @@
 		)
 	</insert>
 	
+	<!-- 강의의 대상 학년 조회 -->
+    <select id="selectCourseGrade" resultType="string">
+        select G.grade_level
+        from course C
+        inner join grade G on C.grade_no = G.grade_no
+        where C.course_no = #{courseNo}
+    </select>
+    
+    <!-- 강의 현재 수강 인원 갱신 -->
+    <update id="updateCourseCurrentCount">
+        update course
+        set course_current_count = (
+            select count(*)
+            from student_course
+            where course_no = #{courseNo}
+              -- 상태가 신청/수강중인 학생만 카운트
+              and student_course_status in ('신청', '수강중')
+        )
+        where course_no = #{courseNo}
+    </update>
 	<!-- 
 		검색 기능 구현을 위한 필요 구문 [1] [2] [3] 참조
 	 -->
@@ -123,5 +143,42 @@
 		from course c
 			<!-- 공통 검색 조건 include -->
 			<include refid="courseSearchCondition" />
+	</select>
+	
+	<!-- 학생이 현재 수강 중인 강의 목록 -->
+	<select id="selectListByStudent" resultType="StudentCourseListVO">
+	    select
+	        c.course_no,
+	        c.course_title
+	
+	    from student_course sc
+	
+	    join course c
+	        on sc.course_no = c.course_no
+	
+	    where sc.student_no = #{studentNo}
+	      and sc.student_course_status = '수강중'
+	
+	    order by c.course_title asc
+	
+	</select>
+	
+	<!-- 관리용 전체 강의 목록 : 원장/데스크 -->
+	<select id="selectManageCourseList" resultType="CourseSimpleListVO">
+	    select
+	        course_no,
+	        course_title
+	    from course
+	    order by course_title asc
+	</select>
+	
+	<!-- 관리용 본인 담당 강의 목록 : 강사 -->
+	<select id="selectManageCourseListByEmployee" resultType="CourseSimpleListVO">
+	    select
+	        course_no,
+	        course_title
+	    from course
+	    where employee_no = #{employeeNo}
+	    order by course_title asc
 	</select>
 </mapper>

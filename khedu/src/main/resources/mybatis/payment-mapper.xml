@@ -119,7 +119,7 @@
     </select>
 
     <!-- 3. 특정 학생이 '현재 수강 중'인 강좌 번호와 해당 강좌의 수강료(course_fee) 조회 -->
-    <select id="selectStudentCourses" resultType="com.kh.khedu.vo.student.StudentCourseVO">
+    <select id="selectStudentCourses" resultType="com.kh.khedu.vo.payment.CoursePaymentVO">
         select 
             c.course_no as courseNo, 
             c.course_fee as courseFee 
@@ -149,5 +149,35 @@
     <select id="selectPaymentHistorys" resultType="PaymentHistoryDto">
         select * from payment_history where payment_no = #{paymentNo}
     </select>
+    
+    <!-- 1. 납부 이력 저장 -->
+    <insert id="insertPaymentHistory">
+        insert into payment_history (
+            payment_history_no, 
+            payment_no, 
+            payment_history_amount, 
+            payment_history_at
+        )
+        values (
+            payment_history_seq.nextval, 
+            #{paymentNo}, 
+            #{paymentHistoryAmount}, 
+            sysdate
+        )
+    </insert>
+
+    <!-- 2. 해당 영수증의 총 납부액 계산 -->
+    <select id="getTotalPaidAmount" resultType="int">
+        select NVL(sum(payment_history_amount), 0) 
+        from payment_history 
+        where payment_no = #{paymentNo}
+    </select>
+
+    <!-- 3. 영수증(마스터) 상태 업데이트 -->
+    <update id="updatePaymentStatus">
+        update payment 
+        set payment_status = #{paymentStatus} 
+        where payment_no = #{paymentNo}
+    </update>
   
 </mapper>

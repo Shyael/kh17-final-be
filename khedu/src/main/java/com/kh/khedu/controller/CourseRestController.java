@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dto.CourseDto;
+import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.service.course.CourseService;
 import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
@@ -22,6 +23,7 @@ import com.kh.khedu.vo.course.CourseCreateRequestVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
+import com.kh.khedu.vo.course.CourseSimpleListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -82,5 +84,17 @@ public class CourseRestController {
 	        @CurrentUser TokenParseResponseVO parseVO) {
 	    return courseDao.selectTeachingListByEmployee(
 	            parseVO.getNoType());
+	}
+	
+	@Operation(summary = "관리용 강의 목록 조회")
+	@GetMapping("/manage")
+	public List<CourseSimpleListVO> selectManageCourseList(
+	        @CurrentUser TokenParseResponseVO parseVO) {
+	    boolean tutor = parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
+	    
+	    return courseService.selectManageCourseList(
+	            parseVO.getNoType(), // employeeNo
+	            tutor
+	    );
 	}
 }

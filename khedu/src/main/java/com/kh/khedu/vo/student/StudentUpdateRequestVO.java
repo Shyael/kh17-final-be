@@ -1,5 +1,7 @@
 package com.kh.khedu.vo.student;
 
+import java.sql.Timestamp;
+
 import lombok.Data;
 
 @Data
@@ -10,11 +12,13 @@ public class StudentUpdateRequestVO {
 
     // 수정 가능한 account 정보
     private String studentPhone;
-    private String studentEmail;
+    private String studentName;
+    private Timestamp accountUtime;
 
     // 수정 가능한 student 정보
     private String studentSchool;
     private String studentGrade;
     private String studentGender;
     private String studentEtc;
+    private Timestamp studentUtime;
 }

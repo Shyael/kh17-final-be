@@ -11,6 +11,8 @@ import com.kh.khedu.vo.course.CourseCreateRequestVO;
 import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
+import com.kh.khedu.vo.course.CourseSimpleListVO;
+import com.kh.khedu.vo.course.StudentCourseListVO;
 
 @Repository
 public class CourseDaoMybatis implements CourseDao {
@@ -21,6 +23,11 @@ public class CourseDaoMybatis implements CourseDao {
 	@Override
 	public List<CourseDto> selectTeachingListByEmployee(int employeeNo) {
 		 return sqlSession.selectList("mapper.course.selectTeachingListByEmployee", employeeNo);
+	}
+	
+	@Override
+	public List<StudentCourseListVO> selectListByStudent(int studentNo) {
+		return sqlSession.selectList("mapper.course.selectListByStudent", studentNo);
 	}
 	
 	//강좌 번호생성
@@ -46,6 +53,16 @@ public class CourseDaoMybatis implements CourseDao {
 	public CourseDetailVO selectCourseDetail(int courseNo) {
 		return sqlSession.selectOne("mapper.course.detail", courseNo);
 	}
+	
+	@Override
+    public String selectCourseGrade(int courseNo) {
+        return sqlSession.selectOne("mapper.course.selectCourseGrade", courseNo);
+    }
+	
+	@Override
+    public void updateCourseCurrentCount(int courseNo) {
+        sqlSession.update("mapper.course.updateCourseCurrentCount", courseNo);
+    }
 
 	@Override
 	public List<CourseListVO> selectSearchList(CourseSearchVO search) {
@@ -56,5 +73,18 @@ public class CourseDaoMybatis implements CourseDao {
 	public int selectCount(CourseSearchVO search) {
 		return sqlSession.selectOne("mapper.course.selectCount", search);
 	}
+
+	
+	@Override
+	public List<CourseSimpleListVO> selectManageCourseList() {
+	    return sqlSession.selectList("mapper.course.selectManageCourseList");
+	}
+
+	@Override
+	public List<CourseSimpleListVO> selectManageCourseListByEmployee(int employeeNo) {
+	    return sqlSession.selectList("mapper.course.selectManageCourseListByEmployee",employeeNo);
+	}
+
+	
 
 }

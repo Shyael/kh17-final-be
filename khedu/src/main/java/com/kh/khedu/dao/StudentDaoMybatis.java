@@ -1,6 +1,7 @@
 package com.kh.khedu.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,10 +35,11 @@ public class StudentDaoMybatis implements StudentDao {
     
     // 학생 목록 전체 조회
 	@Override
-    public List<StudentListResponseVO> selectList() {
+    public List<StudentListResponseVO> selectList(Map<String, Object> params) {
         // sqlSession에게 "student"라는 namespace의 "list"라는 쿼리를 실행하라고 지시
-        return sqlSession.selectList("mapper.student.list");
+        return sqlSession.selectList("mapper.student.list", params);
     }
+
 	
 	//학생 목록 상세 조회
 	@Override
@@ -84,5 +86,9 @@ public class StudentDaoMybatis implements StudentDao {
 	public boolean approveStudent(int studentNo) {
 		return sqlSession.update("mapper.student.approveStudent", studentNo) > 0;
 	}
-
+	
+	@Override
+    public String selectStudentGrade(int studentNo) {
+        return sqlSession.selectOne("mapper.student.selectStudentGrade", studentNo);
+    }
 }

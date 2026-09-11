@@ -1,12 +1,18 @@
 package com.kh.khedu.controller;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,9 +20,17 @@ import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.MessageDao;
 import com.kh.khedu.dao.RoomDao;
 import com.kh.khedu.dto.RoomDto;
+import com.kh.khedu.dto.RoomUserDto;
+import com.kh.khedu.error.GetOutException;
+import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.vo.message.MessageVO;
+import com.kh.khedu.vo.room.RoomDetailResponseVO;
 import com.kh.khedu.vo.room.RoomListResponseVO;
 import com.kh.khedu.vo.room.RoomListVO;
+import com.kh.khedu.vo.room.RoomUserVO;
+import com.kh.khedu.vo.room.RoomVO;
+import com.kh.khedu.websocket.vo.WebSocketChatVO;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +51,10 @@ public class RoomRestController {
 	@PostMapping("/")
 	public void createRoom(//@Valid @RequestBody RoomCreateRequestVO request,
 							@CurrentUser TokenParseResponseVO parseVO) {
-		int roomNo = roomDao.sequence();
+		int roomNo = roomDao.roomSequence();
 		int roomOwner = parseVO.getAccountNo();
 		
-		roomDao.insert(RoomDto.builder()
+		roomDao.insertRoom(RoomDto.builder()
 					.roomNo(roomNo)
 					.roomOwner(roomOwner)
 				.build());
@@ -52,44 +66,116 @@ public class RoomRestController {
 		
 		List<RoomListVO> rooms = 
 				(StringUtils.hasText(parseVO.getAccountType()) 
-						&& (parseVO.getAccountType().contains("학생") 
-						|| parseVO.getAccountType().contains("학부모"))) ?
-					roomDao.selectList(parseVO.getAccountNo())
-					: roomDao.selectList();
+						&& (parseVO.getAccountType().equals("학생") 
+						|| parseVO.getAccountType().equals("학부모"))) ?
+					roomDao.selectMyList(parseVO.getAccountNo())
+					: roomDao.selectConsultList(parseVO.getAccountNo());
 		
 		return RoomListResponseVO.builder()
 					.count(rooms.size())
 					.rooms(rooms)
 				.build();
 	}
-	/*
+	
 	//방 상세 정보
-	@GetMapping("/{roomNo}")
-	public RoomDetailResponseVO detail(@PathVariable int roomNo,
+	@GetMapping({"/{roomNo}", "/check"})
+	public RoomDetailResponseVO detail(@PathVariable(value = "roomNo", required = false) Integer roomNo,
 						@CurrentUser TokenParseResponseVO parseVO) {
-		//방이 있는지 검사 → 404
-		RoomDto roomDto = roomDao.selectOne(roomNo);
-		if(roomDto == null) throw new TargetNotfoundException();
-		
-		//참여자 중에 사용자가 존재하는지 검사 → 403
-		//List<String> members = roomDao.getMembers(roomNo);//id만
-		//if(!members.contains(parseVO.getAccountId())) throw new GetOutException();
-		
-		List<RoomUserVO> users = roomDao.getMemberInfo(roomNo);//id, 등급, 닉네임
-		if(users.stream()
-			.map(user->user.getAccountId())
-			.noneMatch(accountId->accountId.equals(parseVO.getAccountId())) 
-		) {
-			throw new GetOutException();
+		//check로 들어왔다면 토큰정보로 방 검색
+		if(roomNo == null) {
+			int accountNo = parseVO.getAccountNo();
+			RoomVO checkVO = roomDao.selectOneForCheck(accountNo);
+			//생성된 방이 없다면 생성부터
+			if(checkVO == null) {
+				RoomDto insertDto = new RoomDto().builder()
+							.roomNo(roomDao.roomSequence())
+							.roomOwner(accountNo)
+							.roomType("상담")
+						.build();
+				roomDao.insertRoom(insertDto);
+				roomDao.insertRoomUser(new RoomUserDto().builder()
+							.roomUserNo(roomDao.roomUserSequence())
+							.roomNo(insertDto.getRoomNo())
+							.accountNo(accountNo)
+						.build());
+				
+				List<RoomUserVO> users = roomDao.getMemberInfo(insertDto.getRoomNo());
+				//응답 생성 및 반환
+				return RoomDetailResponseVO.builder()
+							.room(new RoomVO().builder()
+										.roomNo(insertDto.getRoomNo())
+										.roomOwner(insertDto.getRoomOwner())
+										.roomType(insertDto.getRoomType())
+										.roomCtime(null)
+									.build())//방정보
+							.users(users)//유저목록
+							.history(new ArrayList<>())
+						.build();
+			} 
+			else {
+				List<RoomUserVO> users = roomDao.getMemberInfo(checkVO.getRoomNo());
+				List<MessageVO> history = messageDao.selectList(checkVO.getRoomNo());
+				//응답 생성 및 반환
+				return RoomDetailResponseVO.builder()
+							.room(checkVO)//방정보
+							.users(users)//유저목록
+							.history(history)
+						.build();
+			}
+		} else {
+			//방이 있는지 검사 → 404
+			RoomVO roomVO = roomDao.selectOne(roomNo);
+			if(roomVO == null) throw new TargetNotfoundException();
+			
+			//참여자 중에 사용자가 존재하는지 검사 → 403
+			String accountType = parseVO.getAccountType();
+			if(!accountType.equals("직원")) {
+				List<Integer> members = roomDao.getMembers(roomNo);
+				if(!members.contains(parseVO.getAccountNo())) throw new GetOutException();
+				
+				List<RoomUserVO> users = roomDao.getMemberInfo(roomNo);
+				if(users.stream()
+					.map(user->user.getAccountNo())
+					.noneMatch(accountNo->accountNo.equals(parseVO.getAccountNo()))
+				) {
+					throw new GetOutException();
+				}
+			}
+			if(parseVO.getAccountType().equals("직원")) {
+				roomDao.readRoomEmployee(roomNo);
+				WebSocketChatVO response = WebSocketChatVO.builder()
+						.senderNo(parseVO.getAccountNo())
+						.senderName(parseVO.getAccountName())
+						.senderType(parseVO.getAccountType())
+						.content("채팅 조회")
+						.time(LocalDateTime.now())
+					.build();
+				simpMessagingTemplate.convertAndSend("/public/"+roomNo+"/read", response);
+			}
+			List<MessageVO> history = messageDao.selectList(roomNo);
+			
+			//응답 생성 및 반환
+			return RoomDetailResponseVO.builder()
+						.room(roomVO)//방정보
+						.users(null)//유저목록
+						.history(history)//대화목록
+					.build();
 		}
-		
-		//응답 생성 및 반환
-		return RoomDetailResponseVO.builder()
-					.room(roomDto)//방정보
-					.users(users)//유저목록
-				.build();
 	}
 	
+	//방 읽음 처리
+	@PutMapping("/{roomNo}/read")
+	public void read(@PathVariable(value = "roomNo", required = false) Integer roomNo,
+						@CurrentUser TokenParseResponseVO parseVO) {
+		if(parseVO.getAccountType().equals("직원")) {
+			roomDao.readRoomEmployee(roomNo);
+		} else if(parseVO.getAccountType().equals("학생")
+				|| parseVO.getAccountType().equals("학부모")) {
+			roomDao.readRoomUser(roomNo, parseVO.getAccountNo());
+		}
+	}
+	
+	/*
 	//방 참여 관련
 	@PostMapping("/enter")
 	public RoomEnterResponseVO enter(

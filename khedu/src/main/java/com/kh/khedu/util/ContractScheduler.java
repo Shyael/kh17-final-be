@@ -10,6 +10,7 @@ import com.kh.khedu.service.payroll.ContractService;
 @Component
 public class ContractScheduler {
 	
+
 	@Autowired
 	private ContractService contractService;
 	
@@ -25,4 +26,5 @@ public class ContractScheduler {
 			public void refreshEndedContractStatus() {
 				contractService.refreshEndedContractStatus();
 			}
+
 }
