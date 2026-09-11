@@ -3,6 +3,7 @@ package com.kh.khedu.service.course;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.BeanUtils;
@@ -15,6 +16,7 @@ import com.kh.khedu.dao.ClassSessionDao;
 import com.kh.khedu.dao.ClassroomDao;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.GradeDao;
+import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.ScheduleDao;
 import com.kh.khedu.dao.TutorDao;
 import com.kh.khedu.dto.ClassSessionDto;
@@ -22,9 +24,11 @@ import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.error.AlreadyExistsException;
+import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.service.AssignmentService;
+import com.kh.khedu.service.ExamService;
 import com.kh.khedu.service.attendance.AttendanceService;
 import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.assignment.AssignmentListVO;
@@ -36,7 +40,11 @@ import com.kh.khedu.vo.course.CourseDetailResponseVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
+import com.kh.khedu.vo.course.CourseSimpleListVO;
+import com.kh.khedu.vo.course.StudentCourseListVO;
+import com.kh.khedu.vo.exam.ExamListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 import com.kh.khedu.vo.schedule.ScheduleCreateRequestVO;
 
 @Service
@@ -60,6 +68,29 @@ public class CourseServiceImpl implements CourseService {
 	private AttendanceService attendanceService;
 	@Autowired
 	private AssignmentService assignmentService;
+	@Autowired
+	private ExamService examService;
+	@Autowired
+	private ParentStudentDao parentStudentDao;
+	
+	
+	//	공통메소드
+	//학부모-자녀 관계 확인
+    private void checkParentStudent(
+    		int parentNo,
+    		int studentNo) {
+    	List<ParentStudentVO> studentList = 
+    			parentStudentDao.findByParentNo(parentNo);
+    	
+    	boolean connected = 
+    			studentList.stream()
+    				.anyMatch(student ->
+    						student.getStudentNo() == studentNo
+    				);
+    	if(!connected) {
+    		throw new GetOutException();
+    	}
+    }
 	
 	//강좌 등록화면 진입 시 최초 조회
 	@Override
@@ -308,8 +339,13 @@ public class CourseServiceImpl implements CourseService {
         }
         
         // [3] 과제 정보 조회
-        List<AssignmentListVO> assignmentList = assignmentService.selectListByCourse(courseNo);
+        List<AssignmentListVO> assignmentList = assignmentService.selectRecentListByCourse(courseNo);
         // [4] 시험 정보 조회
+        List<ExamListVO> examList = examService.selectRecentListByCourse(courseNo);
+        
+        // null 방어 처리
+        if (assignmentList == null) assignmentList = Collections.emptyList();
+        if (examList == null) examList = Collections.emptyList();
         
         // [3] 통합 응답 객체 생성 (3, 4번 과제/시험은 빈 리스트 유지)
         return CourseDetailResponseVO.builder()
@@ -319,8 +355,34 @@ public class CourseServiceImpl implements CourseService {
                 .todaySession(todaySession)
                 .attendanceDetail(attendanceDetail)
                 .assignmentList(assignmentList) // 과제 팀원 영역 (비워둠)
-                //.examList(Collections.emptyList())       // 시험 팀원 영역 (비워둠)
+                .examList(examList)       // 시험 팀원 영역 (비워둠)
                 .build();
+	}
+
+	@Override
+	public List<StudentCourseListVO> selectListByStudent(int studentNo) {
+	    return courseDao.selectListByStudent(studentNo);
+	}
+	
+	@Override
+	public List<StudentCourseListVO> selectListByParentStudent(
+	        int parentNo,
+	        int studentNo) {
+
+	    //부모-자녀 관계 확인
+	    checkParentStudent(parentNo, studentNo);
+
+	    return courseDao.selectListByStudent(studentNo);
+	}
+	
+	@Override
+	public List<CourseSimpleListVO> selectManageCourseList(
+	        int employeeNo,
+	        boolean tutor) {
+	    if(tutor) {
+	        return courseDao.selectManageCourseListByEmployee(employeeNo);
+	    }
+	    return courseDao.selectManageCourseList();
 	}
 
 }

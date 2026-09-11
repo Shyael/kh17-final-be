@@ -7,6 +7,7 @@ import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.vo.assignment.AssignmentListVO;
 import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
+import com.kh.khedu.vo.exam.ExamListVO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,6 @@ public class CourseDetailResponseVO {
 	// [3] 과제 정보
 	private List<AssignmentListVO> assignmentList;
 	// [4] 시험 정보
-//	private ExamlistVO examList;
+	private List<ExamListVO> examList;
 	
 }

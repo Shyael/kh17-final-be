@@ -150,4 +150,41 @@
 			<!-- 공통 검색 조건 include -->
 			<include refid="courseSearchCondition" />
 	</select>
+	
+	<!-- 학생이 현재 수강 중인 강의 목록 -->
+	<select id="selectListByStudent" resultType="StudentCourseListVO">
+	    select
+	        c.course_no,
+	        c.course_title
+	
+	    from student_course sc
+	
+	    join course c
+	        on sc.course_no = c.course_no
+	
+	    where sc.student_no = #{studentNo}
+	      and sc.student_course_status = '수강중'
+	
+	    order by c.course_title asc
+	
+	</select>
+	
+	<!-- 관리용 전체 강의 목록 : 원장/데스크 -->
+	<select id="selectManageCourseList" resultType="CourseSimpleListVO">
+	    select
+	        course_no,
+	        course_title
+	    from course
+	    order by course_title asc
+	</select>
+	
+	<!-- 관리용 본인 담당 강의 목록 : 강사 -->
+	<select id="selectManageCourseListByEmployee" resultType="CourseSimpleListVO">
+	    select
+	        course_no,
+	        course_title
+	    from course
+	    where employee_no = #{employeeNo}
+	    order by course_title asc
+	</select>
 </mapper>

@@ -6,7 +6,7 @@ import com.kh.khedu.dto.TutorDto;
 import com.kh.khedu.vo.tutor.TutorDetailVO;
 import com.kh.khedu.vo.tutor.TutorEmployeeVO;
 import com.kh.khedu.vo.tutor.TutorListVO;
-import com.kh.khedu.vo.tutor.TutorSearchRequestVO;
+import com.kh.khedu.vo.tutor.TutorSearchVO;
 import com.kh.khedu.vo.tutor.TutorSubjectVO;
 
 public interface TutorDao {
@@ -19,9 +19,10 @@ public interface TutorDao {
 	boolean delete(int tutorNo);
 
 	// ==================== 강사 목록 ====================
-	List<TutorListVO> selectList();
-	List<TutorListVO> selectListBySubject(int academySubjectNo);
-
+	//페이지네이션 + 검색
+	List<TutorListVO> selectSearchList(TutorSearchVO search);
+	//검색조건 전체 개수
+	int selectCount(TutorSearchVO search);
 	// ==================== 강사 상세 ====================
 	TutorDetailVO selectDetail(int tutorNo);
 

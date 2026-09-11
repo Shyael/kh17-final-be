@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.message">
+	
+	<!-- 시퀀스 생성 -->
+	<select id="sequence" resultType="int">
+		select message_seq.nextval from dual
+	</select>
+
+	<!-- 메세지 대표 정보 등록 -->	
+	<insert id="add">
+		insert into message(
+			message_no, message_room,
+			message_content, message_type, 
+			message_time
+		)
+		values(
+			#{messageNo}, #{messageRoom},
+			#{messageContent}, #{messageType},
+			#{messageTime}
+		)
+	</insert>
+	<!-- 일반 채팅 메세지 등록 -->
+	<insert id="addChat">
+		insert into message_chat (
+			message_no, 
+			message_sender_no,
+			message_sender_name,
+			message_sender_type
+		)
+		values(
+			#{messageNo},
+			#{messageSenderId},
+			#{messageSenderNickname},
+			#{messageSenderLevel}
+		)
+	</insert>
+	<!-- 시스템 메세지 등록 -->
+	<insert id="addSystem">
+		insert into message_system(
+			message_no, message_level
+		)
+		values(
+			#{messageNo}, #{messageLevel}
+		)
+	</insert>
+	
+	<!-- 조회를 위한 구조를 안내(ResultMap) -->
+	<resultMap type="MessageVO" id="MessageDefaultVO">
+		<result property="no" column="message_no"/>
+		<result property="room" column="message_room"/>
+		<result property="type" column="message_type"/>
+		<result property="content" column="message_content"/>
+		<result property="time" column="message_time"/>
+	</resultMap>
+	<resultMap type="ChatMessageVO" id="ChatMessageVO" extends="MessageDefaultVO">
+		<result property="no" column="message_no"/>
+		<result property="senderId" column="message_sender_id"/>
+		<result property="senderNickname" column="message_sender_nickname"/>
+		<result property="senderLevel" column="message_sender_level"/>
+	</resultMap>
+	<resultMap type="SystemMessageVO" id="SystemMessageVO" extends="MessageDefaultVO">
+		<result property="no" column="message_no"/>
+		<result property="level" column="message_level"/>
+	</resultMap>
+	
+	<!-- 조회를 위한 구조를 정의(ResultMap) -->
+	<resultMap type="MessageVO" id="MessageVO" extends="MessageDefaultVO">
+		<discriminator javaType="String" column="message_type">
+			<case value="chat" resultMap="ChatMessageVO"></case>
+			<case value="system" resultMap="SystemMessageVO"></case>
+		</discriminator>
+	</resultMap>
+	
+	<!-- 메세지 조회 -->
+	<select id="selectTest" resultMap="MessageVO">
+		select 
+			M.*,
+			C.message_sender_id, 
+			C.message_sender_nickname,
+			C.message_sender_level,
+			S.message_level
+		from message M
+			left outer join message_chat C on M.message_no = C.message_no
+			left outer join message_system S on M.message_no = S.message_no
+		where M.message_room = #{messageRoom}
+		order by M.message_no desc
+	</select>
+	
+	<!-- 구문조각(SQL) -->
+	<sql id="temp-header">
+		with temp_list as (
+			select rownum rn, TMP.* from (
+	</sql>
+	<sql id="temp-footer">
+			)TMP
+		)
+	</sql>
+	
+	<select id="selectMessages" resultMap="MessageVO">
+		<include refid="temp-header"></include>
+		select 
+			M.*,
+			C.message_sender_id, 
+			C.message_sender_nickname,
+			C.message_sender_level,
+			S.message_level
+		from message M
+			left outer join message_chat C on M.message_no = C.message_no
+			left outer join message_system S on M.message_no = S.message_no
+		where M.message_room = #{messageRoom}
+		order by M.message_no desc
+		<include refid="temp-footer"></include>
+		
+		select * from (
+			select * from (
+				<!-- temp_list는 위에서 만든 임시 뷰의 이름 -->
+				select * from temp_list
+				
+				<if test="lastMessageNo != null">
+				<![CDATA[
+				where message_no < #{lastMessageNo}
+				]]>		
+				</if>
+			) 
+			
+			<!-- 사이즈가 존재할 경우만 개수제한을 해서 불러와라 -->
+			<if test="size != null">
+			<![CDATA[
+			where rownum <= #{size}
+			]]>
+			</if>
+		)
+		order by message_no asc
+	</select>
+	
+	<select id="countMessages" resultType="int">
+		<include refid="temp-header"></include>
+		select 
+			M.*,
+			C.message_sender_id, 
+			C.message_sender_nickname,
+			C.message_sender_level,
+			S.message_level
+		from message M
+			left outer join message_chat C on M.message_no = C.message_no
+			left outer join message_system S on M.message_no = S.message_no
+		where M.message_room = #{messageRoom}
+		order by M.message_no desc
+		<include refid="temp-footer"></include>
+		
+		select count(*) from (
+			<!-- temp_list는 위에서 만든 임시 뷰의 이름 -->
+			select * from temp_list
+			
+			<if test="lastMessageNo != null">
+			<![CDATA[
+			where message_no < #{lastMessageNo}
+			]]>		
+			</if>
+		) 
+		
+	</select>
+	
+</mapper>

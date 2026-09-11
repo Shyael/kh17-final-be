@@ -5,11 +5,13 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.khedu.dao.AttachDao;
+import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.ExamDao;
 import com.kh.khedu.dao.QuestionDao;
 import com.kh.khedu.dao.QuestionOptionDao;
@@ -19,12 +21,21 @@ import com.kh.khedu.dto.QuestionDto;
 import com.kh.khedu.dto.QuestionOptionDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.util.PageResponseVO;
+import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
+import com.kh.khedu.vo.exam.ExamDraftRequestVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamSearchVO;
+import com.kh.khedu.vo.exam.ExamStatisticsVO;
+import com.kh.khedu.vo.exam.QuestionDraftVO;
 import com.kh.khedu.vo.exam.QuestionManageDetailVO;
+import com.kh.khedu.vo.exam.QuestionOptionDraftVO;
+import com.kh.khedu.vo.exam.QuestionStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
 import com.kh.khedu.vo.exam.StudentExamListVO;
+import com.kh.khedu.vo.exam.StudentExamSearchVO;
 
 @Service
 @Transactional
@@ -44,6 +55,9 @@ public class ExamServiceImpl implements ExamService {
 	
 	@Autowired
 	private AttachService attachService;
+	
+	@Autowired
+	private CourseDao courseDao;
 	
 	//공통 메소드
 	//권한검사
@@ -109,38 +123,60 @@ public class ExamServiceImpl implements ExamService {
 	    if (beforeStatus.equals(afterStatus)) {
 	        return;
 	    }
-
-	    // 작성중 → 공개
-	    if ("작성중".equals(beforeStatus) && "공개".equals(afterStatus)) {
-	        return;
+	    
+	    boolean valid = 
+	    		("작성중".equals(beforeStatus) && "공개".equals(afterStatus))
+	    		||
+	    		("공개".equals(beforeStatus) && "마감".equals(afterStatus));
+	    
+	    if(!valid) {
+	    	throw new ResponseStatusException(
+	    			HttpStatus.BAD_REQUEST,
+	    			"변경할 수 없는 시험 상태입니다."
+	    	);	    	
 	    }
-
-	    // 공개 → 마감
-	    if ("공개".equals(beforeStatus) && "마감".equals(afterStatus)) {
-	        return;
-	    }
-
-	    throw new ResponseStatusException(
-	            HttpStatus.BAD_REQUEST,
-	            "변경할 수 없는 시험 상태입니다."
-	    );
 	}
 	
 	//시험등록
 	@Override
-	public int insert(ExamDto examDto) {
-		//시험 번호 생성
-		int examNo = examDao.sequence();
-		
-		examDto.setExamNo(examNo);
-		
-		//최초 등록은 무조건 작성중
-		examDto.setExamStatus("작성중");
-		
-		//시험등록
-		examDao.insert(examDto);
-		
-		return examNo;
+	@Transactional
+	public int insert(
+	        ExamDto examDto,
+	        int loginEmployeeNo,
+	        boolean tutor) {
+
+	    //선택한 강의 조회
+	    CourseDetailVO course = courseDao.selectCourseDetail(examDto.getCourseNo());
+
+	    if(course == null) {
+	        throw new TargetNotfoundException("존재하지 않는 강의입니다.");
+	    }
+
+	    //선택한 강의의 담당 강사 번호
+	    int courseEmployeeNo = course.getEmployeeNo();
+
+	    //강사는 본인 담당 강의에만 시험 등록 가능
+	    if(tutor && courseEmployeeNo != loginEmployeeNo) {
+	        throw new AccessDeniedException(
+	                "본인이 담당하는 강의에만 시험을 등록할 수 있습니다."
+	        );
+	    }	
+
+	    //원장/데스크가 생성해도 강의 담당 강사 번호 저장
+	    examDto.setEmployeeNo(courseEmployeeNo);
+
+	    //신규 시험은 무조건 작성중
+	    examDto.setExamStatus("작성중");
+
+	    //시험 번호 생성
+	    int examNo = examDao.sequence();
+
+	    examDto.setExamNo(examNo);
+
+	    //시험 등록
+	    examDao.insert(examDto);
+
+	    return examNo;
 	}
 
 	//시험 단일 조회
@@ -234,33 +270,65 @@ public class ExamServiceImpl implements ExamService {
 		return exam;
 	}
 
-	//전체 시험 목록 조회
+	// 특정 강의의 최근 시험 5개 조회
 	@Override
-	public List<ExamListVO> selectList() {
-		return examDao.selectList();
-	}
-
-	//특정 강의의 시험 목록 조회
-	@Override
-	public List<ExamListVO> selectListByCourse(int courseNo) {
-		return examDao.selectListByCourse(courseNo);
-	}
-
-	//특정 강사가 등록한 시험 목록 조회
-	@Override
-	public List<ExamListVO> selectListByEmployee(int employeeNo) {
-		return examDao.selectListByEmployee(employeeNo);
+	public List<ExamListVO> selectRecentListByCourse(int courseNo) {
+	    return examDao.selectRecentListByCourse(courseNo);
 	}
 	
 	@Override
 	public List<StudentExamListVO> selectListByStudent(int studentNo) {
 		return examDao.selectListByStudent(studentNo);
 	}
+	
+	@Override
+	public PageResponseVO<ExamListVO> selectManageList(ExamSearchVO search, int employeeNo, boolean tutor) {
+		//튜터는 본인이 등록한 시험만 조회
+	    if(tutor) {
+	        search.setEmployeeNo(employeeNo);
+	    }
+	    //관리자는 전체 시험 조회
+	    else {
+	        search.setEmployeeNo(null);
+	    }
+
+	    List<ExamListVO> list = examDao.selectManageSearchList(search);
+
+	    int totalCount = examDao.selectManageCount(search);
+	    
+	    return new PageResponseVO<>(
+	            list,
+	            totalCount,
+	            search
+	    );
+	}
+
+	@Override
+	public PageResponseVO<StudentExamListVO> selectStudentList(StudentExamSearchVO search, int studentNo) {
+		//클라이언트가 studentNo를 보내는 것이 아니라
+	    //로그인 토큰의 학생번호를 서버에서 강제 지정
+	    search.setStudentNo(studentNo);
+
+	    List<StudentExamListVO> list = examDao.selectStudentSearchList(search);
+
+	    int totalCount = examDao.selectStudentCount(search);
+
+	    return new PageResponseVO<>(
+	            list,
+	            totalCount,
+	            search
+	    );
+	}
 
 	//시험 수정
 	@Override
 	public boolean update(ExamDto examDto, int employeeNo, boolean tutor) {
 		ExamDto beforeExam = checkAuthority(examDto.getExamNo(), employeeNo, tutor);
+		
+		//상태값을 보내지 않는 경우 기존 상태 유지
+		if(examDto.getExamStatus() == null) {
+			examDto.setExamStatus(beforeExam.getExamStatus());
+		}
 		
 		//상태 변경 검증
 		checkStatusChange(beforeExam.getExamStatus(), examDto.getExamStatus());
@@ -315,5 +383,366 @@ public class ExamServiceImpl implements ExamService {
 		
 		return examDao.selectAttemptList(examNo);
 	}
+	
+	//일괄 저장 + 수정 + 삭제 + 문제 첨부파일 정리
+	@Override
+	@Transactional
+	public ExamDraftRequestVO saveDraft(
+	        int examNo,
+	        ExamDraftRequestVO request,
+	        int employeeNo,
+	        boolean tutor) {
+	    //==================================================
+	    // 1. 시험 권한 확인
+	    //==================================================
+	    checkAuthority(examNo, employeeNo, tutor);
+
+	    ExamDto exam = examDao.selectOne(examNo);
+
+	    if (exam == null) {
+	        throw new TargetNotfoundException();
+	    }
+
+	    //작성중 시험만 임시저장 가능
+	    if (!"작성중".equals(exam.getExamStatus())) {
+	        throw new ResponseStatusException(
+	                HttpStatus.BAD_REQUEST,
+	                "작성중인 시험만 임시저장할 수 있습니다."
+	        );
+	    }
+
+	    //==================================================
+	    // 2. 요청 데이터 기본 검증
+	    //==================================================
+	    if (request.getQuestionList() != null) {
+
+	        //문제 순서 중복 확인
+	        long questionOrderCount =
+	                request.getQuestionList()
+	                        .stream()
+	                        .map(QuestionDraftVO::getQuestionOrder)
+	                        .distinct()
+	                        .count();
+
+	        if (questionOrderCount != request.getQuestionList().size()) {
+	            throw new ResponseStatusException(
+	                    HttpStatus.BAD_REQUEST,
+	                    "문제 순서가 중복되었습니다."
+	            );
+	        }
+
+
+	        for (QuestionDraftVO questionVO : request.getQuestionList()) {
+
+	            if (questionVO.getOptionList() == null) {
+	                continue;
+	            }
+
+	            //보기 순서 중복 확인
+	            long optionOrderCount =
+	                    questionVO.getOptionList()
+	                            .stream()
+	                            .map(QuestionOptionDraftVO::getOptionOrder)
+	                            .distinct()
+	                            .count();
+
+	            if (optionOrderCount != questionVO.getOptionList().size()) {
+	                throw new ResponseStatusException(
+	                        HttpStatus.BAD_REQUEST,
+	                        "보기 순서가 중복되었습니다."
+	                );
+	            }
+
+	            //작성중에는 정답이 없어도 되지만
+	            //정답이 2개 이상이면 안 됨
+	            long answerCount = questionVO.getOptionList()
+	                            .stream()
+	                            .filter(option ->
+	                                    "Y".equals(
+	                                            option.getOptionIsAnswer()
+	                                    )
+	                            )
+	                            .count();
+
+	            if (answerCount > 1) {
+	                throw new ResponseStatusException(
+	                        HttpStatus.BAD_REQUEST,
+	                        "한 문제에는 하나의 정답만 설정할 수 있습니다."
+	                );
+	            }
+	        }
+	    }
+
+
+	    //==================================================
+	    // 3. 삭제된 보기 처리
+	    //==================================================
+	    if (request.getDeletedOptionNos() != null) {
+	        for (Integer optionNo : request.getDeletedOptionNos()) {
+
+	            if (optionNo == null) {
+	                continue;
+	            }
+
+	            QuestionOptionDto option = questionOptionDao.selectOne(optionNo);
+
+	            //이미 없는 데이터면 넘어감
+	            if (option == null) {
+	                continue;
+	            }
+
+	            QuestionDto question = questionDao.selectOne(option.getQuestionNo());
+
+	            if (question == null) {
+	                throw new TargetNotfoundException();
+	            }
+
+	            //다른 시험의 보기 삭제 방지
+	            if (question.getExamNo() != examNo) {
+	                throw new GetOutException();
+	            }
+
+	            questionOptionDao.delete(optionNo);
+	        }
+	    }
+
+
+	    //==================================================
+	    // 4. 삭제된 문제 처리
+	    //==================================================
+		 if (request.getDeletedQuestionNos() != null) {
+		     for (Integer questionNo : request.getDeletedQuestionNos()) {
+	
+		         if (questionNo == null) {
+		             continue;
+		         }
+	
+		         QuestionDto question = questionDao.selectOne(questionNo);
+	
+		         //이미 삭제된 문제면 넘어감
+		         if (question == null) {
+		             continue;
+		         }
+	
+		         //다른 시험의 문제 삭제 방지
+		         if (question.getExamNo() != examNo) {
+		             throw new GetOutException();
+		         }
+	
+		         //문제 삭제 전에 첨부파일 번호 조회
+		         List<Integer> fileNos = questionDao.selectFiles(questionNo);
+	
+		         //문제 삭제
+		         boolean result = questionDao.delete(questionNo);
+	
+		         //문제 삭제 성공 시
+		         //attach DB + 실제 파일 삭제
+		         if (result && fileNos != null) {
+		             for (Integer attachNo : fileNos) {
+		                 attachService.delete(attachNo);
+		             }
+		         }
+		     }
+		 }
+
+	    //문제 목록이 없으면 삭제까지만 처리 후 종료
+	    if (request.getQuestionList() == null) {
+	        return request;
+	    }
+
+	    //==================================================
+	    // 5. 문제 저장
+	    //==================================================
+	    for (QuestionDraftVO questionVO : request.getQuestionList()) {
+	        Integer questionNo = questionVO.getQuestionNo();
+
+	        //================================================
+	        // 신규 문제
+	        //================================================
+	        if (questionNo == null) {
+
+	            int newQuestionNo =
+	                    questionDao.sequence();
+
+	            QuestionDto questionDto =
+	                    QuestionDto.builder()
+	                            .questionNo(newQuestionNo)
+	                            .examNo(examNo)
+	                            .questionContent(
+	                                    questionVO.getQuestionContent()
+	                            )
+	                            .questionScore(
+	                                    questionVO.getQuestionScore()
+	                            )
+	                            .questionComment(
+	                                    questionVO.getQuestionComment()
+	                            )
+	                            .questionOrder(
+	                                    questionVO.getQuestionOrder()
+	                            )
+	                            .build();
+
+	            questionDao.insert(questionDto);
+
+	            //새로 생성된 번호
+	            questionNo = newQuestionNo;
+
+	            //응답 VO에도 반영
+	            questionVO.setQuestionNo(
+	                    newQuestionNo
+	            );
+	        }
+
+
+	        //================================================
+	        // 기존 문제 수정
+	        //================================================
+	        else {
+
+	            QuestionDto before =
+	                    questionDao.selectOne(questionNo);
+
+	            if (before == null) {
+	                throw new TargetNotfoundException();
+	            }
+
+	            //다른 시험 문제 수정 방지
+	            if (before.getExamNo() != examNo) {
+	                throw new GetOutException();
+	            }
+
+
+	            QuestionDto questionDto =
+	                    QuestionDto.builder()
+	                            .questionNo(questionNo)
+	                            .questionContent(
+	                                    questionVO.getQuestionContent()
+	                            )
+	                            .questionScore(
+	                                    questionVO.getQuestionScore()
+	                            )
+	                            .questionComment(
+	                                    questionVO.getQuestionComment()
+	                            )
+	                            .questionOrder(
+	                                    questionVO.getQuestionOrder()
+	                            )
+	                            .build();
+
+	            questionDao.update(questionDto);
+	        }
+
+
+	        //==================================================
+	        // 6. 보기 저장
+	        //==================================================
+
+	        if (questionVO.getOptionList() == null) {
+	            continue;
+	        }
+
+
+	        for (QuestionOptionDraftVO optionVO
+	                : questionVO.getOptionList()) {
+
+	            Integer optionNo =
+	                    optionVO.getOptionNo();
+
+
+	            //==============================================
+	            // 신규 보기
+	            //==============================================
+	            if (optionNo == null) {
+
+	                int newOptionNo =
+	                        questionOptionDao.sequence();
+
+	                QuestionOptionDto optionDto =
+	                        QuestionOptionDto.builder()
+	                                .optionNo(newOptionNo)
+	                                .questionNo(questionNo)
+	                                .optionContent(
+	                                        optionVO.getOptionContent()
+	                                )
+	                                .optionIsAnswer(
+	                                        optionVO.getOptionIsAnswer()
+	                                )
+	                                .optionOrder(
+	                                        optionVO.getOptionOrder()
+	                                )
+	                                .build();
+
+	                questionOptionDao.insert(optionDto);
+
+	                //응답에 생성된 번호 반영
+	                optionVO.setOptionNo(
+	                        newOptionNo
+	                );
+	            }
+
+
+	            //==============================================
+	            // 기존 보기 수정
+	            //==============================================
+	            else {
+
+	                QuestionOptionDto beforeOption =
+	                        questionOptionDao.selectOne(
+	                                optionNo
+	                        );
+
+	                if (beforeOption == null) {
+	                    throw new TargetNotfoundException();
+	                }
+
+	                //이 문제의 보기가 맞는지
+	                if (beforeOption.getQuestionNo() != questionNo) {
+	                    throw new GetOutException();
+	                }
+
+
+	                QuestionOptionDto optionDto =
+	                        QuestionOptionDto.builder()
+	                                .optionNo(optionNo)
+	                                .optionContent(
+	                                        optionVO.getOptionContent()
+	                                )
+	                                .optionIsAnswer(
+	                                        optionVO.getOptionIsAnswer()
+	                                )
+	                                .optionOrder(
+	                                        optionVO.getOptionOrder()
+	                                )
+	                                .build();
+
+	                questionOptionDao.update(optionDto);
+	            }
+	        }
+	    }
+	    //신규 생성된 questionNo / optionNo가 들어간 상태로 반환
+	    return request;
+	}
+
+	@Override
+	public ExamStatisticsVO selectStatistics(int examNo, int employeeNo, boolean tutor) {
+		//강사는 본인 시험만 조회 가능
+		checkAuthority(examNo, employeeNo, tutor);
+		
+		//시험 전체 통계
+		ExamStatisticsVO statistics = examDao.selectStatistics(examNo);
+		
+		if(statistics == null) {
+			throw new TargetNotfoundException();
+		}
+		
+		//문항별 통계
+		List<QuestionStatisticsVO> questionStatistics = examDao.selectQuestionStatistics(examNo);
+		
+		statistics.setQuestionStatistics(questionStatistics);
+		
+		return statistics;
+	}
+
+	
 
 }

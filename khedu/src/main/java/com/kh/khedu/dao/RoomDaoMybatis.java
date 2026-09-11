@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.RoomDto;
 import com.kh.khedu.vo.room.RoomListVO;
+import com.kh.khedu.vo.room.RoomUserVO;
 
 @Repository
 public class RoomDaoMybatis implements RoomDao {
@@ -24,11 +25,27 @@ public class RoomDaoMybatis implements RoomDao {
 		sqlSession.insert("mapper.room.create", roomDto);
 	}
 	@Override
+	public RoomDto selectOne(int roomNo) {
+		return sqlSession.selectOne("mapper.room.find", roomNo);
+	}
+	@Override
+	public RoomDto selectOneForCheck(int accountNo) {
+		return sqlSession.selectOne("mapper.room.check", accountNo);
+	}
+	@Override
 	public List<RoomListVO> selectList() {
 		return sqlSession.selectList("mapper.room.list");
 	}
 	@Override
 	public List<RoomListVO> selectList(int accountNo) {
 		return sqlSession.selectList("mapper.room.listUpgrade", accountNo);
+	}
+	@Override
+	public List<Integer> getMembers(int roomNo) {
+		return sqlSession.selectList("mapper.room.member", roomNo);
+	}
+	@Override
+	public List<RoomUserVO> getMemberInfo(int roomNo) {
+		return sqlSession.selectList("mapper.room.memberInfo", roomNo);
 	}
 }

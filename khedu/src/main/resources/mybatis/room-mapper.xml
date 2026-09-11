@@ -5,15 +5,77 @@
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
   
 <mapper namespace="mapper.room">
+
+	<!-- 방 생성 -->
 	<select id="sequence" resultType="int">
 		select room_seq.nextval from dual
 	</select>
 	<insert id="create">
 		insert into room (
-			room_no, room_owner
+			room_no, room_owner, room_type
 		)
 		values( 
-			#{roomNo} , #{roomOwner} 
+			#{roomNo} , #{roomOwner} , #{roomType}
 		)
 	</insert>
+	
+	<!-- 방 상세 -->
+	<select id="find" resultType="RoomDto">
+		select	*
+		  from	room
+		 where	room_no = #{roomNo}
+	</select>
+	<select id="check" resultType="RoomDto">
+		select	* 
+		  from	room
+		 where	room_owner = #{roomOwner}
+		   and	room_type = '상담'
+	</select>
+	
+	<!-- 방 목록(검색x) -->
+	<select id="list" resultType="RoomListVO">
+		select 
+			R.*,
+			nvl(U.cnt, 0) cnt, 
+			'N' enter
+		from room R 
+			left outer join (
+		        select room_no, count(*) cnt from room_user group by room_no
+		    ) U on R.room_no = U.room_no
+		order by R.room_no asc
+	</select>
+	<!-- 방 목록(+인원수+참여여부) -->
+	<select id="listUpgrade" resultType="RoomListVO">
+		select 
+		    R.*, 
+		    nvl(U.cnt, 0) cnt, 
+		    nvl2(MY.account_id, 'Y', 'N') enter
+		from room R 
+		    left outer join (
+		        select room_no, count(*) cnt from room_user group by room_no
+		    ) U on R.room_no = U.room_no
+		    left outer join (
+		        select * from room_user where account_id = #{accountId}
+		    ) MY on R.room_no = MY.room_no
+		order by R.room_no asc
+	</select>
+	
+	<!-- 참여자 명단 조회 -->
+	<select id="member" resultType="int">
+		select 	account_no from room_user
+		 where 	room_no = #{roomNo}
+		order by account_no asc
+	</select>
+	
+	<!-- 참여자 정보(아이디, 등급, 닉네임) 조회 -->
+	<select id="memberInfo" resultType="RoomUserVO">
+		select 
+			ACC.account_no, 
+			ACC.account_name, 
+			ACC.account_type 
+		from room_user RU
+			inner join account ACC on RU.account_no = ACC.account_no
+		where room_no = #{roomNo}
+	</select>
+	
 </mapper>

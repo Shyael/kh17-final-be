@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 import com.kh.khedu.dto.AssignmentDto;
 import com.kh.khedu.vo.assignment.AssignmentDetailVO;
 import com.kh.khedu.vo.assignment.AssignmentListVO;
+import com.kh.khedu.vo.assignment.AssignmentSearchVO;
+import com.kh.khedu.vo.assignment.AssignmentStudentSearchVO;
 import com.kh.khedu.vo.assignment.StudentAssignmentListVO;
 
 @Repository
@@ -38,25 +40,11 @@ public class AssignmentDaoMybatis implements AssignmentDao {
                 "mapper.assignment.selectOne", assignmentNo);
     }
 
-    // 전체 과제 목록 조회
+    // 특정 강의의 최근 과제 5개
     @Override
-    public List<AssignmentListVO> selectList() {
-        return sqlSession.selectList("mapper.assignment.selectList");
-    }
-
-    // 특정 강의의 과제 목록 조회
-    @Override
-    public List<AssignmentListVO> selectListByCourse(int courseNo) {
-        return sqlSession.selectList(
-                "mapper.assignment.selectListByCourse", courseNo);
-    }
-
-    // 특정 강사가 등록한 과제 목록 조회
-    @Override
-    public List<AssignmentListVO> selectListByEmployee(int employeeNo) {
-        return sqlSession.selectList(
-                "mapper.assignment.selectListByEmployee", employeeNo);
-    }
+	public List<AssignmentListVO> selectRecentListByCourse(int courseNo) {
+    	return sqlSession.selectList("mapper.assignment.selectRecentListByCourse", courseNo);
+	}
 
     // 학생이 수강 중인 강의의 과제 목록 조회
     @Override
@@ -92,5 +80,27 @@ public class AssignmentDaoMybatis implements AssignmentDao {
 	public List<Integer> selectFiles(int assignmentNo) {
 		return sqlSession.selectList("mapper.assignment.selectFiles",assignmentNo);
 	}
+
+	@Override
+	public List<AssignmentListVO> selectManageSearchList(AssignmentSearchVO search) {
+		return sqlSession.selectList("mapper.assignment.selectManageSearchList", search);
+	}
+
+	@Override
+	public int selectManageCount(AssignmentSearchVO search) {
+		return sqlSession.selectOne("mapper.assignment.selectManageCount", search);
+	}
+
+	@Override
+	public List<StudentAssignmentListVO> selectStudentSearchList(AssignmentStudentSearchVO search) {
+		return sqlSession.selectList("mapper.assignment.selectStudentSearchList" ,search);
+	}
+
+	@Override
+	public int selectStudentCount(AssignmentStudentSearchVO search) {
+		return sqlSession.selectOne("mapper.assignment.selectStudentCount", search);
+	}
+
+	
 
 }

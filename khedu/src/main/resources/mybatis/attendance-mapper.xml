@@ -315,19 +315,19 @@
 	<!-- 세션 생성 시 수강생들의 출석부 기본값('미출결') 일괄 생성 -->
 	<insert id="initAttendance">
 	    INSERT INTO attendance (
-	        attendance_no,
-	        class_session_no,
-	        student_no,
+	        attendance_no, 
+	        class_session_no, 
+	        student_no, 
 	        attendance_state
 	    )
 	    SELECT 
-	        attendance_seq.nextval,  <!-- 출석 시퀀스명 (프로젝트 시퀀스명에 맞게 확인) -->
-	        #{sessionNo},
-	        r.student_no,
+	        attendance_seq.nextval, 
+	        #{sessionNo}, 
+	        sc.student_no, 
 	        '미출결'
-	    FROM registration r
-	    WHERE r.course_no = #{courseNo}
-	      <!-- 만약 수강취소/환불 학생을 거르는 컬럼이 있다면 추가 (예: AND r.registration_status = '수강중') -->
+	    FROM student_course sc
+	    WHERE sc.course_no = #{courseNo}
+	      AND sc.student_course_status IN ('신청', '수강중')
 	</insert>
 	
 	<!-- [1] 관리자 / 강사용 수동 출결 상태 정정 -->

@@ -2,7 +2,9 @@ package com.kh.khedu.service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.Locale;
 
@@ -141,6 +143,20 @@ public class ClassSessionServiceImple implements ClassSessionService {
 		// [2] 강좌가 진행중인지 확인
 		if(!ClassSessionDto.STATUS_RUNNING.equals(classSessionDto.getSessionStatus())) {
 			throw new WhoAreYouException("현재 진행중인 수업 세션이 아닙니다(이미 종료되었거나 취소됨)");
+		}
+		
+		// [2-1] 수업 종료 시간 도달 여부 검증 (종료 시각 이전 종료 시도 차단)
+		Timestamp sessionEndTimestamp = classSessionDto.getSessionEnd();
+		if (sessionEndTimestamp != null) {
+			LocalDateTime now = LocalDateTime.now();
+			LocalDateTime sessionEndTime = sessionEndTimestamp.toLocalDateTime();
+			
+			// 현재 시각이 수업 종료 시각 이전인 경우 예외 발생
+			if (now.isBefore(sessionEndTime)) {
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+				String formattedEndTime = sessionEndTime.format(formatter);
+				throw new IllegalArgumentException("수업 종료 시간(" + formattedEndTime + ") 이전에는 수업을 종료할 수 없습니다.");
+			}
 		}
 		
 		// [3] ClassSession 상태를 '종료'로 변경 및 종료시각 갱신

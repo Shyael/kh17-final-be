@@ -13,6 +13,7 @@ import com.kh.khedu.vo.tutor.TutorDetailVO;
 import com.kh.khedu.vo.tutor.TutorEmployeeVO;
 import com.kh.khedu.vo.tutor.TutorListVO;
 import com.kh.khedu.vo.tutor.TutorSearchRequestVO;
+import com.kh.khedu.vo.tutor.TutorSearchVO;
 import com.kh.khedu.vo.tutor.TutorSubjectVO;
 
 @Repository
@@ -44,19 +45,6 @@ public class TutorDaoMybatis implements TutorDao {
 	@Override
 	public boolean delete(int tutorNo) {
 		return sqlSession.delete("mapper.tutor.delete", tutorNo) > 0;
-	}
-
-	@Override
-	public List<TutorListVO> selectList() {
-		return sqlSession.selectList("mapper.tutor.selectList");
-	}
-
-	@Override
-	public List<TutorListVO> selectListBySubject(int academySubjectNo) {
-		return sqlSession.selectList(
-				"mapper.tutor.selectListBySubject",
-				academySubjectNo
-		);
 	}
 
 	@Override
@@ -100,6 +88,16 @@ public class TutorDaoMybatis implements TutorDao {
 	@Override
 	public List<TutorSubjectVO> tutorListBySubject() {
 		return sqlSession.selectList("mapper.tutor.tutorListBySubject");
+	}
+
+	@Override
+	public List<TutorListVO> selectSearchList(TutorSearchVO search) {
+		return sqlSession.selectList("mapper.tutor.selectSearchList", search);
+	}
+
+	@Override
+	public int selectCount(TutorSearchVO search) {
+		return sqlSession.selectOne("mapper.tutor.selectCount", search);
 	}
 
 

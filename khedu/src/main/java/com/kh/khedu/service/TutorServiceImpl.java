@@ -17,9 +17,11 @@ import com.kh.khedu.dto.AttachDto;
 import com.kh.khedu.dto.TutorCareerDto;
 import com.kh.khedu.dto.TutorDto;
 import com.kh.khedu.dto.TutorSubjectDto;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.tutor.TutorDetailVO;
 import com.kh.khedu.vo.tutor.TutorEmployeeVO;
 import com.kh.khedu.vo.tutor.TutorListVO;
+import com.kh.khedu.vo.tutor.TutorSearchVO;
 
 @Service
 @Transactional
@@ -69,21 +71,18 @@ public class TutorServiceImpl implements TutorService {
 	}
 
 	@Override
-	public List<TutorListVO> selectList() {
-		List<TutorListVO> tutorList = tutorDao.selectList();
+	public PageResponseVO<TutorListVO> selectList(TutorSearchVO search) {
+		//현재 페이지 목록
+		List<TutorListVO> tutorList = tutorDao.selectSearchList(search);
 		
+		//강사 이미지 세팅
 		setTutorImages(tutorList);
 		
-		return tutorList;
-	}
-
-	@Override
-	public List<TutorListVO> selectListBySubject(int academySubjectNo) {
+		//검색조건 전체 개수
+		int totalCount = tutorDao.selectCount(search);
 		
-		List<TutorListVO> tutorList = tutorDao.selectListBySubject(academySubjectNo);
-		//이미지 불러와서 세팅
-		setTutorImages(tutorList);
-		return tutorList;
+		//페이지 정보 + 목록 합쳐서 반환
+		return new PageResponseVO<>(tutorList, totalCount, search);
 	}
 
 	@Override
@@ -277,5 +276,4 @@ public class TutorServiceImpl implements TutorService {
 			}
 		}
 	}
-
 }
