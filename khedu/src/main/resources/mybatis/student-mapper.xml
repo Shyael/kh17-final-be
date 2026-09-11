@@ -203,7 +203,7 @@
     </update>
     
     <!-- 관리자 -->
-    <select id="selectCurrentRunningSessionByStudent" resultType="com.kh.khedu.dto.ClassSessionDto">
+    <select id="selectCurrentRunningSessionByStudent" resultType="ClassSessionDto">
     SELECT *
 	FROM (
 	        SELECT 

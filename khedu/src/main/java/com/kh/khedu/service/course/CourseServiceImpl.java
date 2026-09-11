@@ -43,6 +43,7 @@ import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.course.CourseSimpleListVO;
+import com.kh.khedu.vo.course.CourseStudentListVO;
 import com.kh.khedu.vo.course.StudentCourseListVO;
 import com.kh.khedu.vo.exam.ExamListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
@@ -355,10 +356,13 @@ public class CourseServiceImpl implements CourseService {
         List<AssignmentListVO> assignmentList = assignmentService.selectRecentListByCourse(courseNo);
         // [4] 시험 정보 조회
         List<ExamListVO> examList = examService.selectRecentListByCourse(courseNo);
-        
+        // [5] 학생 정보 조회
+    	List<CourseStudentListVO> studentList = courseDao.selectCourseStudentList(courseNo);
+
         // null 방어 처리
         if (assignmentList == null) assignmentList = Collections.emptyList();
         if (examList == null) examList = Collections.emptyList();
+        if (studentList == null) studentList = Collections.emptyList(); 
         
         // [3] 통합 응답 객체 생성 (3, 4번 과제/시험은 빈 리스트 유지)
         return CourseDetailResponseVO.builder()
@@ -369,6 +373,7 @@ public class CourseServiceImpl implements CourseService {
                 .attendanceDetail(attendanceDetail)
                 .assignmentList(assignmentList) // 과제 팀원 영역 (비워둠)
                 .examList(examList)       // 시험 팀원 영역 (비워둠)
+                .studentList(studentList)
                 .build();
 	}
 
