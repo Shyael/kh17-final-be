@@ -27,10 +27,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "시험 문제 관리")
+@Tag(name = "시험 문제 관리(직원)")
 @RestController
-@RequestMapping("/api/question")
-public class QuestionRestController {
+@RequestMapping("/api/employee/question")
+public class EmployeeQuestionRestController {
 
     @Autowired
     private QuestionService questionService;
@@ -69,19 +69,6 @@ public class QuestionRestController {
         );
     }
     
-    //학생용 시험 문제 목록 조회
-    @Operation(summary = "학생 시험 문제 목록 조회")
-    @GetMapping("/attempt/{attemptNo}")
-    public List<StudentQuestionVO> selectListByAttempt(
-            @PathVariable int attemptNo,
-            @CurrentUser TokenParseResponseVO parseVO) {
-
-        return questionService.selectListByAttempt(
-                attemptNo,
-                parseVO.getNoType()
-        );
-    }
-
     // 문제 수정
     @Operation(summary = "문제 수정")
     @ApiResponse(responseCode = "200", description = "문제 수정 성공")
@@ -109,7 +96,6 @@ public class QuestionRestController {
         );
     }
 
-
     // 문제 삭제
     @Operation(summary = "문제 삭제")
     @ApiResponse(responseCode = "200", description = "문제 삭제 성공")
@@ -126,7 +112,6 @@ public class QuestionRestController {
                 tutor
         );
     }
-
 
     // 문제 첨부파일 삭제
     @Operation(summary = "문제 첨부파일 삭제")

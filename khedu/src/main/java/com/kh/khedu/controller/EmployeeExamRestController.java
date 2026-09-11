@@ -22,27 +22,23 @@ import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamDraftRequestVO;
 import com.kh.khedu.vo.exam.ExamListVO;
-import com.kh.khedu.vo.exam.ExamResultVO;
 import com.kh.khedu.vo.exam.ExamSearchVO;
 import com.kh.khedu.vo.exam.ExamStatisticsVO;
-import com.kh.khedu.vo.exam.StudentExamDetailVO;
-import com.kh.khedu.vo.exam.StudentExamListVO;
-import com.kh.khedu.vo.exam.StudentExamSearchVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "시험 관리")
+@Tag(name = "시험 관리(강사)")
 @RestController
-@RequestMapping("/api/exam")
-public class ExamRestController {
-
-    @Autowired
+@RequestMapping("/api/employee/exam")
+public class EmployeeExamRestController {
+	@Autowired
     private ExamService examService;
-
-    // 시험 등록
+	
+	
+	// 시험 등록
     @Operation(summary = "시험 등록")
     @ApiResponse(responseCode = "200", description = "시험 등록 성공")
     @PostMapping("/")
@@ -62,7 +58,7 @@ public class ExamRestController {
 
     //강사/관리자 시험 목록
     @Operation(summary = "시험 관리 목록 조회")
-    @GetMapping("/manage")
+    @GetMapping
     public PageResponseVO<ExamListVO> selectManageList(
             @ModelAttribute ExamSearchVO search,
             @CurrentUser TokenParseResponseVO parseVO) {
@@ -87,27 +83,6 @@ public class ExamRestController {
         return examService.selectDetail(examNo, parseVO.getNoType(),tutor);
     }
     
-    //학생용 시험 단일 조회
-    @Operation(summary = "학생 시험 상세 조회")
-    @GetMapping("/student/{examNo}")
-    public StudentExamDetailVO selectDetailByStudent(
-    		@PathVariable int examNo,
-    		@CurrentUser TokenParseResponseVO parseVO) {
-    	return examService.selectDetailByStudent(examNo, parseVO.getNoType());
-    }
-
-    //학생 시험 목록
-    @Operation(summary = "학생 시험 목록 조회")
-    @GetMapping("/student")
-    public PageResponseVO<StudentExamListVO> selectStudentList(
-            @ModelAttribute StudentExamSearchVO search,
-            @CurrentUser TokenParseResponseVO parseVO) {
-        return examService.selectStudentList(
-                search,
-                parseVO.getNoType() //studentNo
-        );
-    }
-
     // 시험 수정
     @Operation(summary = "시험 수정")
     @ApiResponse(responseCode = "200", description = "시험 수정 성공")
@@ -177,51 +152,6 @@ public class ExamRestController {
     			examNo,
     			parseVO.getNoType(),
     			tutor);
-    }
-    
-    // 학부모 - 자녀 시험 목록
-    @Operation(summary = "학부모용 자녀 시험 목록 조회")
-    @GetMapping("/parent/student/{studentNo}")
-    public PageResponseVO<StudentExamListVO> selectParentStudentList(
-            @PathVariable int studentNo,
-            @ModelAttribute StudentExamSearchVO search,
-            @CurrentUser TokenParseResponseVO parseVO) {
-
-        return examService.selectParentStudentList(
-                search,
-                parseVO.getNoType(), // parentNo
-                studentNo
-        );
-    }
-    
-    // 학부모 - 자녀 시험 상세
-    @Operation(summary = "학부모용 자녀 시험 상세 조회")
-    @GetMapping("/parent/student/{studentNo}/{examNo}")
-    public StudentExamDetailVO selectParentStudentDetail(
-            @PathVariable int studentNo,
-            @PathVariable int examNo,
-            @CurrentUser TokenParseResponseVO parseVO) {
-
-        return examService.selectParentStudentDetail(
-                examNo,
-                parseVO.getNoType(), // parentNo
-                studentNo
-        );
-    }
-    
-    // 학부모 - 자녀 시험 결과 조회
-    @Operation(summary = "학부모용 자녀 시험 결과 조회")
-    @GetMapping("/parent/student/{studentNo}/attempt/{attemptNo}/result")
-    public ExamResultVO selectParentStudentResult(
-            @PathVariable int studentNo,
-            @PathVariable int attemptNo,
-            @CurrentUser TokenParseResponseVO parseVO) {
-
-        return examService.selectParentStudentResult(
-                attemptNo,
-                parseVO.getNoType(), // parentNo
-                studentNo
-        );
     }
     
     // 시험 마감

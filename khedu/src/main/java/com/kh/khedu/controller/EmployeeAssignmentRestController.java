@@ -21,27 +21,23 @@ import com.kh.khedu.dto.AssignmentDto;
 import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.service.AssignmentService;
 import com.kh.khedu.util.PageResponseVO;
-import com.kh.khedu.vo.assignment.AssignmentDetailVO;
 import com.kh.khedu.vo.assignment.AssignmentListVO;
 import com.kh.khedu.vo.assignment.AssignmentSearchVO;
-import com.kh.khedu.vo.assignment.AssignmentStudentSearchVO;
-import com.kh.khedu.vo.assignment.StudentAssignmentListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-
-@Tag(name = "과제 관리")
+@Tag(name = "과제 관리(직원)")
 @RestController
-@RequestMapping("/api/assignment")
-public class AssignmentRestController {
+@RequestMapping("/api/employee/assignment")
+public class EmployeeAssignmentRestController {
 
-    @Autowired
+	@Autowired
     private AssignmentService assignmentService;
-
-    // 과제 등록
+	
+	// 과제 등록
     @Operation(summary = "과제 등록")
     @ApiResponse(responseCode = "200", description = "과제 등록 성공")
     @PostMapping(value = "/" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -61,15 +57,6 @@ public class AssignmentRestController {
         );
     }
     
-    // 과제 상세 조회
-    @Operation(summary = "과제 상세 조회")
-    @GetMapping("/{assignmentNo}")
-    public AssignmentDetailVO selectOne(
-            @PathVariable int assignmentNo) {
-
-        return assignmentService.selectOne(assignmentNo);
-    }
-
     // 특정 강의의 최근 5개 과제 목록 조회
     @Operation(summary = "특정 강의의 최근 5개 과제 목록 조회")
     @GetMapping("/course/{courseNo}/recent")
@@ -78,10 +65,10 @@ public class AssignmentRestController {
 
         return assignmentService.selectRecentListByCourse(courseNo);
     }
-
+    
     //직원 페이지네이션 + 검색 + 과제목록
     @Operation(summary = "직원 페이지네이션 + 검색 + 과제목록 조회")
-    @GetMapping("/manage")
+    @GetMapping
     public PageResponseVO<AssignmentListVO> selectManageList(
     		 @ModelAttribute AssignmentSearchVO search,
     	     @CurrentUser TokenParseResponseVO parseVO){
@@ -94,21 +81,6 @@ public class AssignmentRestController {
     	);
     }
     
-    //학생 페이지네이션 + 검색 + 과제목록
-    @Operation(summary = "학생 페이지네이션 + 검색 + 과제목록 조회")
-    @GetMapping("/student")
-    public PageResponseVO<StudentAssignmentListVO> selectStudentList(
-            @ModelAttribute AssignmentStudentSearchVO search,
-            @CurrentUser TokenParseResponseVO parseVO) {
-
-        return assignmentService.selectStudentList(
-                search,
-                parseVO.getNoType()
-        );
-    }
-    
-
-
     // 과제 수정
     @Operation(summary = "과제 수정")
     @ApiResponse(responseCode = "200", description = "과제 수정 성공")
@@ -178,34 +150,6 @@ public class AssignmentRestController {
         );
     }
     
-    //학부모용 : 자녀 과제 목록 조회 + 검색 + 페이지네이션
-    @Operation(summary = "학부모 자녀 과제 페이지네이션 + 검색 + 목록 조회")
-    @GetMapping("/parent/student/{studentNo}")
-    public PageResponseVO<StudentAssignmentListVO> selectListByParentStudent(
-            @PathVariable int studentNo,
-            @ModelAttribute AssignmentStudentSearchVO search,
-            @CurrentUser TokenParseResponseVO parseVO) {
-
-        return assignmentService.selectListByParentStudent(
-                search,
-                parseVO.getNoType(), // parentNo
-                studentNo
-        );
-    }
-    
-    //학부모용 : 자녀 과제 상세 조회
-    @GetMapping("/parent/student/{studentNo}/{assignmentNo}")
-    public AssignmentDetailVO selectOneByParentStudent(
-    		@PathVariable int studentNo,
-    		@PathVariable int assignmentNo,
-    		@CurrentUser TokenParseResponseVO parseVO) {
-    	return assignmentService.selectOneByParentStudent(
-    			parseVO.getNoType(), // parentNo
-    			studentNo,
-    			assignmentNo
-    	);
-    }
-    
     // 과제 마감
     @Operation(summary = "과제 마감")
     @PutMapping("/{assignmentNo}/close")
@@ -223,5 +167,4 @@ public class AssignmentRestController {
                 tutor
         );
     }
-
 }
