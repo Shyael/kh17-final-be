@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.kh.khedu.dao.AttachDao;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.ExamDao;
+import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.QuestionDao;
 import com.kh.khedu.dao.QuestionOptionDao;
 import com.kh.khedu.dto.AttachDto;
@@ -27,6 +28,7 @@ import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamDraftRequestVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamResultVO;
 import com.kh.khedu.vo.exam.ExamSearchVO;
 import com.kh.khedu.vo.exam.ExamStatisticsVO;
 import com.kh.khedu.vo.exam.QuestionDraftVO;
@@ -36,6 +38,7 @@ import com.kh.khedu.vo.exam.QuestionStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
 import com.kh.khedu.vo.exam.StudentExamListVO;
 import com.kh.khedu.vo.exam.StudentExamSearchVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 @Service
 @Transactional
@@ -58,6 +61,12 @@ public class ExamServiceImpl implements ExamService {
 	
 	@Autowired
 	private CourseDao courseDao;
+	
+	@Autowired
+	private ParentStudentDao parentStudentDao;
+	
+	@Autowired
+	private AttemptService attemptService;
 	
 	//공통 메소드
 	//권한검사
@@ -136,6 +145,23 @@ public class ExamServiceImpl implements ExamService {
 	    	);	    	
 	    }
 	}
+	
+	//학부모-자녀 관계 확인
+    private void checkParentStudent(
+    		int parentNo,
+    		int studentNo) {
+    	List<ParentStudentVO> studentList = 
+    			parentStudentDao.findByParentNo(parentNo);
+    	
+    	boolean connected = 
+    			studentList.stream()
+    				.anyMatch(student ->
+    						student.getStudentNo() == studentNo
+    				);
+    	if(!connected) {
+    		throw new GetOutException();
+    	}
+    }
 	
 	//시험등록
 	@Override
@@ -743,6 +769,94 @@ public class ExamServiceImpl implements ExamService {
 		return statistics;
 	}
 
+	@Override
+	public PageResponseVO<StudentExamListVO> selectParentStudentList(
+	        StudentExamSearchVO search,
+	        int parentNo,
+	        int studentNo) {
+
+	    // 부모-자녀 관계 검증
+	    checkParentStudent(parentNo, studentNo);
+
+	    // 조회 대상 학생번호 강제 지정
+	    search.setStudentNo(studentNo);
+
+	    List<StudentExamListVO> list = examDao.selectStudentSearchList(search);
+
+	    int totalCount = examDao.selectStudentCount(search);
+
+	    return new PageResponseVO<>(
+	            list,
+	            totalCount,
+	            search
+	    );
+	}
+
+	@Override
+	public StudentExamDetailVO selectParentStudentDetail(
+	        int examNo,
+	        int parentNo,
+	        int studentNo) {
+
+	    // 부모-자녀 관계 검증
+	    checkParentStudent(parentNo, studentNo);
+
+	    StudentExamDetailVO exam = examDao.selectDetailByStudent(examNo, studentNo);
+
+	    if(exam == null) {
+	        throw new TargetNotfoundException(
+	                "조회할 수 없는 시험입니다."
+	        );
+	    }
+
+	    return exam;
+	}
 	
+	@Override
+	public ExamResultVO selectParentStudentResult(
+	        int attemptNo,
+	        int parentNo,
+	        int studentNo) {
+
+	    // 부모-자녀 관계 검증
+	    checkParentStudent(parentNo, studentNo);
+
+	    // 기존 학생 결과 조회 로직 재사용
+	    return attemptService.selectResult(
+	            attemptNo,
+	            studentNo
+	    );
+	}
+	
+	@Override
+	public boolean close(
+	        int examNo,
+	        int employeeNo,
+	        boolean tutor) {
+
+	    // 시험 존재 여부 + 강사 본인 시험 여부 확인
+	    checkAuthority(examNo, employeeNo, tutor);
+
+	    ExamDto exam = examDao.selectOne(examNo);
+
+	    if (exam == null) {
+	        throw new TargetNotfoundException();
+	    }
+
+	    // 이미 마감
+	    if ("마감".equals(exam.getExamStatus())) {
+	        return true;
+	    }
+
+	    // 공개된 시험만 마감 가능
+	    if (!"공개".equals(exam.getExamStatus())) {
+	        throw new ResponseStatusException(
+	                HttpStatus.BAD_REQUEST,
+	                "공개된 시험만 마감할 수 있습니다."
+	        );
+	    }
+
+	    return examDao.close(examNo);
+	}
 
 }

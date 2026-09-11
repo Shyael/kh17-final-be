@@ -11,6 +11,7 @@ public class ExamSearchVO extends PaginationVO {
     private Integer courseNo;
     private String examTitle;
     private String examStatus;
+    private String examPhase;
     //서버 내부용 - 강사 본인 시험만 조회할 때 사용
     private Integer employeeNo;
 }

@@ -24,5 +24,7 @@ public class ExamListVO {
 	//null이면 시간 제한 없음
 	private Integer examLimit;
 	private String examStatus;
+	// 실제 시험 상태 : 예정 / 응시가능 / 종료
+	private String examPhase;
 	private Timestamp examWtime;
 }

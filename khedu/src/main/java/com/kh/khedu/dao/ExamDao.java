@@ -57,4 +57,7 @@ public interface ExamDao {
     
     //문항별 통계
     List<QuestionStatisticsVO> selectQuestionStatistics(int examNo);
+    
+    // 시험 마감
+    boolean close(int examNo);
 }

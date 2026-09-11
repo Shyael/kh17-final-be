@@ -18,7 +18,10 @@ public class AssignmentListVO {
     private int employeeNo;
     private String accountName;
     private String assignmentTitle;
+    // DB 상태 : 게시 / 마감
     private String assignmentStatus;
+    // 실제 상태 : 제출가능 / 마감
+    private String assignmentPhase;
     private Timestamp assignmentDueDate;
     private Timestamp assignmentWtime;
 }

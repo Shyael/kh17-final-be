@@ -404,6 +404,14 @@ public class AttemptServiceImpl implements AttemptService {
         if (exam == null) {
             throw new TargetNotfoundException();
         }
+        
+        // 강사가 수동으로 시험을 마감한 경우
+        if ("마감".equals(exam.getExamStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "마감된 시험입니다."
+            );
+        }
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime examStart = exam.getExamStart().toLocalDateTime();
         LocalDateTime examEnd = exam.getExamEnd().toLocalDateTime();
