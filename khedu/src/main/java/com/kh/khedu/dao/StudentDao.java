@@ -1,12 +1,11 @@
 package com.kh.khedu.dao;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.StudentDto;
-import com.kh.khedu.vo.parentStudent.ParentStudentVO;
+import com.kh.khedu.util.PaginationVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentListResponseVO;
@@ -19,7 +18,10 @@ public interface StudentDao {
 
 	int sequence(); //등록
 	void insert(StudentVO studentVO);
-	List<StudentListResponseVO> selectList(Map<String, Object> params);//학생목록
+	// 전체 학생 수 조회 (페이징 계산용)
+    int count(String filter, String searchKeyword);
+    // 페이징이 적용된 학생 목록 조회
+    List<StudentListResponseVO> list(String filter, String searchKeyword, PaginationVO paginationVO);
 	StudentDetailResponseVO selectDetail(int studentNo);//학생 상세정보
 	void updateAccount(StudentUpdateRequestVO requestVO);
 	void updateStudent(StudentUpdateRequestVO requestVO);
