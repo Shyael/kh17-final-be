@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,6 +69,13 @@ public class PaymentRestController {
         return ResponseEntity.ok("할인 정보가 수정되었습니다.");
     }
     
+    // 4. 할인 삭제
+    @DeleteMapping("/discount/delete")
+    public ResponseEntity<String> deleteDiscount(int discountNo){
+    	paymentService.deleteDiscount(discountNo);
+    	return ResponseEntity.ok("할인이 삭제되었습니다.");
+    }
+    
     // 특정 학생 결제 내역 조회 API
     @GetMapping("/student/{studentNo}")
     public List<PaymentListResponseVO> getStudentPayments(@PathVariable int studentNo) {
@@ -82,6 +90,20 @@ public class PaymentRestController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+ // 수납(결제) 처리 API
+    @PostMapping("/pay")
+    public ResponseEntity<String> addPaymentHistory(
+            @RequestParam int paymentNo, 
+            @RequestParam int payAmount) {
+        try {
+            paymentService.addPaymentHistory(paymentNo, payAmount);
+            return ResponseEntity.ok("수납 처리가 완료되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("수납 처리 실패");
         }
     }
 }

@@ -2,6 +2,8 @@ package com.kh.khedu.websocket.server;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.Message;
@@ -46,9 +48,7 @@ public class WebSocketServer {
 		//발신 메세지 생성1
 		WebSocketChatVO response = WebSocketChatVO.builder()
 					.senderNo(parseVO.getAccountNo())
-					//.senderName(parseVO.getAccountName())
-					//일단 아이디로 넣음
-					.senderName(parseVO.getAccountId())
+					.senderName(parseVO.getAccountName())
 					.senderType(parseVO.getAccountType())
 					.content(request.getContent())
 					.time(LocalDateTime.now())
@@ -67,6 +67,9 @@ public class WebSocketServer {
 					.messageContent(response.getContent())
 				.build());
 		
+		Map<String, Object> params = new HashMap<>();
+		params.put("roomNo", roomNo);
+		simpMessagingTemplate.convertAndSend("/public/room/check", params);
 		simpMessagingTemplate.convertAndSend("/public/"+roomNo+"/chat", response);
 	}
 }

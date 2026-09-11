@@ -1,6 +1,7 @@
 package com.kh.khedu.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Repository;
 
@@ -18,7 +19,7 @@ public interface StudentDao {
 
 	int sequence(); //등록
 	void insert(StudentVO studentVO);
-	List<StudentListResponseVO> selectList();//학생목록
+	List<StudentListResponseVO> selectList(Map<String, Object> params);//학생목록
 	StudentDetailResponseVO selectDetail(int studentNo);//학생 상세정보
 	void updateAccount(StudentUpdateRequestVO requestVO);
 	void updateStudent(StudentUpdateRequestVO requestVO);
@@ -30,4 +31,6 @@ public interface StudentDao {
 	boolean updateAll(StudentDto studentDto);
 	boolean approveStudent(int studentNo);
 	StudentDto selectOneByNoAndPhone(int studentNo, String studentPhone);
+	// 학년 조회 메서드 추가
+    String selectStudentGrade(int studentNo);
 }

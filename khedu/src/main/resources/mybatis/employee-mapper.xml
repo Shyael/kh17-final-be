@@ -323,4 +323,40 @@
 
 </select>
 
+<select
+    id="adminEmployeeSearch"
+    parameterType="AdminEmployeeSearchRequestVO"
+    resultType="AdminEmployeeSearchResponseVO">
+
+    select
+        E.employee_no as employeeNo,
+        E.employee_type as employeeType,
+        E.employee_htime as employeeHtime,
+        E.employee_status as employeeStatus,
+
+        A.account_id as accountId,
+        A.account_name as accountName,
+        A.account_phone as accountPhone,
+        A.account_birth as accountBirth,
+        A.account_status as accountStatus,
+        A.account_ctime as accountCtime
+
+    from employee E
+    join account A
+        on E.account_no = A.account_no
+
+    where E.employee_type != '원장'
+
+    <if test="accountName != null and accountName != ''">
+        and A.account_name like #{accountName} || '%'
+    </if>
+
+    <if test="employeeType != null and employeeType != ''">
+        and E.employee_type = #{employeeType}
+    </if>
+
+    order by A.account_name asc
+
+</select>
+
 </mapper>

@@ -367,5 +367,33 @@ public class AssignmentServiceImpl implements AssignmentService {
 	    // 3. 기존 과제 상세조회 재사용
 	    return selectOne(assignmentNo);
 	}
+	
+	@Override
+	public boolean close(
+	        int assignmentNo,
+	        int employeeNo,
+	        boolean tutor) {
+
+	    AssignmentDetailVO assignment =
+	            assignmentDao.selectOne(assignmentNo);
+
+	    if (assignment == null) {
+	        throw new TargetNotfoundException(
+	                "존재하지 않는 과제입니다."
+	        );
+	    }
+
+	    // 강사라면 본인 담당 과제만 가능
+	    if (tutor && assignment.getEmployeeNo() != employeeNo) {
+	        throw new GetOutException();
+	    }
+
+	    // 이미 마감된 과제
+	    if ("마감".equals(assignment.getAssignmentStatus())) {
+	        return true;
+	    }
+
+	    return assignmentDao.close(assignmentNo);
+	}
 
 }

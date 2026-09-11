@@ -100,6 +100,11 @@ public class AssignmentDaoMybatis implements AssignmentDao {
 	public int selectStudentCount(AssignmentStudentSearchVO search) {
 		return sqlSession.selectOne("mapper.assignment.selectStudentCount", search);
 	}
+	
+	@Override
+	public boolean close(int assignmentNo) {
+	    return sqlSession.update("mapper.assignment.close", assignmentNo) > 0;
+	}
 
 	
 

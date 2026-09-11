@@ -12,9 +12,9 @@ import com.kh.khedu.dto.PaymentDetailDto;
 import com.kh.khedu.dto.PaymentDiscountDto;
 import com.kh.khedu.dto.PaymentDto;
 import com.kh.khedu.dto.PaymentHistoryDto;
+import com.kh.khedu.vo.payment.CoursePaymentVO;
 import com.kh.khedu.vo.payment.DiscountVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
-import com.kh.khedu.vo.student.StudentCourseVO;
 
 @Repository
 public class PaymentDaoMybatis implements PaymentDao {
@@ -64,8 +64,13 @@ public class PaymentDaoMybatis implements PaymentDao {
     }
 
     @Override
-    public void updateDiscount(DiscountVO discountVO) {
-        sqlSession.update("mapper.discount.updateDiscount", discountVO);
+    public boolean updateDiscount(DiscountVO discountVO) {
+        return sqlSession.update("mapper.discount.updateDiscount", discountVO) > 0;
+    }
+    
+    @Override
+    public void deleteDiscount(int discountNo) {
+    	sqlSession.delete("mapper.discount.deleteDiscount", discountNo);
     }
     
     @Override
@@ -84,7 +89,7 @@ public class PaymentDaoMybatis implements PaymentDao {
     }
 
     @Override
-    public List<StudentCourseVO> selectStudentCourses(int studentNo) {
+    public List<CoursePaymentVO> selectStudentCourses(int studentNo) {
         return sqlSession.selectList("mapper.payment.selectStudentCourses", studentNo);
     }
     
@@ -106,5 +111,20 @@ public class PaymentDaoMybatis implements PaymentDao {
     @Override
     public List<PaymentHistoryDto> selectPaymentHistorys(int paymentNo) {
     	return sqlSession.selectList("mapper.payment.selectPaymentHistorys", paymentNo);
+    }
+    
+    @Override
+    public void insertPaymentHistory(PaymentHistoryDto paymentHistoryDto) {
+        sqlSession.insert("mapper.payment.insertPaymentHistory", paymentHistoryDto);
+    }
+    
+    @Override
+    public int getTotalPaidAmount(int paymentNo){
+        return sqlSession.selectOne("mapper.payment.getTotalPaidAmount", paymentNo);
+    }
+    
+    @Override
+    public boolean updatePaymentStatus(Map<String, Object> params) {
+        return sqlSession.update("mapper.payment.updatePaymentStatus", params) > 0;
     }
 }

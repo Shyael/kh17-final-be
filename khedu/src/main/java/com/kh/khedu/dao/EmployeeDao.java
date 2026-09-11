@@ -6,6 +6,8 @@ import java.util.List;
 import com.kh.khedu.dto.EmployeeDto;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeListVO;
+import com.kh.khedu.vo.employee.AdminEmployeeSearchRequestVO;
+import com.kh.khedu.vo.employee.AdminEmployeeSearchResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeSearchByNameVO;
 import com.kh.khedu.vo.employee.EmployeeVO;
@@ -50,4 +52,9 @@ public interface EmployeeDao {
 			int accountNo,
 			int employeeNo
 	);
+	//원장 직원 목록 검색 결과
+	 List<AdminEmployeeSearchResponseVO> adminEmployeeSearch(
+	            AdminEmployeeSearchRequestVO requestVO
+	    );
+
 }

@@ -13,36 +13,110 @@
 	            and e.employee_no = #{employeeNo}
 	        </if>
 	
+	        <!-- 특정 강의 -->
 	        <if test="courseNo != null">
 	            and e.course_no = #{courseNo}
 	        </if>
 	
+	        <!-- 시험 제목 -->
 	        <if test="examTitle != null and examTitle != ''">
 	            and e.exam_title like '%' || #{examTitle} || '%'
 	        </if>
 	
+	        <!-- DB 관리 상태 : 작성중 / 공개 / 마감 -->
 	        <if test="examStatus != null and examStatus != ''">
 	            and e.exam_status = #{examStatus}
+	        </if>
+	
+	        <!-- 실제 시험 상태 : 예정 / 응시가능 / 종료 -->
+	        <if test="examPhase != null and examPhase != ''">
+	            <choose>
+	
+	                <!-- 예정 -->
+	                <when test="examPhase == '예정'">
+	                    and e.exam_status != '마감'
+	                    and e.exam_end > systimestamp
+	                    and (
+	                        e.exam_status = '작성중'
+	                        or e.exam_start > systimestamp
+	                    )
+	                </when>
+	
+	                <!-- 응시가능 -->
+	                <when test="examPhase == '응시가능'">
+	                    and e.exam_status = '공개'
+	                    and e.exam_start <![CDATA[ <= ]]> systimestamp
+	                    and e.exam_end > systimestamp
+	                </when>
+	
+	                <!-- 종료 -->
+	                <when test="examPhase == '종료'">
+	                    and (
+	                        e.exam_status = '마감'
+	                        or e.exam_end <![CDATA[ <= ]]> systimestamp
+	                    )
+	                </when>
+	            </choose>
 	        </if>
 	    </where>
 	</sql>
 	
+	<!-- ==================== 학생/학부모 시험 검색 조건 ==================== -->
 	<sql id="examStudentSearchCondition">
 	    <where>
+	        <!-- 로그인 학생 또는 학부모가 선택한 자녀 -->
 	        and sc.student_no = #{studentNo}
+	
+	        <!-- 현재 수강중인 강의 -->
 	        and sc.student_course_status = '수강중'
 	
+	        <!-- 학생에게 작성중 시험은 노출하지 않음 -->
 	        and e.exam_status in ('공개', '마감')
 	
+	        <!-- 특정 강의 -->
 	        <if test="courseNo != null">
 	            and e.course_no = #{courseNo}
 	        </if>
 	
+	        <!-- 시험 제목 -->
 	        <if test="examTitle != null and examTitle != ''">
 	            and e.exam_title like '%' || #{examTitle} || '%'
 	        </if>
 	
+	        <!-- 실제 시험 상태 : 예정 / 응시가능 / 종료 -->
+	        <if test="examPhase != null and examPhase != ''">
+	
+	            <choose>
+	
+	                <!-- 아직 시험 시작 전 -->
+	                <when test="examPhase == '예정'">
+	                    and e.exam_status = '공개'
+	                    and systimestamp <![CDATA[ < ]]> e.exam_start
+	                    and e.exam_end > systimestamp
+	                </when>
+	
+	                <!-- 현재 응시 가능한 시험 -->
+	                <when test="examPhase == '응시가능'">
+	                    and e.exam_status = '공개'
+	                    and e.exam_start <![CDATA[ <= ]]> systimestamp
+	                    and e.exam_end > systimestamp
+	                </when>
+	
+	                <!-- 수동 마감 또는 종료시간 지남 -->
+	                <when test="examPhase == '종료'">
+	                    and (
+	                        e.exam_status = '마감'
+	                        or e.exam_end <![CDATA[ <= ]]> systimestamp
+	                    )
+	                </when>
+	
+	            </choose>
+	
+	        </if>
+	
+	        <!-- 학생 개인 응시 상태 -->
 	        <if test="attemptStatus != null and attemptStatus != ''">
+	
 	            <choose>
 	
 	                <!-- 시험을 한 번도 시작하지 않음 -->
@@ -259,19 +333,38 @@
 	                e.exam_end,
 	                e.exam_limit,
 	                e.exam_status,
+	
+	                case
+	                    when e.exam_status = '마감'
+	                         or systimestamp >= e.exam_end
+	                    then '종료'
+	
+	                    when e.exam_status = '작성중'
+	                         or e.exam_start > systimestamp
+	                    then '예정'
+	
+	                    else '응시가능'
+	                end as exam_phase,
+	
 	                e.exam_wtime
+	
 	            from exam e
+	
 	            join course c
 	                on e.course_no = c.course_no
+	
 	            join employee emp
 	                on e.employee_no = emp.employee_no
+	
 	            join account a
 	                on emp.account_no = a.account_no
 	
 	            <include refid="examManageSearchCondition"/>
 	
 	            order by e.exam_no desc
+	
 	        ) inner_table
+	
 	        where ROWNUM <![CDATA[ <= ]]> #{endRow}
 	    )
 	    where rn <![CDATA[ >= ]]> #{beginRow}
@@ -283,8 +376,9 @@
 	    <include refid="examManageSearchCondition"/>
 	</select>
 	
-	<!-- 학생 시험 목록 -->
+	<!-- 학생/학부모 시험 목록 -->
 	<select id="selectStudentSearchList" resultType="StudentExamListVO">
+	
 	    select *
 	    from (
 	        select inner_table.*, ROWNUM rn
@@ -298,6 +392,17 @@
 	                e.exam_end,
 	                e.exam_limit,
 	                e.exam_status,
+	
+	                case
+					    when e.exam_status = '마감'
+					         or systimestamp >= e.exam_end
+					    then '종료'
+					
+					    when systimestamp <![CDATA[ < ]]> e.exam_start
+					    then '예정'
+					
+					    else '응시가능'
+					end as exam_phase,
 	
 	                att.attempt_no,
 	                att.attempt_status,
@@ -318,12 +423,17 @@
 	
 	            <include refid="examStudentSearchCondition"/>
 	
-	            order by e.exam_start desc,
-	                     e.exam_no desc
+	            order by
+	                e.exam_start desc,
+	                e.exam_no desc
+	
 	        ) inner_table
+	
 	        where ROWNUM <![CDATA[ <= ]]> #{endRow}
 	    )
+	
 	    where rn <![CDATA[ >= ]]> #{beginRow}
+	
 	</select>
 	
 	<select id="selectStudentCount" resultType="int">
@@ -336,8 +446,10 @@
 	        and att.student_no = #{studentNo}
 	    <include refid="examStudentSearchCondition"/>
 	</select>
+	
+	
 
-
+ 
     <!-- 시험 수정 -->
     <update id="update">
         update exam
@@ -545,4 +657,11 @@
 	        q.question_order asc
 	
 	</select>
+	
+	<!-- 시험 마감 -->
+	<update id="close" parameterType="int">
+	    update exam
+	    set exam_status = '마감'
+	    where exam_no = #{examNo}
+	</update>
 </mapper>

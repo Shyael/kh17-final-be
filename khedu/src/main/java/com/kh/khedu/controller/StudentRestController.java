@@ -12,13 +12,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.khedu.dto.StudentCourseDto;
+import com.kh.khedu.service.StudentCourseService;
 import com.kh.khedu.service.StudentService;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentListResponseVO;
 import com.kh.khedu.vo.student.StudentUpdateRequestVO;
+import com.kh.khedu.vo.studentCourse.AvailableCourseVO;
+import com.kh.khedu.vo.studentCourse.StudentCourseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,13 +34,19 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class StudentRestController {
 	@Autowired 
 	private StudentService studentService;
+	@Autowired
+	private StudentCourseService studentCourseService;
 	
     //학생 목록 전체 조회
-    @GetMapping(value = "/list", produces = "application/json")
-    public List<StudentListResponseVO> list() {
-        return studentService.getStudentList();
+	@GetMapping("/list")
+    public ResponseEntity<List<StudentListResponseVO>> getStudentList(
+            @RequestParam(required = false, defaultValue = "전체") String filter,
+            @RequestParam(required = false, defaultValue = "") String searchKeyword) {
+        
+        List<StudentListResponseVO> list = studentService.getStudentList(filter, searchKeyword);
+        return ResponseEntity.ok(list);
     }
-    
+	
     //학생 상세 조회
     @Operation(summary = "학생 상세 조회", description = "특정 학생의 상세 정보를 반환합니다.")
     @GetMapping(value = "/detail/{studentNo}", produces = "application/json")
@@ -86,5 +97,39 @@ public class StudentRestController {
             return ResponseEntity.internalServerError().body("승인 처리 실패");
         }
     }
-
+    
+    @PostMapping("/course/add")
+    public ResponseEntity<String> addCourse(@RequestBody StudentCourseDto dto) {
+        String result = studentCourseService.enrollCourse(dto);
+        
+        if ("GRADE_MISMATCH".equals(result)) {
+            return ResponseEntity.badRequest().body("신청 불가: 학생의 학년과 강의 대상 학년이 일치하지 않습니다.");
+        } else if ("TIME_CONFLICT".equals(result)) {
+            return ResponseEntity.badRequest().body("신청 불가: 기존에 수강 중인 강의와 요일/시간이 겹칩니다.");
+        }
+        
+        return ResponseEntity.ok("성공적으로 수강 신청되었습니다.");
+    }
+    
+    // 모달창 셀렉트 박스용 강의 목록 조회 API
+    @GetMapping("/course/list/{studentNo}")
+    public ResponseEntity<List<AvailableCourseVO>> getAvailableCourseList(@PathVariable int studentNo) {
+        List<AvailableCourseVO> list = studentCourseService.getAvailableCourseList(studentNo);
+        return ResponseEntity.ok(list);
+    }
+    
+    // 학생 상세 페이지: '수강 중인 강의 목록' 조회 API
+    @GetMapping("/course/enrolled/{studentNo}")
+    public ResponseEntity<List<StudentCourseVO>> getEnrolledCourses(@PathVariable int studentNo) {
+        List<StudentCourseVO> list = studentCourseService.getListByStudentNo(studentNo);
+        return ResponseEntity.ok(list);
+    }
+    
+ // 2. 수강 취소 기능
+    @DeleteMapping("/course/cancel/{studentNo}/{courseNo}")
+    public ResponseEntity<String> cancelCourse(@PathVariable int studentNo, @PathVariable int courseNo) {
+        // Service -> Dao 연동하여 위의 cancelCourse 호출 (MyBatis @Param 사용 권장)
+        studentCourseService.cancelCourse(studentNo, courseNo);
+        return ResponseEntity.ok("수강이 취소되었습니다.");
+    }
 }

@@ -41,29 +41,34 @@ public class AssignmentSubmitServiceImpl implements AssignmentSubmitService {
     private ParentStudentDao parentStudentDao;
     
     //공통 메소드
-    // 과제 제출 기한 검사
+    // 과제 제출 가능 여부 검사
     private void checkDueDate(int assignmentNo) {
-    	
-    	AssignmentDetailVO assignment = 
-    			assignmentDao.selectOne(assignmentNo);
-    	
-    	if(assignment == null) {
-    		throw new TargetNotfoundException("존재하지 않는 과제입니다");
-    	}
-    	
-    	Timestamp dueDate = 
-    			assignment.getAssignmentDueDate();
-    	
-    	//마감일이 없는 과제는 제한없음
-    	if(dueDate == null) {
-    		return;
-    	}
-    	
-    	//현재 시간
-    	Timestamp now =
-                new Timestamp(System.currentTimeMillis());
-    	
-    	if (!dueDate.after(now)) {
+
+        AssignmentDetailVO assignment = assignmentDao.selectOne(assignmentNo);
+
+        if(assignment == null) {
+            throw new TargetNotfoundException("존재하지 않는 과제입니다");
+        }
+
+        // 수동 마감 검사
+        if("마감".equals(assignment.getAssignmentStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "마감된 과제입니다."
+            );
+        }
+
+        Timestamp dueDate = assignment.getAssignmentDueDate();
+
+        // 마감일이 없으면 날짜 제한 없음
+        if(dueDate == null) {
+            return;
+        }
+
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+
+        // 마감시간이 현재시간과 같거나 이미 지났으면 차단
+        if(!dueDate.after(now)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "과제 제출 기한이 지났습니다."

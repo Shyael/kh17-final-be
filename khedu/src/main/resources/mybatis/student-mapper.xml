@@ -42,25 +42,89 @@
 		where account_no = #{accountNo}
 	</update>
 	
-	<!-- 학생 목록 전체 조회 (Account 테이블과 JOIN) -->
+	<!-- 학생 목록 전체 조회 (검색 및 필터 포함) -->
 	<select id="list" resultType="com.kh.khedu.vo.student.StudentListResponseVO">
+	    -- 2. 안쪽에서 계산된 출석률(attendanceRate)과 미납액(unpaidAmount)을 바탕으로 위험도(riskLevel)를 판별합니다.
 	    select 
-	        S.student_no as studentNo,
-	        A.account_name as studentName,       <!-- 계정 테이블의 이름을 가져와서 VO의 studentName에 매핑 -->
-	        S.student_school as studentSchool,
-	        S.student_grade as studentGrade,
-	        S.student_academic_status as studentAcademicStatus,
-	        
-	        <!-- 통계 및 집계 데이터는 테이블이 완성되기 전까지 임시(더미) 데이터로 채워둡니다 -->
-	        100 as attendanceRate, 
-	        0 as unpaidAmount,
-	        '안전' as riskLevel
-	    from 
-	        student S
-	    inner join 
-	        account A ON S.account_no = A.account_no
+	        main.*,
+	        case
+	            -- [위험 기준] 출석률 70% 미만이거나, 미납액이 10만원 이상일 때
+	            when main.attendanceRate &lt; 70 and main.unpaidAmount &gt;= 100000 then '위험'
+	            -- [주의 기준] 출석률 85% 미만이거나, 미납액이 1원이라도 있을 때
+	            when main.attendanceRate &lt; 85 and main.unpaidAmount &gt; 0 then '주의'
+	            -- 그 외에는 모두 안전!
+	            else '안전'
+	        end as riskLevel
+	    from (
+	        -- 1. 학생 기본 정보, 누적 미납액, 출석률을 먼저 싹 다 계산해서 main이라는 가상 테이블로 만듭니다.
+	        select 
+	            s.student_no as studentNo,
+	            a.account_name as studentName,
+	            s.student_school as studentSchool,
+	            s.student_grade as studentGrade,
+	            s.student_academic_status as studentAcademicStatus,
+	            
+	            -- 미납액 계산 로직 (기존 totalUnpaidAmount와 dummy를 합쳐서 unpaidAmount로 통일)
+	            nvl((
+	                select sum(p.payment_amount - nvl(
+	                    (select sum(h.payment_history_amount) from payment_history h where h.payment_no = p.payment_no)
+	                , 0))
+	                from payment p
+	                where p.student_no = s.student_no
+	                  and p.payment_status != '완납'
+	            ), 0) as unpaidAmount,
+	            
+	            -- 출석률 계산 로직 (아까 만든 서브쿼리 적용)
+	            nvl((
+	                select 
+	                    case 
+	                        when count(cs.session_no) = 0 then 0 
+	                        else round((count(att.attendance_no) / count(cs.session_no)) * 100) 
+	                    end
+	                from student_course sc
+	                inner join schedule sch on sc.course_no = sch.course_no
+	                inner join class_session cs on sch.schedule_no = cs.schedule_no
+	                left join attendance att on cs.session_no = att.class_session_no 
+	                                        and att.student_no = sc.student_no 
+	                                        and att.attendance_state = '출석'
+	                where sc.student_no = s.student_no
+	                  and sc.student_course_status in ('수강중', '수강완료')
+	            ), 0) as attendanceRate
+	            
+	        from 
+	            student s
+	        inner join 
+	            account a on s.account_no = a.account_no
+	
+	        <where>
+	            <if test="filter != null and filter != '전체'">
+	                <choose>
+	                    <when test="filter == '미납'">
+	                        and exists (
+	                            select 1 from payment p 
+	                            where p.student_no = s.student_no 
+	                              and p.payment_status != '완납'
+	                        )
+	                    </when>
+	                    <when test="filter == '대기'">
+	                        and s.student_academic_status = '대기'
+	                    </when>
+	                    <when test="filter == '휴원'">
+	                        and s.student_academic_status in ('휴원', '퇴원')
+	                    </when>
+	                </choose>
+	            </if>
+	
+	            <if test="searchKeyword != null and searchKeyword != ''">
+	                and (
+	                    a.account_name like '%' || #{searchKeyword} || '%'
+	                    or s.student_school like '%' || #{searchKeyword} || '%'
+	                )
+	            </if>
+	        </where>
+	    ) main
 	    order by 
-	        S.student_no desc <!-- 최신 등록된 학생이 먼저 보이도록 내림차순 정렬 -->
+	        main.studentNo desc
 	</select>
 	
 	<!-- 학생 상세 정보 조회 -->
@@ -75,15 +139,26 @@
             S.student_grade as studentGrade,
             S.student_gender as studentGender,
             S.student_etc as studentEtc,
-            S.student_academic_status as studentAcademicStatus,
+            S.student_academic_status as studentAcademicStatus, 
             
-            -- DB에 아직 없는 테이블의 정보는 임시 가짜 데이터로 채웁니다.
-            '김보호' as guardianName,
-            '010-9999-8888' as guardianPhone,
-            'parent@test.com' as guardianEmail,
-            '서울시 마포구 백범로 23' as address,
-            350000 as tuition,
-            1 as isPaid
+            -- 출석률 서브쿼리 (JOIN으로 전체 세션과 출석 세션을 한 방에 계산)
+            NVL((
+                select 
+                    case 
+                         when count(CS.session_no) = 0 THEN 0 
+                        else round((count(ATT.attendance_no) / count(CS.session_no)) * 100) 
+                    end
+                from student_course SC
+                inner join schedule Sch on SC.course_no = Sch.course_no
+                inner join class_session CS on Sch.schedule_no = CS.schedule_no
+                -- 출석 테이블은 left join (출석 안 했으면 count 안 되도록)
+                left join attendance ATT on CS.session_no = ATT.class_session_no 
+                                        and ATT.student_no = SC.student_no 
+                                        and ATT.attendance_state = '출석'
+                where SC.student_no = S.student_no
+                  and SC.student_course_status IN ('수강중', '수강완료')
+            ), 0) AS attendanceRate
+            
         from 
             student S
         inner join 
@@ -97,7 +172,8 @@
         update account 
         set 
             account_phone = #{studentPhone},
-            account_id = #{studentEmail}
+            account_name = #{studentName},
+            account_utime = systimestamp
         where 
             account_no = #{accountNo}
     </update>
@@ -109,7 +185,8 @@
             student_school = #{studentSchool},
             student_grade = #{studentGrade},
             student_gender = #{studentGender},
-            student_etc = #{studentEtc}
+            student_etc = #{studentEtc}, 
+            student_utime = systimestamp
         where 
             student_no = #{studentNo}
     </update>
@@ -153,5 +230,44 @@
 	    where a.account_phone = #{studentPhone}
 	      and s.student_no = #{studentNo}
 	</select>
+    <!-- 학생 학년만 단건으로 조회 -->
+    <select id="selectStudentGrade" resultType="string">
+        select student_grade 
+        from student 
+        where student_no = #{studentNo}
+    </select>
+    
+    <!-- 학생의 통합 출석률 계산 (%) -->
+    <select id="getStudentAttendanceRate" resultType="int">
+        select 
+            case 
+                -- 분모(총 수업 수)가 0이면 출석률도 0 반환 (에러 방지)
+                when total_sessions = 0 then 0 
+                -- (분자 / 분모) * 100 후 반올림(ROUND) 처리
+                else round((attended_sessions / total_sessions) * 100) 
+            end as attendance_rate
+        from (
+            select 
+                -- [분모] 이 학생이 수강 중인 강의들의 총 열린 수업(세션) 갯수
+                (select count(CS.session_no)
+                 from student_course SC
+                 inner join schedule S on SC.course_no = S.course_no
+                 inner join class_session CS on S.schedule_no = CS.schedule_no
+                 where SC.student_no = #{studentNo}
+                   and SC.student_course_status in ('수강중', '수강완료')
+                   -- UI의 '4주' 기준을 맞추려면 아래 주석을 해제하세요!
+                   and CS.session_start >= trunc(sysdate) - 28 
+                ) as total_sessions,
+                
+                -- [분자] 이 학생이 실제로 '출석'한 갯수
+                (select count(A.attendance_no)
+                 from attendance A
+                 where A.student_no = #{studentNo}
+                   and A.attendance_state = '출석' -- 실제 출석을 의미하는 데이터 값으로 맞춰주세요
+                   -- and A.attendance_at >= trunc(sysdate) - 28
+                ) as attended_sessions
+            from dual
+        )
+    </select>
 	
 </mapper>

@@ -4,13 +4,18 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.service.EmployeeService;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeListVO;
+import com.kh.khedu.vo.employee.AdminEmployeeSearchRequestVO;
+import com.kh.khedu.vo.employee.AdminEmployeeSearchResponseVO;
+import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,4 +46,27 @@ public class AdminEmployeeRestController {
 	//직원 수정
 	
 	
+	
+	//직원 검색(한성)
+	
+	@GetMapping("/search")
+	public List<AdminEmployeeSearchResponseVO> adminEmployeeSearch(
+	        @ModelAttribute AdminEmployeeSearchRequestVO requestVO,
+	        @CurrentUser TokenParseResponseVO parseVO
+	) {
+
+	    return employeeService.adminEmployeeSearch(
+	            requestVO,
+	            parseVO
+	    );
+	}
+	
+	//직원 검색 창에서 상세
+	@GetMapping("/{employeeNo}")
+	public AdminEmployeeDetailVO findEmployeeInfo(
+	        @PathVariable int employeeNo
+	) {
+
+	    return employeeService.findEmployeeInfo(employeeNo);
+	}
 }

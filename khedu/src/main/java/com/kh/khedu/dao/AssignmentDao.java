@@ -51,4 +51,7 @@ public interface AssignmentDao {
 	//파일
 	void connect(int assignmentNo, int attachNo);
 	List<Integer> selectFiles(int assignmentNo);
+	
+	// 과제 마감
+	boolean close(int assignmentNo);
 }

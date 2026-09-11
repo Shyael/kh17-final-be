@@ -3,7 +3,9 @@ package com.kh.khedu.service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -122,9 +124,12 @@ public class StudentService {
 
 
 	//학생 목록
-	public List<StudentListResponseVO> getStudentList() {
-        // Dao의 메서드 호출
-        return studentDao.selectList();
+	public List<StudentListResponseVO> getStudentList(String filter, String searchKeyword) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("filter", filter);
+        params.put("searchKeyword", searchKeyword);
+        
+        return studentDao.selectList(params); // DAO 메서드 호출
     }
 	
 	
@@ -350,5 +355,4 @@ public class StudentService {
 	    return studentName + " 학생, [" + targetState + "] 완료되었습니다.";
 	}
 	
-
 }

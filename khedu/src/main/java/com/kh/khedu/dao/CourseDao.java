@@ -28,6 +28,12 @@ public interface CourseDao {
 	// 강좌 상세
 	CourseDetailVO selectCourseDetail(int courseNo);
 	
+	// 강의 대상 학년 조회
+    String selectCourseGrade(int courseNo);
+    
+    // 강의 현재 수강 인원 갱신
+    void updateCourseCurrentCount(int courseNo);
+
 	//강좌 검색 조회
 	List<CourseListVO> selectSearchList(CourseSearchVO search);
 	

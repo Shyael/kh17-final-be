@@ -12,17 +12,19 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dao.EmployeeDao;
-import com.kh.khedu.dao.RoleDao;
 import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.dto.AccountRolesDto;
 import com.kh.khedu.dto.EmployeeDto;
 import com.kh.khedu.enums.AccountType;
+import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.account.CheckPasswordRequestVO;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeListVO;
+import com.kh.khedu.vo.employee.AdminEmployeeSearchRequestVO;
+import com.kh.khedu.vo.employee.AdminEmployeeSearchResponseVO;
 import com.kh.khedu.vo.employee.ChangeEmployeeRequestVO;
 import com.kh.khedu.vo.employee.ChangeEmployeeResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
@@ -191,5 +193,18 @@ public class EmployeeService {
 		return response;
 	}
 	
-	
+
+	public List<AdminEmployeeSearchResponseVO> adminEmployeeSearch(
+	        AdminEmployeeSearchRequestVO requestVO,
+	        TokenParseResponseVO parseVO
+	) {
+
+	    boolean isAdmin = parseVO.getRoleNames().contains("ADMIN");
+
+	    if (!isAdmin) {
+	        throw new GetOutException();
+	    }
+
+	    return employeeDao.adminEmployeeSearch(requestVO);
+	}
 }

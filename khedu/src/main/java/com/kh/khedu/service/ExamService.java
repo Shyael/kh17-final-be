@@ -8,6 +8,7 @@ import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamDraftRequestVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamResultVO;
 import com.kh.khedu.vo.exam.ExamSearchVO;
 import com.kh.khedu.vo.exam.ExamStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
@@ -79,6 +80,34 @@ public interface ExamService {
     		int examNo,
     		int employeeNo,
     		boolean tutor
+    );
+    
+    // 학부모 - 자녀 시험 목록
+    PageResponseVO<StudentExamListVO> selectParentStudentList(
+            StudentExamSearchVO search,
+            int parentNo,
+            int studentNo
+    );
+
+    // 학부모 - 자녀 시험 상세
+    StudentExamDetailVO selectParentStudentDetail(
+            int examNo,
+            int parentNo,
+            int studentNo
+    );
+    
+    //학부모 - 시험 결과 확인
+    ExamResultVO selectParentStudentResult(
+            int attemptNo,
+            int parentNo,
+            int studentNo
+    );
+    
+    // 시험 마감
+    boolean close(
+            int examNo,
+            int employeeNo,
+            boolean tutor
     );
     
 }

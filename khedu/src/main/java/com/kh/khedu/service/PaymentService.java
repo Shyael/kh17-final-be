@@ -15,6 +15,7 @@ import com.kh.khedu.dto.PaymentDetailDto;
 import com.kh.khedu.dto.PaymentDiscountDto;
 import com.kh.khedu.dto.PaymentDto;
 import com.kh.khedu.dto.PaymentHistoryDto;
+import com.kh.khedu.vo.payment.CoursePaymentVO;
 import com.kh.khedu.vo.payment.DiscountVO;
 import com.kh.khedu.vo.payment.PaymentComprehensiveVO;
 import com.kh.khedu.vo.payment.PaymentDetailVO;
@@ -22,7 +23,6 @@ import com.kh.khedu.vo.payment.PaymentDiscountVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
 import com.kh.khedu.vo.payment.PaymentRequestVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
-import com.kh.khedu.vo.student.StudentCourseVO;
 
 @Service
 public class PaymentService {
@@ -100,6 +100,11 @@ public class PaymentService {
         paymentDao.updateDiscount(discountVO);
     }
     
+    // 할인 삭제
+    public void deleteDiscount(int discountNo) {
+    	paymentDao.deleteDiscount(discountNo);
+    }
+    
     // 특정 학생의 결제 내역만 가져오기
     public List<PaymentListResponseVO> getStudentPayments(int studentNo) {
         Map<String, Object> params = new HashMap<>();
@@ -123,13 +128,13 @@ public class PaymentService {
             }
             
             // 2. 학생이 듣고 있는 강좌 목록을 가져와서 '원금 총액' 계산
-            List<StudentCourseVO> courses = paymentDao.selectStudentCourses(studentNo);
+            List<CoursePaymentVO> courses = paymentDao.selectStudentCourses(studentNo);
             if (courses.isEmpty()) {
                 continue; // 듣는 강좌가 없으면 청구서 발행 안 함
             }
             
             int totalFee = 0;
-            for (StudentCourseVO course : courses) {
+            for (CoursePaymentVO course : courses) {
                 totalFee += course.getCourseFee(); // 미리 복사해 둔 수강료 합산
             }
             
@@ -162,7 +167,7 @@ public class PaymentService {
             paymentDao.insertPayment(payment);
             
             // 5. DB에 수강 내역 디테일(payment_detail) INSERT
-            for (StudentCourseVO course : courses) {
+            for (CoursePaymentVO course : courses) {
                 PaymentDetailDto detail = new PaymentDetailDto();
                 detail.setPaymentNo(paymentNo);
                 detail.setCourseNo(course.getCourseNo());
@@ -216,5 +221,32 @@ public class PaymentService {
                 .discounts(discounts)
                 .historys(historys)
                 .build();
+    }
+    
+    @Transactional
+    public void addPaymentHistory(int paymentNo, int payAmount) {
+        // 1. 납부 이력 DB에 INSERT
+        PaymentHistoryDto historyDto = new PaymentHistoryDto();
+        historyDto.setPaymentNo(paymentNo);
+        historyDto.setPaymentHistoryAmount(payAmount);
+        paymentDao.insertPaymentHistory(historyDto);
+
+        // 2. 지금까지 낸 총액과 원래 내야 할 원금(청구액) 조회
+        int totalPaid = paymentDao.getTotalPaidAmount(paymentNo);
+        PaymentDto master = paymentDao.selectPaymentMaster(paymentNo);
+
+        // 3. 상태 결정 (원금보다 같거나 많이 냈으면 완납, 조금이라도 냈으면 부분납)
+        String newStatus = "미납";
+        if (totalPaid >= master.getPaymentAmount()) {
+            newStatus = "완납";
+        } else if (totalPaid > 0) {
+            newStatus = "부분납";
+        }
+
+        // 4. 영수증 마스터 상태 업데이트 (부분납 or 완납)
+        Map<String, Object> params = new HashMap<>();
+        params.put("paymentNo", paymentNo);
+        params.put("paymentStatus", newStatus);
+        paymentDao.updatePaymentStatus(params); // DAO에 Map 넘기기
     }
 }

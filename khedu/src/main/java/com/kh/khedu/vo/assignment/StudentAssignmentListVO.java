@@ -33,4 +33,6 @@ public class StudentAssignmentListVO {
     private String submitComment;
     private Timestamp submitWtime;
     private Timestamp submitEtime;
+    
+    private String assignmentPhase;
 }

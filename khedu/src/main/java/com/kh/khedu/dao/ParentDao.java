@@ -10,11 +10,11 @@ public interface ParentDao {
 
 	int sequence();
 	void insert(ParentDto parentDto);
-	ParentStudentVO selectOneRelationByAccountNo(int accountNo);
-	ParentDto selectOneByAccountNo(int accountNo);
+	ParentStudentVO selectOneRelationByAccountNo(Integer accountNo);
+	ParentDto selectOneByAccountNo(Integer accountNo);
 	
 	//studentNo로 학부모 계정 정보 조회
-	List<ParentDetailVO> findParentDetailByStudentNo(int studentNo);
+	List<ParentDetailVO> findParentDetailByStudentNo(Integer studentNo);
 	//검색으로 학부모 계정정보 조회
 	List<ParentDetailVO> searchParents(String keyword);
 
