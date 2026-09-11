@@ -7,6 +7,6 @@ import lombok.EqualsAndHashCode;
 public class ChatMessageVO extends MessageVO{
 	private int no;
 	private Integer senderNo;
-	private String senderLevel;
 	private String senderName;
+	private String senderType;
 }
