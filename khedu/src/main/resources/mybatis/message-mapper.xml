@@ -34,9 +34,9 @@
 		)
 		values(
 			#{messageNo},
-			#{messageSenderId},
-			#{messageSenderNickname},
-			#{messageSenderLevel}
+			#{messageSenderNo},
+			#{messageSenderName},
+			#{messageSenderType}
 		)
 	</insert>
 	<!-- 시스템 메세지 등록 -->
@@ -59,9 +59,9 @@
 	</resultMap>
 	<resultMap type="ChatMessageVO" id="ChatMessageVO" extends="MessageDefaultVO">
 		<result property="no" column="message_no"/>
-		<result property="senderId" column="message_sender_id"/>
-		<result property="senderNickname" column="message_sender_nickname"/>
-		<result property="senderLevel" column="message_sender_level"/>
+		<result property="senderNo" column="message_sender_no"/>
+		<result property="senderName" column="message_sender_name"/>
+		<result property="senderType" column="message_sender_type"/>
 	</resultMap>
 	<resultMap type="SystemMessageVO" id="SystemMessageVO" extends="MessageDefaultVO">
 		<result property="no" column="message_no"/>
@@ -80,9 +80,9 @@
 	<select id="selectTest" resultMap="MessageVO">
 		select 
 			M.*,
-			C.message_sender_id, 
-			C.message_sender_nickname,
-			C.message_sender_level,
+			C.message_sender_no, 
+			C.message_sender_name,
+			C.message_sender_type,
 			S.message_level
 		from message M
 			left outer join message_chat C on M.message_no = C.message_no
@@ -105,9 +105,9 @@
 		<include refid="temp-header"></include>
 		select 
 			M.*,
-			C.message_sender_id, 
-			C.message_sender_nickname,
-			C.message_sender_level,
+			C.message_sender_no, 
+			C.message_sender_name,
+			C.message_sender_type,
 			S.message_level
 		from message M
 			left outer join message_chat C on M.message_no = C.message_no
@@ -142,9 +142,9 @@
 		<include refid="temp-header"></include>
 		select 
 			M.*,
-			C.message_sender_id, 
-			C.message_sender_nickname,
-			C.message_sender_level,
+			C.message_sender_no, 
+			C.message_sender_name,
+			C.message_sender_type,
 			S.message_level
 		from message M
 			left outer join message_chat C on M.message_no = C.message_no
