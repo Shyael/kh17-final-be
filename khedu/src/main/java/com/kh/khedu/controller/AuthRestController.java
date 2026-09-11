@@ -75,6 +75,11 @@ public class AuthRestController {
 		//토큰 생성
 		TokenCreateRequestVO tokenRequest = new TokenCreateRequestVO();
 		BeanUtils.copyProperties(response, tokenRequest);
+		
+		//토큰에만 담을 내용 (현재는 accountName 세팅)
+		String accountName = accountDao.selectOneByAccountNo(response.getAccountNo()).getAccountName();
+		tokenRequest.setAccountName(accountName);
+		
 		String accessToken = jwtService.createAccessToken(tokenRequest);
 		String refreshToken = jwtService.createRefreshToken(tokenRequest.getAccountId());
 		

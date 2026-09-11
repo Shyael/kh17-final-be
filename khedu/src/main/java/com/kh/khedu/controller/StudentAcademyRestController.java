@@ -1,8 +1,11 @@
 package com.kh.khedu.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,8 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.service.StudentService;
+import com.kh.khedu.service.course.CourseService;
 import com.kh.khedu.vo.account.AccountJoinResponseVO;
 import com.kh.khedu.vo.account.CheckPasswordRequestVO;
+import com.kh.khedu.vo.course.StudentCourseListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.student.ChangeStudentRequestVO;
 import com.kh.khedu.vo.student.ChangeStudentResponseVO;
@@ -20,6 +25,7 @@ import com.kh.khedu.vo.student.StudentDetailVO;
 import com.kh.khedu.vo.student.StudentJoinRequestVO;
 import com.kh.khedu.vo.studentLink.StudentLinkResponseVO;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,6 +36,8 @@ import jakarta.validation.Valid;
 public class StudentAcademyRestController {
 	@Autowired 
 	private StudentService studentService;
+	@Autowired
+	private CourseService courseService;
 	
 	//학생 회원가입
 	@ApiResponse(responseCode = "200", description = "등록 성공")
@@ -79,4 +87,29 @@ public class StudentAcademyRestController {
 	) {
 		return studentService.createStudentLink(parseVO);
 	}
+	
+	//학생 본인이 수강중인 강의 목록
+	@Operation(summary = "학생 수강중인 강의 목록 조회")
+	@GetMapping("/course")
+	public List<StudentCourseListVO> selectListByStudent(
+	        @CurrentUser TokenParseResponseVO parseVO) {
+	    return courseService.selectListByStudent(
+	            parseVO.getNoType()
+	    );
+	}
+
+
+	//학부모용 : 자녀가 수강중인 강의 목록
+	@Operation(summary = "학부모용 자녀 수강중인 강의 목록 조회")
+	@GetMapping("/parent/{studentNo}/course")
+	public List<StudentCourseListVO> selectListByParentStudent(
+	        @PathVariable int studentNo,
+	        @CurrentUser TokenParseResponseVO parseVO) {
+	    return courseService.selectListByParentStudent(
+	            parseVO.getNoType(), //parentNo
+	            studentNo
+	    );
+	}
+	
+	
 }

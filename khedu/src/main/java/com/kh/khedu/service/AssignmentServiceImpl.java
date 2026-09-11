@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,14 +12,19 @@ import org.springframework.web.multipart.MultipartFile;
 import com.kh.khedu.dao.AssignmentDao;
 import com.kh.khedu.dao.AssignmentSubmitDao;
 import com.kh.khedu.dao.AttachDao;
+import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dto.AssignmentDto;
 import com.kh.khedu.dto.AttachDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.assignment.AssignmentDetailVO;
 import com.kh.khedu.vo.assignment.AssignmentListVO;
+import com.kh.khedu.vo.assignment.AssignmentSearchVO;
+import com.kh.khedu.vo.assignment.AssignmentStudentSearchVO;
 import com.kh.khedu.vo.assignment.StudentAssignmentListVO;
+import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 @Service
@@ -39,6 +45,9 @@ public class AssignmentServiceImpl implements AssignmentService {
     
     @Autowired
     private ParentStudentDao parentStudentDao;
+    
+    @Autowired
+    private CourseDao courseDao;
     
     //공통 메소드
     // 과제 수정/삭제 권한 확인
@@ -84,27 +93,61 @@ public class AssignmentServiceImpl implements AssignmentService {
     // 과제 등록
     @Override
     public int insert(
-    		AssignmentDto assignmentDto,
-    		List<MultipartFile> files
-    		) throws IllegalStateException, IOException {
-    	//시퀀스번호 생성
+            AssignmentDto assignmentDto,
+            List<MultipartFile> files,
+            int loginEmployeeNo,
+            boolean tutor
+            ) throws IllegalStateException, IOException {
+
+        //선택한 강의 조회
+        CourseDetailVO course = courseDao.selectCourseDetail(assignmentDto.getCourseNo());
+
+        if(course == null) {
+            throw new TargetNotfoundException("존재하지 않는 강의입니다.");
+        }
+
+        //선택한 강의의 담당 강사 번호
+        int courseEmployeeNo = course.getEmployeeNo();
+
+        //강사는 본인 담당 강의에만 과제 등록 가능
+        if(tutor && courseEmployeeNo != loginEmployeeNo) {
+            throw new AccessDeniedException(
+                    "본인이 담당하는 강의에만 과제를 등록할 수 있습니다."
+            );
+        }
+
+        //중요
+        //로그인한 직원번호가 아니라 강의 담당 강사번호 저장
+        assignmentDto.setEmployeeNo(courseEmployeeNo);
+
+        //과제 시퀀스번호 생성
         int assignmentNo = assignmentDao.sequence();
-        
+
         assignmentDto.setAssignmentNo(assignmentNo);
 
+        //DB 등록
         assignmentDao.insert(assignmentDto);
-        
+
+
         //과제 파일 등록
         if(files != null && files.size() > 0) {
-        	for(MultipartFile file : files) {
-        		if(!file.isEmpty()) {
-        			//attach 테이블 + 실제 파일 저장
-        			int attachNo = attachService.save(file);
-        			//assignment_file연결
-        			assignmentDao.connect(assignmentNo, attachNo);
-        		}
-        	}
+
+            for(MultipartFile file : files) {
+
+                if(!file.isEmpty()) {
+
+                    //attach 테이블 + 실제 파일 저장
+                    int attachNo = attachService.save(file);
+
+                    //assignment_file 연결
+                    assignmentDao.connect(
+                            assignmentNo,
+                            attachNo
+                    );
+                }
+            }
         }
+
         return assignmentNo;
     }
 
@@ -134,29 +177,60 @@ public class AssignmentServiceImpl implements AssignmentService {
     	return assignment;
     }
 
-    // 전체 과제 목록 조회
+    // 특정 강의의 최근 5개 과제 목록 조회
     @Override
-    public List<AssignmentListVO> selectList() {
-        return assignmentDao.selectList();
-    }
-
-    // 특정 강의의 과제 목록 조회
-    @Override
-    public List<AssignmentListVO> selectListByCourse(int courseNo) {
-        return assignmentDao.selectListByCourse(courseNo);
-    }
-
-    // 특정 강사가 등록한 과제 목록 조회
-    @Override
-    public List<AssignmentListVO> selectListByEmployee(int employeeNo) {
-        return assignmentDao.selectListByEmployee(employeeNo);
-    }
+	public List<AssignmentListVO> selectRecentListByCourse(int courseNo) {
+    	return assignmentDao.selectRecentListByCourse(courseNo);
+	}
 
     // 학생이 수강 중인 강의의 과제 목록 조회
     @Override
     public List<StudentAssignmentListVO> selectListByStudent(int studentNo) {
         return assignmentDao.selectListByStudent(studentNo);
     }
+    
+    //강사 페이지네이션+ 검색 + 과제 목록
+    @Override
+	public PageResponseVO<AssignmentListVO> selectManageList(AssignmentSearchVO search, int employeeNo, boolean tutor) {
+		//강사는 본인 과제만
+    	if (tutor){
+    		search.setEmployeeNo(employeeNo);
+    	}
+    	//원장/관리자는 전체 
+    	else {
+    		search.setEmployeeNo(null);
+    	}
+    	
+    	List<AssignmentListVO> assignmentList = assignmentDao.selectManageSearchList(search);
+    	
+    	int totalCount = assignmentDao.selectManageCount(search);
+    	
+    	return new PageResponseVO<>(
+    			assignmentList,
+    			totalCount,
+    			search
+    	);
+	}
+    
+    //학생/학부모 페이지네이션 + 검색 + 과제목록
+    @Override
+	public PageResponseVO<StudentAssignmentListVO> selectStudentList(AssignmentStudentSearchVO search, int studentNo) {
+		//로그인한 학생 번호 세팅
+    	search.setStudentNo(studentNo);
+    	
+    	//현재 페이지 과제 목록
+    	List<StudentAssignmentListVO> assignmentList =
+    			assignmentDao.selectStudentSearchList(search);
+    	
+    	//검색조건에 해당하는 전체 개수
+    	int totalCount = assignmentDao.selectStudentCount(search);
+    	
+    	return new PageResponseVO<>(
+    			assignmentList,
+    			totalCount,
+    			search
+    	);
+	}
 
     // 과제 수정
     @Override
@@ -252,15 +326,25 @@ public class AssignmentServiceImpl implements AssignmentService {
 	
 	//학부모용 : 자녀 과제 목록 조회
 	@Override
-	public List<StudentAssignmentListVO> selectListByParentStudent(
-			int parentNo,
-			int studentNo
-	){
-		//자신의 자녀인지 확인
-		checkParentStudent(parentNo, studentNo);
-		
-		//기존 학생 과제 목록 조회 재사용
-		return assignmentDao.selectListByStudent(studentNo);
+	public PageResponseVO<StudentAssignmentListVO> selectListByParentStudent(
+	        AssignmentStudentSearchVO search,
+	        int parentNo,
+	        int studentNo) {
+	    //학부모-자녀 관계 검증
+	    checkParentStudent(parentNo, studentNo);
+
+	    //조회할 학생번호 세팅
+	    search.setStudentNo(studentNo);
+
+	    List<StudentAssignmentListVO> list = assignmentDao.selectStudentSearchList(search);
+
+	    int totalCount = assignmentDao.selectStudentCount(search);
+
+	    return new PageResponseVO<>(
+	            list,
+	            totalCount,
+	            search
+	    );
 	}
 	
 	// 학부모용 : 자녀 과제 상세 조회

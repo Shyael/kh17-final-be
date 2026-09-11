@@ -8,9 +8,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.kh.khedu.dto.TutorCareerDto;
 import com.kh.khedu.dto.TutorDto;
 import com.kh.khedu.dto.TutorSubjectDto;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.tutor.TutorDetailVO;
 import com.kh.khedu.vo.tutor.TutorEmployeeVO;
 import com.kh.khedu.vo.tutor.TutorListVO;
+import com.kh.khedu.vo.tutor.TutorSearchVO;
 
 public interface TutorService {
 
@@ -21,11 +23,8 @@ public interface TutorService {
 		MultipartFile image
 	) throws IllegalStateException, IOException;
 
-	// 강사 목록 조회
-	List<TutorListVO> selectList();
-
-	// 과목별 강사 목록 조회
-	List<TutorListVO> selectListBySubject(int academySubjectNo);
+	//강사 페이지네이션 + 검색 추가 목록
+	PageResponseVO<TutorListVO> selectList(TutorSearchVO search);
 
 	// 강사 상세 조회
 	TutorDetailVO selectDetail(int tutorNo);
@@ -72,4 +71,5 @@ public interface TutorService {
 	//이미지 삭제
 	void deleteImage(int tutorNo);
 
+	
 }
