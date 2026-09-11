@@ -446,6 +446,8 @@
 	        and att.student_no = #{studentNo}
 	    <include refid="examStudentSearchCondition"/>
 	</select>
+	
+	
 
  
     <!-- 시험 수정 -->
