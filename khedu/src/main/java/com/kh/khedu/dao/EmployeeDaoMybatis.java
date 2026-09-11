@@ -12,6 +12,8 @@ import org.springframework.stereotype.Repository;
 import com.kh.khedu.dto.EmployeeDto;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeListVO;
+import com.kh.khedu.vo.employee.AdminEmployeeSearchRequestVO;
+import com.kh.khedu.vo.employee.AdminEmployeeSearchResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.employee.EmployeeSearchByNameVO;
 import com.kh.khedu.vo.employee.EmployeeVO;
@@ -105,5 +107,16 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 	    params.put("accountNo", accountNo);
 		
 		return sqlSession.selectOne("mapper.employee.checkEmployeeOwner", params);
+	}
+	
+	@Override
+	public List<AdminEmployeeSearchResponseVO> adminEmployeeSearch(
+	        AdminEmployeeSearchRequestVO requestVO
+	) {
+
+	    return sqlSession.selectList(
+	            "mapper.employee.adminEmployeeSearch",
+	            requestVO
+	    );
 	}
 }
