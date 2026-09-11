@@ -107,7 +107,7 @@ public class ClassSessionServiceImple implements ClassSessionService {
 		
 		// [8] 첫 수업 여부 확인 (개강일 등록)
 		if(scheduleDto.getScheduleOpen() == null) {
-			scheduleDao.updateOpen(scheduleNo, today);
+			scheduleDao.updateOpenByCourseNo(scheduleDto.getCourseNo(), today);
 		}
 			
 		// [9] Course 상태를 진행중으로 변경
@@ -246,7 +246,7 @@ public class ClassSessionServiceImple implements ClassSessionService {
 
 		// 첫 수업 누락 건 사후 등록 시 개강일 보정
 		if (scheduleDto.getScheduleOpen() == null) {
-			scheduleDao.updateOpen(request.getScheduleNo(), request.getTargetDate());
+			scheduleDao.updateOpenByCourseNo(request.getScheduleNo(), request.getTargetDate());
 		}
 	}
 	

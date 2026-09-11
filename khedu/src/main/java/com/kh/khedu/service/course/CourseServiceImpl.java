@@ -3,8 +3,10 @@ package com.kh.khedu.service.course;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.TextStyle;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -319,22 +321,33 @@ public class CourseServiceImpl implements CourseService {
         String tutorName = courseDao.selectTutorNameByEmployeeNo(course.getEmployeeNo());
         List<ScheduleDto> scheduleList = scheduleDao.selectListByCourseNo(courseNo);
         
-        // [2] 오늘 날짜에 해당하는 세션 및 출결 현황 탐색
+     // [2] 오늘 날짜에 해당하는 세션 및 출결 현황 탐색
         ClassSessionDto todaySession = null;
         SessionAttendanceDetailVO attendanceDetail = null;
-        
+
         LocalDate today = LocalDate.now();
+        String todayWeek = today.getDayOfWeek()
+                .getDisplayName(TextStyle.NARROW, Locale.KOREAN); // '월', '화', ..., '금'
+
         for (ScheduleDto schedule : scheduleList) {
+            // 1. 오늘 요일과 일치하지 않는 스케줄은 DB 조회 생략
+            if (!todayWeek.equals(schedule.getScheduleWeek())) {
+                continue;
+            }
+
             LocalTime startTime = LocalTime.parse(schedule.getScheduleStart());
             Timestamp sessionStart = Timestamp.valueOf(today.atTime(startTime));
 
-            // 오늘 날짜 + 시작 시간으로 등록된 세션이 있는지 확인
+            // 오늘 날짜 + 시작 시간으로 등록된 세션 확인
             ClassSessionDto session = classSessionDao.selectTodaySession(schedule.getScheduleNo(), sessionStart);
             if (session != null) {
                 todaySession = session;
-                // 세션이 존재하면 앞서 구현해 둔 출석부 상세 조회 로직 호출
                 attendanceDetail = attendanceService.getSessionAttendanceDetail(session.getSessionNo(), parseVO);
-                break;
+                
+                // 현재 '진행중'인 세션을 찾았다면 즉시 루프 종료
+                if (ClassSessionDto.STATUS_RUNNING.equals(session.getSessionStatus())) {
+                    break;
+                }
             }
         }
         

@@ -56,7 +56,7 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 	
 	//schedule_open의 날짜를 오늘로 변경
 	@Override
-	public boolean updateOpen(int scheduleNo, LocalDate today) {
+	public boolean updateOpenByCourseNo(int scheduleNo, LocalDate today) {
 		Map<String, Object> param = new HashMap<>();
 		param.put("scheduleNo", scheduleNo);
 		param.put("today", today);
@@ -71,6 +71,12 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 	@Override
 	public List<ScheduleDto> selectListByCourseNo(int courseNo) {
 		return sqlSession.selectList("mapper.schedule.selectListByCourseNo", courseNo);
+	}
+	
+	// 개강일(schedule_open)이 도달했거나 null이 아닌 오늘 스케줄 조회
+	@Override
+	public List<ScheduleDto> selectTodayActiveSchedules(String todayKorean) {
+		return sqlSession.selectList("mapper.schedule.selectTodayActiveSchedules", todayKorean);
 	}
 
 }

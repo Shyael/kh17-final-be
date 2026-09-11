@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.AttemptDto;
 import com.kh.khedu.vo.attendance.AttendanceStudentResponseVO;
+import com.kh.khedu.vo.attendance.KioskStudentCandidateVO;
 
 @Repository
 public class AttemptDaoMybatis implements AttemptDao {
@@ -51,5 +52,5 @@ public class AttemptDaoMybatis implements AttemptDao {
     public String selectStudentName(int studentNo) {
         return sqlSession.selectOne("mapper.attempt.selectStudentName",studentNo);
     }
-    
+
 }

@@ -1,9 +1,6 @@
 package com.kh.khedu.dao;
 
-import java.util.List;
-
 import com.kh.khedu.dto.AttemptDto;
-import com.kh.khedu.vo.attendance.AttendanceStudentResponseVO;
 
 public interface AttemptDao {
     // 응시 번호 시퀀스 생성
@@ -18,4 +15,5 @@ public interface AttemptDao {
     boolean submit(AttemptDto attemptDto);
     //학생이름 조회
     String selectStudentName(int studentNo);
+    
 }

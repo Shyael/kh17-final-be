@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.AttendanceDto;
 import com.kh.khedu.vo.attendance.AttendanceStudentResponseVO;
+import com.kh.khedu.vo.attendance.KioskStudentCandidateVO;
+import com.kh.khedu.vo.attendance.KioskTargetSessionVO;
 
 @Repository
 public class AttendanceDaoMyBatis implements AttendanceDao {
@@ -69,6 +71,34 @@ public class AttendanceDaoMyBatis implements AttendanceDao {
 	@Override
 	public List<AttendanceStudentResponseVO> selectAttendanceListBySessionNo(int sessionNo) {
 		return sqlSession.selectList("mapper.attendance.selectAttendanceListBySessionNo", sessionNo);
+	}
+	
+	 /*
+     * ==========================================
+     * 키오스크 관련
+     * ==========================================
+     * */
+	@Override
+	public List<KioskStudentCandidateVO> selectStudentsByPhoneTail(String phoneTail) {
+		return sqlSession.selectList("mapper.attendance.selectStudentsByPhoneTail", phoneTail);
+	}
+
+	@Override
+	public KioskStudentCandidateVO selectStudentInfoByNo(int studentNo) {
+		return sqlSession.selectOne("mapper.attendance.selectStudentInfoByNo", studentNo);
+	}
+
+	@Override
+	public KioskTargetSessionVO selectCurrentTargetAttendance(int studentNo) {
+		return sqlSession.selectOne("mapper.attendance.selectCurrentTargetAttendance", studentNo);
+	}
+
+	@Override
+	public int updateKioskAttendance(int attendanceNo, String attendanceState) {
+		Map<String, Object> param = new HashMap<>();
+	    param.put("attendanceNo", attendanceNo);
+	    param.put("attendanceState", attendanceState);
+		return sqlSession.update("mapper.attendance.updateKioskAttendance", param);
 	}
 
 }
