@@ -44,6 +44,8 @@
 	
 	<!-- 학생 목록 전체 조회 (검색 및 필터 포함) -->
 	<select id="list" resultType="com.kh.khedu.vo.student.StudentListResponseVO">
+	select * from (
+            select rownum as rn, TMP.* from (
 	    -- 2. 안쪽에서 계산된 출석률(attendanceRate)과 미납액(unpaidAmount)을 바탕으로 위험도(riskLevel)를 판별합니다.
 	    select 
 	        main.*,
@@ -125,6 +127,8 @@
 	    ) main
 	    order by 
 	        main.studentNo desc
+	    ) TMP
+        ) where rn between #{pagination.beginRow} and #{pagination.endRow}
 	</select>
 	
 	<!-- 학생 상세 정보 조회 -->
@@ -268,6 +272,39 @@
                 ) as attended_sessions
             from dual
         )
+    </select>
+    
+    <!-- 2. 전체 데이터 개수 조회 (페이징 계산용) -->
+    <select id="count" resultType="int">
+        select count(*) 
+        from student s
+        inner join account a on s.account_no = a.account_no
+        <where>
+	            <if test="filter != null and filter != '전체'">
+	                <choose>
+	                    <when test="filter == '미납'">
+	                        and exists (
+	                            select 1 from payment p 
+	                            where p.student_no = s.student_no 
+	                              and p.payment_status != '완납'
+	                        )
+	                    </when>
+	                    <when test="filter == '대기'">
+	                        and s.student_academic_status = '대기'
+	                    </when>
+	                    <when test="filter == '휴원'">
+	                        and s.student_academic_status in ('휴원', '퇴원')
+	                    </when>
+	                </choose>
+	            </if>
+	
+	            <if test="searchKeyword != null and searchKeyword != ''">
+	                and (
+	                    a.account_name like '%' || #{searchKeyword} || '%'
+	                    or s.student_school like '%' || #{searchKeyword} || '%'
+	                )
+	            </if>
+	        </where>
     </select>
 	
 </mapper>

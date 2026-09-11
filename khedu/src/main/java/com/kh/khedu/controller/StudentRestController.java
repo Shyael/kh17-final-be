@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.khedu.dto.StudentCourseDto;
 import com.kh.khedu.service.StudentCourseService;
 import com.kh.khedu.service.StudentService;
+import com.kh.khedu.util.PageResponseVO;
+import com.kh.khedu.util.PaginationVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentListResponseVO;
@@ -39,12 +42,15 @@ public class StudentRestController {
 	
     //학생 목록 전체 조회
 	@GetMapping("/list")
-    public ResponseEntity<List<StudentListResponseVO>> getStudentList(
+    public ResponseEntity<PageResponseVO<StudentListResponseVO>> getStudentList(
             @RequestParam(required = false, defaultValue = "전체") String filter,
-            @RequestParam(required = false, defaultValue = "") String searchKeyword) {
+            @RequestParam(required = false) String searchKeyword,
+            @ModelAttribute PaginationVO pagination) { 
         
-        List<StudentListResponseVO> list = studentService.getStudentList(filter, searchKeyword);
-        return ResponseEntity.ok(list);
+        // 서비스만 딱 호출하면 끝!
+        PageResponseVO<StudentListResponseVO> response = studentService.getStudentList(filter, searchKeyword, pagination);
+        
+        return ResponseEntity.ok(response);
     }
 	
     //학생 상세 조회
