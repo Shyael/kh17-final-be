@@ -58,7 +58,7 @@
 		  inner join room_user ru on ru.room_no = r.room_no
 		 where	r.room_owner = #{roomOwner}
 		   and	r.room_type = '상담'
-	</select>
+	</select> 
 	
 	<!-- 상담 채팅방 목록 -->
 	<select id="consultList" resultType="RoomListVO">
