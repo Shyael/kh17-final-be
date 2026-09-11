@@ -2,12 +2,14 @@ package com.kh.khedu.service.payroll;
 
 import java.util.List;
 
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.ContractAddRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployeeSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployerSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractExtendRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractListSearchVO;
 import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 import com.kh.khedu.vo.payroll.response.ContractAddResponseVO;
@@ -103,8 +105,7 @@ public interface ContractService {
 			TokenParseResponseVO parseVO
 	);
 
-	// 시작일 도래 계약 활성화 및 종료일 도래 계약 종료
-	void refreshContractStatus();
+	
 	
 	//도중 퇴사
 	
@@ -114,5 +115,18 @@ public interface ContractService {
 	        ContractSearchRequestVO request,
 	        TokenParseResponseVO parseVO
 	);
+
+	void refreshEndedContractStatus();
+
+	void refreshActiveContractStatus();
+	
+	void cancelContract(
+			long contractNo,
+			TokenParseResponseVO parseVO
+	);
+	
+	PageResponseVO<ContractHistoryResponseVO> selectList(
+	        ContractListSearchVO search,
+	        TokenParseResponseVO parseVO);
 	
 }

@@ -5,8 +5,11 @@ import java.util.List;
 
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractListSearchVO;
 import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
+import com.kh.khedu.vo.payroll.response.ContractFindOrdinaryEmployeeVO;
+import com.kh.khedu.vo.payroll.response.ContractHistoryResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractSearchResponseVO;
 
 public interface ContractDao {
@@ -97,4 +100,41 @@ public interface ContractDao {
 	        Timestamp startDate,
 	        Timestamp endDate
 	);
+	
+	int countContinuingContract(int employeeNo);
+	
+	
+	boolean resignEmployee(int employeeNo);
+	
+	List<ContractDto> findContractsToEnd();
+	
+	boolean deactivateEndedEmployees();
+
+	boolean deactivateEndedEmployeeAccounts();
+	
+	// active 계약이 생긴 대기 직원 → 재직
+		int activateWaitingEmployees();
+		
+		// active 계약이 있는 직원 계정 → Y
+		int activateEmployeeAccounts();
+		
+		//계약 도중 무르는 경우	
+		boolean cancelContract(long contractNo);
+		
+		List<Integer> findEmployeeNoByPeriod(
+	    		Timestamp startDate,
+	    		Timestamp endDate
+	    );
+
+		//통상근로자 찾기
+		List<ContractFindOrdinaryEmployeeVO> findOrdinaryEmployeeNoList(
+				String employeeType,
+				Timestamp targetDate
+		);
+		
+		List<ContractHistoryResponseVO> selectSearchList(
+		        ContractListSearchVO search);
+
+		int selectCount(
+		        ContractListSearchVO search);
 }

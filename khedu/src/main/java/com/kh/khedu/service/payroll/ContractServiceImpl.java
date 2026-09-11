@@ -15,6 +15,7 @@ import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.util.SignatureEncryptor;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.ContractAddRequestVO;
@@ -22,6 +23,7 @@ import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployeeSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractEmployerSignRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractExtendRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractListSearchVO;
 import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
 import com.kh.khedu.vo.payroll.response.ContractAddResponseVO;
@@ -56,10 +58,16 @@ public class ContractServiceImpl implements ContractService {
 
 	    private void validateWrittenBreakTimes(
 	            double dailyWorkHours,
+	            double weeklyWorkHours,
 	            double writtenBreakTimes) {
 
-	        
-
+	       if (dailyWorkHours>8) {
+	    	   throw new GetOutException();
+	       }
+	       
+	       if(weeklyWorkHours > 40) {
+	    	   throw new GetOutException();
+	       }
 	        if (writtenBreakTimes < 0) {
 	            throw new GetOutException();
 	        }
@@ -208,8 +216,16 @@ public class ContractServiceImpl implements ContractService {
 			throw new GetOutException();
 		}
 		
-		validateWrittenBreakTimes(contractDto.getDailyWorkHours(), contractDto.getWrittenBreakMinutes());
+		if (contractDto.getWeeklyWorkHours() < 15) {
+		    contractDto.setWeeklyHolidayDay(null);
+		}
 
+		
+		validateWrittenBreakTimes(
+		        contractDto.getDailyWorkHours(),
+		        contractDto.getWeeklyWorkHours(),
+		        contractDto.getWrittenBreakMinutes()
+		);
 		// [6] 최초 등록 상태는 서명대기
 		contractDto.setContractStatus("pending");
 
@@ -287,7 +303,15 @@ public class ContractServiceImpl implements ContractService {
 			throw new GetOutException();
 		}
 		
-		validateWrittenBreakTimes(currentContract.getDailyWorkHours(), currentContract.getWrittenBreakMinutes());
+		if (currentContract.getWeeklyWorkHours() < 15) {
+		    currentContract.setWeeklyHolidayDay(null);
+		}
+		
+		validateWrittenBreakTimes(
+		        currentContract.getDailyWorkHours(),
+		        currentContract.getWeeklyWorkHours(),
+		        currentContract.getWrittenBreakMinutes()
+		);
 		
 		request.setContractNo(contractNo);
 		
@@ -332,7 +356,7 @@ public class ContractServiceImpl implements ContractService {
 				.payday(contract.getPayday()).writtenBreakMinutes(contract.getWrittenBreakMinutes())
 				.contractContent(contract.getContractContent())
 				.contractStatus(contract.getContractStatus()).signedTime(contract.getSignedTime())
-				.weeklyHolidayDay(contract.getWeeklyHolidayDay())
+				.weeklyHolidayDay(contract.getWeeklyHolidayDay()!=null ? contract.getWeeklyHolidayDay() : null)
 				.build();
 		 		
 		return response;
@@ -579,7 +603,7 @@ public class ContractServiceImpl implements ContractService {
 	            .employerSigned(contractDto.getEmployerSignature() != null)
 	            .signedTime(contractDto.getSignedTime())
 	            .writtenBreakMinutes(contractDto.getWrittenBreakMinutes())
-	            .weeklyHolidayDay(contractDto.getWeeklyHolidayDay())
+	            .weeklyHolidayDay(contractDto.getWeeklyHolidayDay() !=null ? contractDto.getWeeklyHolidayDay() : null)
 	            .build();
 		return response;
 	}
@@ -853,10 +877,13 @@ public class ContractServiceImpl implements ContractService {
 
 	    validateWrittenBreakTimes(
 	            newContractDto.getDailyWorkHours(),
+	            newContractDto.getWeeklyWorkHours(),
 	            newContractDto.getWrittenBreakMinutes()
 	    );
 
-
+	    if (newContractDto.getWeeklyWorkHours() < 15) {
+	        newContractDto.setWeeklyHolidayDay(null);
+	    }
 
 	    // [8] 근로조건 변경은 미래부터 적용
 	    Timestamp current =
@@ -876,18 +903,18 @@ public class ContractServiceImpl implements ContractService {
 
 
 	    // [9] 기존 계약은 새 계약 시작 시점에 종료
+	    LocalDate previousContractEndDate =
+	            newContractDto
+	                    .getContractStart()
+	                    .toLocalDateTime()
+	                    .toLocalDate()
+	                    .minusDays(1);
+
 	    originDto.setContractEnd(
-	    	    newContractDto.getContractStart()
-	    	);
-
-	    	boolean closeResult =
-	    	        contractDao.closeForConditionChange(
-	    	                originDto
-	    	        );
-
-	    	if (!closeResult)
-	    	    throw new GetOutException();
-
+	            Timestamp.valueOf(
+	                    previousContractEndDate.atStartOfDay()
+	            )
+	    );
 
 	    // [10] 새 계약은 다시 서명대기
 	    newContractDto.setContractStatus(
@@ -979,7 +1006,7 @@ public class ContractServiceImpl implements ContractService {
 	                            .getWrittenBreakMinutes()
 	                    )
 	                    
-	                    .weeklyHolidayDay(newContractDto.getWeeklyHolidayDay())
+	                    .weeklyHolidayDay(newContractDto.getWeeklyHolidayDay() != null ? newContractDto.getWeeklyHolidayDay() : null)
 	                    
 	                    .build();
 
@@ -1015,22 +1042,30 @@ public class ContractServiceImpl implements ContractService {
 		return response;
 	}
 
-	// 계약기간에 따른 상태 갱신
 	@Transactional
 	@Override
-	public void refreshContractStatus() {
+	public void refreshEndedContractStatus() {
 
-	    // 종료일 도래 계약 종료
-	    contractDao.endContracts();
+		contractDao.endContracts();
 
-	    // 시작일 도래 + 서명완료 계약 활성화
-	    contractDao.activateContracts();
+		contractDao.deactivateEndedEmployees();
 
-	    // active 계약을 가진 대기 직원 재직 처리
-	    employeeDao.activateWaitingEmployees();
+		contractDao.deactivateEndedEmployeeAccounts();
+	}
+	
+	
+	@Transactional
+	@Override
+	public void refreshActiveContractStatus() {
 
-	    // 재직 + active 계약 직원 계정 활성화
-	    employeeDao.activateEmployeeAccounts();
+		// 시작일 도래 + 서명완료 계약 활성화
+		contractDao.activateContracts();
+
+		// active 계약을 가진 대기 직원 재직 처리
+		contractDao.activateWaitingEmployees();
+
+		// 재직 + active 계약 직원 계정 활성화
+		contractDao.activateEmployeeAccounts();
 	}
 
 	@Transactional
@@ -1039,39 +1074,45 @@ public class ContractServiceImpl implements ContractService {
 	        long contractNo,
 	        TokenParseResponseVO parseVO) {
 
-	    boolean isAdmin =
-	            contractAuthorizationService.checkAdmin(
-	                    parseVO
-	            );
+		boolean isAdmin =
+				contractAuthorizationService.checkAdmin(
+						parseVO
+				);
 
-	    if (!isAdmin)
-	        throw new GetOutException();
-
-
-	    ContractDto find =
-	            contractDao.find(
-	                    contractNo
-	            );
-
-	    if (find == null)
-	        throw new TargetNotfoundException();
+		if (!isAdmin)
+			throw new GetOutException();
 
 
-	    if ("ended".equals(
-	            find.getContractStatus()
-	    ))
-	        throw new GetOutException();
+		ContractDto find =
+				contractDao.find(
+						contractNo
+				);
+
+		if (find == null)
+			throw new TargetNotfoundException();
 
 
-	    boolean result =
-	            contractDao.exitContracts(
-	                    contractNo
-	            );
+		if ("ended".equals(
+				find.getContractStatus()
+		))
+			throw new GetOutException();
 
-	    if (!result)
-	        throw new GetOutException();
+
+		boolean result =
+				contractDao.exitContracts(
+						contractNo
+				);
+
+		if (!result)
+			throw new GetOutException();
+
+
+		// 후속 계약이 없는 직원 대기 처리
+		contractDao.deactivateEndedEmployees();
+
+		// 대기 직원 계정 비활성화
+		contractDao.deactivateEndedEmployeeAccounts();
 	}
-
 
 	
 	@Override
@@ -1100,4 +1141,121 @@ public class ContractServiceImpl implements ContractService {
 	    return result;
 	}
 	
+	
+	@Transactional
+	@Override
+	public void cancelContract(
+			long contractNo,
+			TokenParseResponseVO parseVO) {
+
+		// =========================
+		// 관리자 권한 확인
+		// =========================
+
+		boolean isAdmin =
+				contractAuthorizationService.checkAdmin(
+						parseVO
+				);
+
+		if (!isAdmin)
+			throw new GetOutException();
+
+
+		// =========================
+		// 계약 조회
+		// =========================
+
+		ContractDto contractDto =
+				contractDao.find(
+						contractNo
+				);
+
+		if (contractDto == null)
+			throw new TargetNotfoundException();
+
+
+		// =========================
+		// pending 계약만 취소 가능
+		// =========================
+
+		if (!"pending".equals(
+				contractDto.getContractStatus()
+		))
+			throw new GetOutException();
+
+
+		// =========================
+		// 직원이 이미 서명한 계약은 취소 불가
+		// =========================
+
+		if (contractDto.getEmployeeSignature() != null)
+			throw new GetOutException();
+
+
+		// =========================
+		// 원장이 이미 서명한 계약은 취소 불가
+		// =========================
+
+		if (contractDto.getEmployerSignature() != null)
+			throw new GetOutException();
+
+
+		// =========================
+		// 서명 완료시간이 존재하면 취소 불가
+		// =========================
+
+		if (contractDto.getSignedTime() != null)
+			throw new GetOutException();
+
+
+		// =========================
+		// 계약 삭제
+		// =========================
+
+		boolean result =
+				contractDao.cancelContract(
+						contractNo
+				);
+
+		if (!result)
+			throw new GetOutException();
+	}
+	
+	
+	@Override
+	@Transactional(readOnly = true)
+	public PageResponseVO<ContractHistoryResponseVO> selectList(
+	        ContractListSearchVO search,
+	        TokenParseResponseVO parseVO) {
+
+
+	    // 계약 전체목록은 원장만
+	    boolean isAdmin =
+	            contractAuthorizationService
+	                    .checkAdmin(parseVO);
+
+
+	    if (isAdmin==false) {
+	        throw new GetOutException();
+	    }
+
+
+	    // 현재 페이지 목록
+	    List<ContractHistoryResponseVO> list =
+	            contractDao.selectSearchList(
+	                    search);
+
+
+	    // 검색조건 전체 개수
+	    int totalCount =
+	            contractDao.selectCount(
+	                    search);
+
+
+	    return new PageResponseVO<>(
+	            list,
+	            totalCount,
+	            search
+	    );
+	}
 }

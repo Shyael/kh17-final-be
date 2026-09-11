@@ -250,5 +250,64 @@
 		
 	
 	</select>
+	
+	<!-- 기간 내 소정근로시간 합계 -->
+<select id="sumScheduledWorkHoursByPeriod"
+        resultType="double">
+
+	select nvl(
+		sum(
+			(
+				cast(S.scheduled_clock_out as date)
+				- cast(S.scheduled_clock_in as date)
+			)
+			* 24
+			-
+			nvl(C.written_break_minutes, 0) / 60
+		),
+		0
+	)
+
+	from employee_work_schedule S
+
+		inner join employment_contract C
+			on S.contract_no = C.contract_no
+
+	where C.employee_no = #{employeeNo}
+
+	and S.scheduled_work_date <![CDATA[ >= ]]> #{startDate}
+
+	and S.scheduled_work_date <![CDATA[ < ]]> #{endDate}
+
+	and S.scheduled_day_type = 'workday'
+
+	and S.scheduled_clock_in is not null
+
+	and S.scheduled_clock_out is not null
+
+</select>
+
+<!-- 기간 내 소정근로일수 -->
+<select id="countScheduledWorkDaysByPeriod"
+        resultType="int">
+
+	select count(
+		distinct S.scheduled_work_date
+	)
+
+	from employee_work_schedule S
+
+		inner join employment_contract C
+			on S.contract_no = C.contract_no
+
+	where C.employee_no = #{employeeNo}
+
+	and S.scheduled_work_date <![CDATA[ >= ]]> #{startDate}
+
+	and S.scheduled_work_date <![CDATA[ < ]]> #{endDate}
+
+	and S.scheduled_day_type = 'workday'
+
+</select>
 
 </mapper>

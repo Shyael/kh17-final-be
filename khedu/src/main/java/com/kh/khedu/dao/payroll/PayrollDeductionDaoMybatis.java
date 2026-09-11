@@ -37,4 +37,9 @@ public class PayrollDeductionDaoMybatis implements PayrollDeductionDao {
 		);
 	}
 
+	@Override
+	public boolean update(PayrollDeductionDto payrollDeductiondto) {
+		return sqlSession.update("mapper.payroll.deductionUpdate",payrollDeductiondto)>0;
+	}
+
 }

@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class ContractDto {
 	// 근로계약 번호
-    private long contractNo;
+    private Long contractNo;
 
     // 직원 번호
     private int employeeNo;
@@ -24,7 +24,7 @@ public class ContractDto {
     private String wageType;
 
     // 기준 임금
-    private long baseWage;
+    private Long baseWage;
 
     // 1일 소정근로시간
     private Double dailyWorkHours;
@@ -39,7 +39,7 @@ public class ContractDto {
     private Timestamp contractEnd;
 
     // 매월 급여 지급 예정일
-    private int payday;
+    private Integer payday;
 
     // 계약서 본문
     private String contractContent;
@@ -57,7 +57,7 @@ public class ContractDto {
     // scheduled / active / ended
     private String contractStatus;
     
-    private double writtenBreakMinutes;
+    private Double writtenBreakMinutes;
     
     private String weeklyHolidayDay;
 }

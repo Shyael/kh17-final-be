@@ -42,4 +42,9 @@ public class ErrorRestController {
 	public ResponseEntity<String> areNotAdmin(){
 		return ResponseEntity.status(403).body("you are not admin");
 	}
+	
+	@ExceptionHandler(value = {YouAreNotMeException.class})
+	public ResponseEntity<String> areNotMyself(){
+		return ResponseEntity.status(403).body("You are not myself");
+	}
 }

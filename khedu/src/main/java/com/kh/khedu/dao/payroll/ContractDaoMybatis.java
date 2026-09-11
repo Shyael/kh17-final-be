@@ -12,8 +12,11 @@ import org.springframework.stereotype.Repository;
 import com.kh.khedu.dto.payroll.ContractDto;
 import com.kh.khedu.util.SignatureEncryptor;
 import com.kh.khedu.vo.payroll.request.ContractChangeConditionRequestVO;
+import com.kh.khedu.vo.payroll.request.ContractListSearchVO;
 import com.kh.khedu.vo.payroll.request.ContractSearchRequestVO;
 import com.kh.khedu.vo.payroll.request.ContractUpdateDraftRequestVO;
+import com.kh.khedu.vo.payroll.response.ContractFindOrdinaryEmployeeVO;
+import com.kh.khedu.vo.payroll.response.ContractHistoryResponseVO;
 import com.kh.khedu.vo.payroll.response.ContractSearchResponseVO;
 
 @Repository
@@ -309,5 +312,99 @@ public class ContractDaoMybatis implements ContractDao {
 		params.put("endDate", endDate);
 			
 		return sqlSession.selectList("mapper.payroll.findContractListByEmployeeAndPeriod",params);
+	}
+
+
+	@Override
+	public int countContinuingContract(int employeeNo) {
+		return sqlSession.selectOne("mapper.payroll.countContinuingContract",employeeNo);
+	}
+
+
+	@Override
+	public boolean resignEmployee(int employeeNo) {
+		return sqlSession.update("mapper.payroll.resignEmployee",employeeNo)>0;
+	}
+
+
+	@Override
+	public List<ContractDto> findContractsToEnd() {
+		return sqlSession.selectList("mapper.payroll.findContractsToEnd");
+	}
+	
+	
+	@Override
+	public boolean deactivateEndedEmployees() {
+
+		return sqlSession.update(
+				"mapper.employee.deactivateEndedEmployees"
+		) > 0;
+	}
+
+	@Override
+	public boolean deactivateEndedEmployeeAccounts() {
+
+		return sqlSession.update(
+				"mapper.employee.deactivateEndedEmployeeAccounts"
+		) > 0;
+	}
+	
+	@Override
+	public int activateWaitingEmployees() {
+
+	    return sqlSession.update(
+	            "mapper.employee.activateWaitingEmployees"
+	    );
+	}
+
+
+	@Override
+	public int activateEmployeeAccounts() {
+
+	    return sqlSession.update(
+	            "mapper.employee.activateEmployeeAccounts"
+	    );
+	}
+	
+	@Override
+	public boolean cancelContract(long contractNo) {
+		return sqlSession.delete("mapper.payroll.cancelContract",contractNo)>0;
+	}
+	
+	@Override
+	public List<Integer> findEmployeeNoByPeriod(Timestamp startDate, Timestamp endDate) {
+		Map<String,Object> params = new HashMap<>();
+		params.put("startDate", startDate);
+		params.put("endDate", endDate);
+		return sqlSession.selectList("mapper.payroll.findEmployeeNoByPeriod",params);
+	}
+
+
+	@Override
+	public List<ContractFindOrdinaryEmployeeVO> findOrdinaryEmployeeNoList(String employeeType, Timestamp targetDate) {
+		Map<String,Object> params = new HashMap<>();
+		params.put("employeeType", employeeType);
+		params.put("targetDate", targetDate);
+		
+		return sqlSession.selectList("mapper.payroll.findOrdinaryEmployeeNoList",params);
+		
+	}
+	
+	@Override
+	public List<ContractHistoryResponseVO> selectSearchList(
+	        ContractListSearchVO search) {
+
+	    return sqlSession.selectList(
+	            "mapper.payroll.selectSearchList",
+	            search);
+	}
+
+	@Override
+	public int selectCount(
+	        ContractListSearchVO search) {
+
+	    return sqlSession.selectOne(
+	            "mapper.payroll.selectCount",
+	            search);
 	}
 }

@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ContractHistoryResponseVO {
 
+	
+	private String accountName;
     private long contractNo;
     private int employeeNo;
 

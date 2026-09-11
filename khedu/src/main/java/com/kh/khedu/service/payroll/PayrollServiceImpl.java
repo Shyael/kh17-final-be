@@ -9,20 +9,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.payroll.ContractDao;
-import com.kh.khedu.dao.payroll.EmployeeWorkScheduleDao;
 import com.kh.khedu.dao.payroll.PayrollDao;
-import com.kh.khedu.dto.payroll.ContractDto;
-import com.kh.khedu.dto.payroll.EmployeeWorkScheduleDto;
+import com.kh.khedu.dao.payroll.PayrollDeductionDao;
+import com.kh.khedu.dao.payroll.PayrollPaymentDao;
+import com.kh.khedu.dto.payroll.PayrollDeductionDto;
 import com.kh.khedu.dto.payroll.PayrollDto;
+import com.kh.khedu.dto.payroll.PayrollPaymentDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
-
-import java.time.temporal.ChronoUnit;
-
-import com.kh.khedu.dao.payroll.EmployeeAttendanceDao;
-import com.kh.khedu.dto.payroll.EmployeeAttendanceDto;
-
+import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
+import com.kh.khedu.vo.payroll.response.PayrollDeductionResponseVO;
+import com.kh.khedu.vo.payroll.response.PayrollDetailResponseVO;
+import com.kh.khedu.vo.payroll.response.PayrollListResponseVO;
+import com.kh.khedu.vo.payroll.response.PayrollMonthlyListResponseVO;
+import com.kh.khedu.vo.payroll.response.PayrollPaymentResponseVO;
 @Service
 @Transactional
 public class PayrollServiceImpl implements PayrollService {
@@ -31,16 +33,23 @@ public class PayrollServiceImpl implements PayrollService {
 	private PayrollDao payrollDao;
 
 	@Autowired
+	private PayrollDeductionDao payrollDeductionDao;
+	
+	@Autowired
+	private PayrollPaymentDao payrollPaymentDao;
+	
+	@Autowired
+	private EmployeeDao employeeDao;
+	
+	@Autowired
 	private ContractDao contractDao;
-
+	
 	@Autowired
-	private EmployeeWorkScheduleDao employeeWorkScheduleDao;
-
-	@Autowired
-	private EmployeeAttendanceDao employeeAttendanceDao;
+	private Calculater calculater;
 
 	@Override
-	public void calculate(long employeeNo, int payrollYear, int payrollMonth) {
+	@Transactional
+	public void calculate(int employeeNo, int payrollYear, int payrollMonth) {
 
 		// 이미 해당 월 급여가 존재하는지 확인
 		PayrollDto findDto = payrollDao.findByEmployeeAndPeriod(employeeNo, payrollYear, payrollMonth);
@@ -48,469 +57,1740 @@ public class PayrollServiceImpl implements PayrollService {
 		if (findDto != null) {
 			throw new GetOutException();
 		}
+		long payrollNo =
+				payrollDao.sequence();
+		
+		
+		PayrollDto payrollDto = calculater.calculatePayroll(payrollNo,employeeNo,payrollYear,payrollMonth);
+		
+		
+		payrollDto.setPayrollNo(payrollNo);
+		
 
-		// 급여 산정기간 시작일
-		// ex) 2026년 9월 급여 -> 2026-09-01
-		LocalDate start = LocalDate.of(payrollYear, payrollMonth, 1);
+		// =========================
+		// 급여 기본 계산 결과 저장
+		// =========================
 
-		// 다음 달 1일
-		// ex) 2026-09-01 -> 2026-10-01
-		// Mapper에서 endDate 미만(<)으로 조회하기 때문에
-		// 실제 조회범위는 9/1 ~ 9/30
-		LocalDate end = start.plusMonths(1);
+		payrollDao.add(
+				payrollDto
+		);
+		
+		// =========================
+		// 공제 계산
+		// =========================
 
-		Timestamp startDate = Timestamp.valueOf(start.atStartOfDay());
+		long totalDeduction = 0;
 
-		Timestamp endDate = Timestamp.valueOf(end.atStartOfDay());
 
-		// 급여기간과 겹치는 계약 전체 조회
-		List<ContractDto> contractList = contractDao.findListByEmployeeAndPeriod(employeeNo, startDate, endDate);
+		// 현재 KH EDU 단순화 기준
+		// 실제 국민연금 기준소득월액,
+		// 건강보험 / 고용보험 보수월액과는 차이가 있을 수 있음
+		long insuranceBaseAmount =
+				payrollDto.getGrossPay();
 
-		// 해당 월에 적용되는 계약이 없으면 급여 계산 불가
-		if (contractList.isEmpty()) {
+
+		// =========================
+		// 국민연금
+		// =========================
+
+		double pensionRate =
+				0.0475;
+
+		long pension =
+				Math.round(
+						insuranceBaseAmount
+						* pensionRate
+				);
+
+
+		PayrollDeductionDto pensionDto =
+				PayrollDeductionDto.builder()
+						.deductionNo(
+								payrollDeductionDao.sequence()
+						)
+						.payrollNo(payrollNo)
+						.deductionType("국민연금")
+						.baseAmount(insuranceBaseAmount)
+						.deductionRate(pensionRate)
+						.fixedDeductionAmount(null)
+						.deductionAmount(pension)
+						.deductionBasisYear(payrollYear)
+						.deductionNote("근로자 부담 국민연금")
+						.build();
+
+
+		payrollDeductionDao.add(
+				pensionDto
+		);
+
+		totalDeduction += pension;
+
+
+		// =========================
+		// 건강보험
+		// =========================
+
+		// 전체 7.19%
+		// 근로자 50% 부담
+		double healthInsuranceRate =
+				0.03595;
+
+		long healthInsurance =
+				Math.round(
+						insuranceBaseAmount
+						* healthInsuranceRate
+				);
+
+
+		PayrollDeductionDto healthInsuranceDto =
+				PayrollDeductionDto.builder()
+						.deductionNo(
+								payrollDeductionDao.sequence()
+						)
+						.payrollNo(payrollNo)
+						.deductionType("건강보험")
+						.baseAmount(insuranceBaseAmount)
+						.deductionRate(healthInsuranceRate)
+						.fixedDeductionAmount(null)
+						.deductionAmount(healthInsurance)
+						.deductionBasisYear(payrollYear)
+						.deductionNote("근로자 부담 건강보험")
+						.build();
+
+
+		payrollDeductionDao.add(
+				healthInsuranceDto
+		);
+
+		totalDeduction += healthInsurance;
+
+
+		// =========================
+		// 장기요양보험
+		// =========================
+
+		// 2026
+		// 장기요양보험료율 0.9448%
+		// 건강보험료율 7.19%
+		//
+		// 장기요양보험료
+		// = 건강보험료 × 0.9448 / 7.19
+
+		double longTermCareRate =
+				0.009448
+				/ 0.0719;
+
+
+		long longTermCareInsurance =
+				Math.round(
+						healthInsurance
+						* longTermCareRate
+				);
+
+
+		PayrollDeductionDto longTermCareDto =
+				PayrollDeductionDto.builder()
+						.deductionNo(
+								payrollDeductionDao.sequence()
+						)
+						.payrollNo(payrollNo)
+						.deductionType("장기요양보험")
+
+						// 장기요양은
+						// 건강보험 근로자 부담액을 기준으로 계산
+						.baseAmount(healthInsurance)
+
+						.deductionRate(longTermCareRate)
+						.fixedDeductionAmount(null)
+						.deductionAmount(longTermCareInsurance)
+						.deductionBasisYear(payrollYear)
+						.deductionNote("건강보험료 기준 장기요양보험")
+						.build();
+
+
+		payrollDeductionDao.add(
+				longTermCareDto
+		);
+
+		totalDeduction +=
+				longTermCareInsurance;
+
+
+		// =========================
+		// 고용보험
+		// =========================
+
+		double employmentInsuranceRate =
+				0.009;
+
+		long employmentInsurance =
+				Math.round(
+						insuranceBaseAmount
+						* employmentInsuranceRate
+				);
+
+
+		PayrollDeductionDto employmentInsuranceDto =
+				PayrollDeductionDto.builder()
+						.deductionNo(
+								payrollDeductionDao.sequence()
+						)
+						.payrollNo(payrollNo)
+						.deductionType("고용보험")
+						.baseAmount(insuranceBaseAmount)
+						.deductionRate(employmentInsuranceRate)
+						.fixedDeductionAmount(null)
+						.deductionAmount(employmentInsurance)
+						.deductionBasisYear(payrollYear)
+						.deductionNote("근로자 부담 고용보험")
+						.build();
+
+
+		payrollDeductionDao.add(
+				employmentInsuranceDto
+		);
+
+		
+		// =========================
+		// 총 공제액
+		// =========================
+
+		
+		totalDeduction +=
+				employmentInsurance;
+		
+		
+
+		// =========================
+		// 실수령액
+		// =========================
+
+		long netPay =
+				payrollDto.getGrossPay()
+				- totalDeduction;
+
+
+		// =========================
+		// 급여 계산 완료 처리
+		// =========================
+
+		payrollDto.setTotalDeduction(
+				totalDeduction
+		);
+
+		payrollDto.setNetPay(
+				netPay
+		);
+
+		payrollDto.setCalculatedAt(
+				new Timestamp(
+						System.currentTimeMillis()
+				)
+		);
+
+
+		// 계산 결과 최종 반영
+		boolean result =
+				payrollDao.updateCalculation(
+						payrollDto
+				);
+
+		if (!result) {
+			throw new TargetNotfoundException();
+		}
+	}
+
+	
+	@Override
+	public void recalculate(
+			int employeeNo,
+			int payrollYear,
+			int payrollMonth) {
+
+		// =========================
+		// 기존 급여 조회
+		// =========================
+
+		PayrollDto payrollDto =
+				payrollDao.findByEmployeeAndPeriod(
+						employeeNo,
+						payrollYear,
+						payrollMonth
+				);
+
+		if (payrollDto == null) {
 			throw new TargetNotfoundException();
 		}
 
-		// 같은 급여기간의 근무스케줄 조회
-		List<EmployeeWorkScheduleDto> scheduleList = employeeWorkScheduleDao.findByPeriod(employeeNo, startDate,
-				endDate);
 
-		// 월 전체 실제 근로시간 합계
-		double totalWorkHours = 0;
-		double totalOvertimeHours = 0;
-		double totalNightHours = 0;
-		double totalHolidayHours = 0;
+		long payrollNo =
+				payrollDto.getPayrollNo();
 
-		for (EmployeeWorkScheduleDto scheduleDto : scheduleList) {
 
-			if (scheduleDto.getActualWorkHours() != null) {
+		// =========================
+		// 취소되지 않은 지급 확인
+		// =========================
 
-				totalWorkHours += scheduleDto.getActualWorkHours();
-			}
+		List<PayrollPaymentDto> paymentList =
+				payrollPaymentDao
+						.findNotCancelledByPayroll(
+								payrollNo
+						);
 
-			if (scheduleDto.getActualOvertimeHours() != null) {
+		// 이미 지급됐고 아직 취소되지 않은 지급내역이 존재하면
+		// 급여 재계산 불가
+		if (!paymentList.isEmpty()) {
+			throw new GetOutException();
+		}
 
-				totalOvertimeHours += scheduleDto.getActualOvertimeHours();
-			}
 
-			if (scheduleDto.getActualNightHours() != null) {
+		// =========================
+		// 급여 다시 계산
+		// =========================
 
-				totalNightHours += scheduleDto.getActualNightHours();
-			}
+		PayrollDto rePayrollDto =
+				calculater.calculatePayroll(
+						payrollNo,
+						employeeNo,
+						payrollYear,
+						payrollMonth
+				);
 
-			if (scheduleDto.getActualHolidayHours() != null) {
 
-				totalHolidayHours += scheduleDto.getActualHolidayHours();
+		// =========================
+		// 기존 공제내역 조회
+		// =========================
+
+		List<PayrollDeductionDto> deductionList =
+				payrollDeductionDao
+						.findAllByPayroll(
+								payrollNo
+						);
+
+
+		// =========================
+		// 공제 계산
+		// =========================
+
+		long totalDeduction = 0;
+
+
+		// 현재 KH EDU 단순화 기준
+		long insuranceBaseAmount =
+				rePayrollDto.getGrossPay();
+
+
+		// =================================================
+		// 국민연금
+		// =================================================
+
+		double pensionRate =
+				0.0475;
+
+
+		long pension =
+				Math.round(
+						insuranceBaseAmount
+						* pensionRate
+				);
+
+
+		PayrollDeductionDto pensionDto =
+				PayrollDeductionDto.builder()
+						.payrollNo(payrollNo)
+						.deductionType("국민연금")
+						.baseAmount(insuranceBaseAmount)
+						.deductionRate(pensionRate)
+						.fixedDeductionAmount(null)
+						.deductionAmount(pension)
+						.deductionBasisYear(payrollYear)
+						.deductionNote("근로자 부담 국민연금")
+						.build();
+
+
+		PayrollDeductionDto oldPensionDto =
+				null;
+
+
+		for (PayrollDeductionDto deductionDto
+				: deductionList) {
+
+			if ("국민연금".equals(
+					deductionDto.getDeductionType())) {
+
+				oldPensionDto =
+						deductionDto;
+
+				break;
 			}
 		}
 
-		// 계약별 급여 계산
-		// 월 전체 기본급
-		long basePay = 0;
 
-		long overtimePay = 0;
+		if (oldPensionDto != null) {
 
-		long nightPay = 0;
-		
-		long holidayPay = 0;
-		
-		long weekHolidayPay = 0;
+			pensionDto.setDeductionNo(
+					oldPensionDto.getDeductionNo()
+			);
 
-		// 계약별 급여 계산
-		for (ContractDto contractDto : contractList) {
+			payrollDeductionDao.update(
+					pensionDto
+			);
+		}
 
-			long contractNo = contractDto.getContractNo();
+		else {
 
-			// 현재 계약에 해당하는 근무스케줄만 담기
-			List<EmployeeWorkScheduleDto> contractScheduleList = new ArrayList<>();
+			pensionDto.setDeductionNo(
+					payrollDeductionDao.sequence()
+			);
 
-			for (EmployeeWorkScheduleDto scheduleDto : scheduleList) {
+			payrollDeductionDao.add(
+					pensionDto
+			);
+		}
 
-				if (scheduleDto.getContractNo() == contractNo) {
 
-					contractScheduleList.add(scheduleDto);
+		totalDeduction +=
+				pension;
+
+
+		// =================================================
+		// 건강보험
+		// =================================================
+
+		double healthInsuranceRate =
+				0.03595;
+
+
+		long healthInsurance =
+				Math.round(
+						insuranceBaseAmount
+						* healthInsuranceRate
+				);
+
+
+		PayrollDeductionDto healthInsuranceDto =
+				PayrollDeductionDto.builder()
+						.payrollNo(payrollNo)
+						.deductionType("건강보험")
+						.baseAmount(insuranceBaseAmount)
+						.deductionRate(healthInsuranceRate)
+						.fixedDeductionAmount(null)
+						.deductionAmount(healthInsurance)
+						.deductionBasisYear(payrollYear)
+						.deductionNote("근로자 부담 건강보험")
+						.build();
+
+
+		PayrollDeductionDto oldHealthInsuranceDto =
+				null;
+
+
+		for (PayrollDeductionDto deductionDto
+				: deductionList) {
+
+			if ("건강보험".equals(
+					deductionDto.getDeductionType())) {
+
+				oldHealthInsuranceDto =
+						deductionDto;
+
+				break;
+			}
+		}
+
+
+		if (oldHealthInsuranceDto != null) {
+
+			healthInsuranceDto.setDeductionNo(
+					oldHealthInsuranceDto.getDeductionNo()
+			);
+
+			payrollDeductionDao.update(
+					healthInsuranceDto
+			);
+		}
+
+		else {
+
+			healthInsuranceDto.setDeductionNo(
+					payrollDeductionDao.sequence()
+			);
+
+			payrollDeductionDao.add(
+					healthInsuranceDto
+			);
+		}
+
+
+		totalDeduction +=
+				healthInsurance;
+
+
+		// =================================================
+		// 장기요양보험
+		// =================================================
+
+		double longTermCareRate =
+				0.009448
+				/ 0.0719;
+
+
+		long longTermCareInsurance =
+				Math.round(
+						healthInsurance
+						* longTermCareRate
+				);
+
+
+		PayrollDeductionDto longTermCareDto =
+				PayrollDeductionDto.builder()
+						.payrollNo(payrollNo)
+						.deductionType("장기요양보험")
+						.baseAmount(healthInsurance)
+						.deductionRate(longTermCareRate)
+						.fixedDeductionAmount(null)
+						.deductionAmount(longTermCareInsurance)
+						.deductionBasisYear(payrollYear)
+						.deductionNote("건강보험료 기준 장기요양보험")
+						.build();
+
+
+		PayrollDeductionDto oldLongTermCareDto =
+				null;
+
+
+		for (PayrollDeductionDto deductionDto
+				: deductionList) {
+
+			if ("장기요양보험".equals(
+					deductionDto.getDeductionType())) {
+
+				oldLongTermCareDto =
+						deductionDto;
+
+				break;
+			}
+		}
+
+
+		if (oldLongTermCareDto != null) {
+
+			longTermCareDto.setDeductionNo(
+					oldLongTermCareDto.getDeductionNo()
+			);
+
+			payrollDeductionDao.update(
+					longTermCareDto
+			);
+		}
+
+		else {
+
+			longTermCareDto.setDeductionNo(
+					payrollDeductionDao.sequence()
+			);
+
+			payrollDeductionDao.add(
+					longTermCareDto
+			);
+		}
+
+
+		totalDeduction +=
+				longTermCareInsurance;
+
+
+		// =================================================
+		// 고용보험
+		// =================================================
+
+		double employmentInsuranceRate =
+				0.009;
+
+
+		long employmentInsurance =
+				Math.round(
+						insuranceBaseAmount
+						* employmentInsuranceRate
+				);
+
+
+		PayrollDeductionDto employmentInsuranceDto =
+				PayrollDeductionDto.builder()
+						.payrollNo(payrollNo)
+						.deductionType("고용보험")
+						.baseAmount(insuranceBaseAmount)
+						.deductionRate(employmentInsuranceRate)
+						.fixedDeductionAmount(null)
+						.deductionAmount(employmentInsurance)
+						.deductionBasisYear(payrollYear)
+						.deductionNote("근로자 부담 고용보험")
+						.build();
+
+
+		PayrollDeductionDto oldEmploymentInsuranceDto =
+				null;
+
+
+		for (PayrollDeductionDto deductionDto
+				: deductionList) {
+
+			if ("고용보험".equals(
+					deductionDto.getDeductionType())) {
+
+				oldEmploymentInsuranceDto =
+						deductionDto;
+
+				break;
+			}
+		}
+
+
+		if (oldEmploymentInsuranceDto != null) {
+
+			employmentInsuranceDto.setDeductionNo(
+					oldEmploymentInsuranceDto.getDeductionNo()
+			);
+
+			payrollDeductionDao.update(
+					employmentInsuranceDto
+			);
+		}
+
+		else {
+
+			employmentInsuranceDto.setDeductionNo(
+					payrollDeductionDao.sequence()
+			);
+
+			payrollDeductionDao.add(
+					employmentInsuranceDto
+			);
+		}
+
+
+		totalDeduction +=
+				employmentInsurance;
+
+
+		// =================================================
+		// 실수령액 계산
+		// =================================================
+
+		long netPay =
+				rePayrollDto.getGrossPay()
+				- totalDeduction;
+
+
+		// =================================================
+		// 재계산 결과 반영
+		// =================================================
+
+		rePayrollDto.setTotalDeduction(
+				totalDeduction
+		);
+
+		rePayrollDto.setNetPay(
+				netPay
+		);
+
+		rePayrollDto.setPayrollStatus(
+				"calculating"
+		);
+
+		rePayrollDto.setCalculatedAt(
+				new Timestamp(
+						System.currentTimeMillis()
+				)
+		);
+
+		// confirmed였던 급여도 재계산하면
+		// 다시 calculating으로 돌아가므로 확정시간 초기화
+		rePayrollDto.setConfirmedAt(
+				null
+		);
+
+
+		// =========================
+		// 급여 재계산 결과 수정
+		// =========================
+
+		boolean result =
+				payrollDao.updateCalculation(
+						rePayrollDto
+				);
+
+		if (!result) {
+			throw new TargetNotfoundException();
+		}
+	}
+	
+	
+	@Override
+	public void confirm(
+			int employeeNo,
+			int payrollYear,
+			int payrollMonth) {
+
+		PayrollDto payrollDto =
+				payrollDao.findByEmployeeAndPeriod(
+						employeeNo,
+						payrollYear,
+						payrollMonth
+				);
+
+		if (payrollDto == null) {
+			throw new TargetNotfoundException();
+		}
+
+		if ("confirmed".equals(
+				payrollDto.getPayrollStatus())) {
+
+			throw new GetOutException();
+		}
+
+		if (payrollDto.getCalculatedAt() == null) {
+			throw new GetOutException();
+		}
+
+		payrollDto.setPayrollStatus(
+				"confirmed"
+		);
+
+		payrollDto.setConfirmedAt(
+				new Timestamp(
+						System.currentTimeMillis()
+				)
+		);
+
+		boolean result =
+				payrollDao.changeStatus(
+						payrollDto
+				);
+
+		if (!result) {
+			throw new TargetNotfoundException();
+		}
+	}
+	
+	
+	
+	@Override
+	public void pay(
+			int employeeNo,
+			int payrollYear,
+			int payrollMonth,
+			String paymentMethod,
+			String paymentNote) {
+
+		// =========================
+		// 급여 조회
+		// =========================
+
+		PayrollDto payrollDto =
+				payrollDao.findByEmployeeAndPeriod(
+						employeeNo,
+						payrollYear,
+						payrollMonth
+				);
+
+		if (payrollDto == null) {
+			throw new TargetNotfoundException();
+		}
+
+
+		long payrollNo =
+				payrollDto.getPayrollNo();
+
+
+		// =========================
+		// 급여 확정 여부 확인
+		// =========================
+
+		// 확정되지 않은 급여는 지급 불가
+		if (!"confirmed".equals(
+				payrollDto.getPayrollStatus())) {
+
+			throw new GetOutException();
+		}
+
+
+		// =========================
+		// 급여 계산 완료 여부 확인
+		// =========================
+
+		if (payrollDto.getCalculatedAt() == null) {
+			throw new GetOutException();
+		}
+
+
+		// =========================
+		// 실수령액 확인
+		// =========================
+
+		if (payrollDto.getNetPay() == null
+				|| payrollDto.getNetPay() <= 0) {
+
+			throw new GetOutException();
+		}
+
+
+		// =========================
+		// 기존 지급내역 확인
+		// =========================
+
+		List<PayrollPaymentDto> paymentList =
+				payrollPaymentDao
+						.findNotCancelledByPayroll(
+								payrollNo
+						);
+
+
+		// 취소되지 않은 기존 지급내역이 존재하면
+		// 중복 지급 불가
+		if (!paymentList.isEmpty()) {
+			throw new GetOutException();
+		}
+
+
+		// =========================
+		// 지급수단 확인
+		// =========================
+
+		if (paymentMethod == null
+				|| paymentMethod.isBlank()) {
+
+			throw new GetOutException();
+		}
+
+
+		// =========================
+		// 지급번호 생성
+		// =========================
+
+		long payrollPaymentNo =
+				payrollPaymentDao.sequence();
+
+
+		// =========================
+		// 지급내역 생성
+		// =========================
+
+		PayrollPaymentDto paymentDto =
+				PayrollPaymentDto.builder()
+						.payrollPaymentNo(
+								payrollPaymentNo
+						)
+
+						.payrollNo(
+								payrollNo
+						)
+
+						// 지급액은 확정된 실수령액
+						.paymentAmount(
+								payrollDto.getNetPay()
+						)
+
+						.paymentAt(
+								new Timestamp(
+										System.currentTimeMillis()
+								)
+						)
+
+						.paymentMethod(
+								paymentMethod
+						)
+
+						.paymentNote(
+								paymentNote
+						)
+
+						.paymentStatus(
+								"paid"
+						)
+
+						// 정상 지급은 취소 대상 없음
+						.cancelTargetPaymentNo(
+								null
+						)
+
+						.build();
+
+
+		// =========================
+		// 지급내역 저장
+		// =========================
+
+		payrollPaymentDao.add(
+				paymentDto
+		);
+	}
+
+	@Override
+	public void cancelPayment(
+			int employeeNo,
+			int payrollYear,
+			int payrollMonth,
+			long cancelAmount,
+			String paymentNote) {
+
+		// =========================
+		// 급여 조회
+		// =========================
+
+		PayrollDto payrollDto =
+				payrollDao.findByEmployeeAndPeriod(
+						employeeNo,
+						payrollYear,
+						payrollMonth
+				);
+
+		if (payrollDto == null) {
+			throw new TargetNotfoundException();
+		}
+
+
+		long payrollNo =
+				payrollDto.getPayrollNo();
+
+
+		// =========================
+		// 취소되지 않은 지급내역 조회
+		// =========================
+
+		List<PayrollPaymentDto> paymentList =
+				payrollPaymentDao
+						.findNotCancelledByPayroll(
+								payrollNo
+						);
+
+
+		if (paymentList.isEmpty()) {
+			throw new TargetNotfoundException();
+		}
+
+
+		// 현재 정책상 동시에 살아있는 지급은
+		// 한 건만 허용
+		if (paymentList.size() > 1) {
+			throw new GetOutException();
+		}
+
+
+		PayrollPaymentDto targetPaymentDto =
+				paymentList.get(0);
+
+
+		if (!"paid".equals(
+				targetPaymentDto.getPaymentStatus())) {
+
+			throw new GetOutException();
+		}
+
+
+		// =========================
+		// 취소금액 검증
+		// =========================
+
+		if (cancelAmount <= 0) {
+			throw new GetOutException();
+		}
+
+
+		// =========================
+		// 기존 취소내역 조회
+		// =========================
+
+		List<PayrollPaymentDto> paymentHistory =
+				payrollPaymentDao
+						.findAllByPayroll(
+								payrollNo
+						);
+
+
+		long alreadyCancelledAmount = 0;
+
+
+		for (PayrollPaymentDto paymentDto
+				: paymentHistory) {
+
+			if (!"cancelled".equals(
+					paymentDto.getPaymentStatus())) {
+
+				continue;
+			}
+
+
+			if (paymentDto.getCancelTargetPaymentNo() == null) {
+				continue;
+			}
+
+
+			if (paymentDto.getCancelTargetPaymentNo()
+					.equals(
+							targetPaymentDto
+									.getPayrollPaymentNo()
+					)) {
+
+				alreadyCancelledAmount +=
+						paymentDto.getPaymentAmount();
+			}
+		}
+
+
+		// =========================
+		// 현재 취소 가능 금액
+		// =========================
+
+		long remainingAmount =
+				targetPaymentDto.getPaymentAmount()
+				- alreadyCancelledAmount;
+
+
+		// 이미 전액 취소된 상태
+		if (remainingAmount <= 0) {
+			throw new GetOutException();
+		}
+
+
+		// 남은 지급액보다 많이 취소 불가
+		if (cancelAmount > remainingAmount) {
+			throw new GetOutException();
+		}
+
+
+		// =========================
+		// 취소 이벤트 번호 생성
+		// =========================
+
+		long cancelPaymentNo =
+				payrollPaymentDao.sequence();
+
+
+		// =========================
+		// 취소 이벤트 생성
+		// =========================
+
+		PayrollPaymentDto cancelPaymentDto =
+				PayrollPaymentDto.builder()
+						.payrollPaymentNo(
+								cancelPaymentNo
+						)
+
+						.payrollNo(
+								payrollNo
+						)
+
+						// 실제 취소하는 금액
+						.paymentAmount(
+								cancelAmount
+						)
+
+						.paymentAt(
+								new Timestamp(
+										System.currentTimeMillis()
+								)
+						)
+
+						.paymentMethod(
+								null
+						)
+
+						.paymentNote(
+								paymentNote
+						)
+
+						.paymentStatus(
+								"cancelled"
+						)
+
+						.cancelTargetPaymentNo(
+								targetPaymentDto
+										.getPayrollPaymentNo()
+						)
+
+						.build();
+
+
+		payrollPaymentDao.add(
+				cancelPaymentDto
+		);
+	}
+
+	@Override
+	public PayrollDetailResponseVO findDetail(
+			int employeeNo,
+			int payrollYear,
+			int payrollMonth) {
+
+		// =========================
+		// 급여 조회
+		// =========================
+
+		PayrollDto payrollDto =
+				payrollDao.findByEmployeeAndPeriod(
+						employeeNo,
+						payrollYear,
+						payrollMonth
+				);
+
+		if (payrollDto == null) {
+			throw new TargetNotfoundException();
+		}
+
+
+		long payrollNo =
+				payrollDto.getPayrollNo();
+
+
+		// =========================
+		// 공제 조회
+		// =========================
+
+		List<PayrollDeductionDto> deductionDtoList =
+				payrollDeductionDao
+						.findAllByPayroll(
+								payrollNo
+						);
+
+
+		List<PayrollDeductionResponseVO> deductionList =
+				new ArrayList<>();
+
+
+		for (PayrollDeductionDto deductionDto
+				: deductionDtoList) {
+
+			PayrollDeductionResponseVO deductionVO =
+					PayrollDeductionResponseVO.builder()
+							.deductionType(
+									deductionDto.getDeductionType()
+							)
+							.baseAmount(
+									deductionDto.getBaseAmount()
+							)
+							.deductionRate(
+									deductionDto.getDeductionRate()
+							)
+							.fixedDeductionAmount(
+									deductionDto.getFixedDeductionAmount()
+							)
+							.deductionAmount(
+									deductionDto.getDeductionAmount()
+							)
+							.deductionBasisYear(
+									deductionDto.getDeductionBasisYear()
+							)
+							.deductionNote(
+									deductionDto.getDeductionNote()
+							)
+							.build();
+
+
+			deductionList.add(
+					deductionVO
+			);
+		}
+
+
+		// =========================
+		// 지급 / 취소 이력 조회
+		// =========================
+
+		List<PayrollPaymentDto> paymentDtoList =
+				payrollPaymentDao
+						.findAllByPayroll(
+								payrollNo
+						);
+
+
+		List<PayrollPaymentResponseVO> paymentList =
+				new ArrayList<>();
+
+
+		long paidAmount = 0;
+
+		long cancelledAmount = 0;
+
+
+		for (PayrollPaymentDto paymentDto
+				: paymentDtoList) {
+
+			PayrollPaymentResponseVO paymentVO =
+					PayrollPaymentResponseVO.builder()
+							.payrollPaymentNo(
+									paymentDto.getPayrollPaymentNo()
+							)
+							.paymentAmount(
+									paymentDto.getPaymentAmount()
+							)
+							.paymentAt(
+									paymentDto.getPaymentAt()
+							)
+							.paymentMethod(
+									paymentDto.getPaymentMethod()
+							)
+							.paymentNote(
+									paymentDto.getPaymentNote()
+							)
+							.paymentStatus(
+									paymentDto.getPaymentStatus()
+							)
+							.cancelTargetPaymentNo(
+									paymentDto.getCancelTargetPaymentNo()
+							)
+							.build();
+
+
+			paymentList.add(
+					paymentVO
+			);
+
+
+			// =========================
+			// 현재 지급금액 계산
+			// =========================
+
+			if ("paid".equals(
+					paymentDto.getPaymentStatus())) {
+
+				paidAmount +=
+						paymentDto.getPaymentAmount();
+			}
+
+
+			else if ("cancelled".equals(
+					paymentDto.getPaymentStatus())) {
+
+				cancelledAmount +=
+						paymentDto.getPaymentAmount();
+			}
+		}
+
+
+		long currentPaidAmount =
+				paidAmount
+				- cancelledAmount;
+
+
+		if (currentPaidAmount < 0) {
+			throw new GetOutException();
+		}
+
+
+		// =========================
+		// 급여 상세 응답 조립
+		// =========================
+
+		return PayrollDetailResponseVO.builder()
+				.payrollNo(
+						payrollDto.getPayrollNo()
+				)
+				.employeeNo(
+						payrollDto.getEmployeeNo()
+				)
+				.payrollYear(
+						payrollDto.getPayrollYear()
+				)
+				.payrollMonth(
+						payrollDto.getPayrollMonth()
+				)
+
+				.totalWorkHours(
+						payrollDto.getTotalWorkHours()
+				)
+				.totalOvertimeHours(
+						payrollDto.getTotalOvertimeHours()
+				)
+				.totalNightHours(
+						payrollDto.getTotalNightHours()
+				)
+				.totalHolidayHours(
+						payrollDto.getTotalHolidayHours()
+				)
+
+				.basePay(
+						payrollDto.getBasePay()
+				)
+				.weekHolidayPay(
+						payrollDto.getWeekHolidayPay()
+				)
+				.overtimePay(
+						payrollDto.getOvertimePay()
+				)
+				.nightPay(
+						payrollDto.getNightPay()
+				)
+				.holidayPay(
+						payrollDto.getHolidayPay()
+				)
+
+				.grossPay(
+						payrollDto.getGrossPay()
+				)
+				.totalDeduction(
+						payrollDto.getTotalDeduction()
+				)
+				.netPay(
+						payrollDto.getNetPay()
+				)
+
+				.payrollStatus(
+						payrollDto.getPayrollStatus()
+				)
+				.calculatedAt(
+						payrollDto.getCalculatedAt()
+				)
+				.confirmedAt(
+						payrollDto.getConfirmedAt()
+				)
+
+				.deductionList(
+						deductionList
+				)
+				.paymentList(
+						paymentList
+				)
+
+				.currentPaidAmount(
+						currentPaidAmount
+				)
+
+				.build();
+	}
+	
+	
+	@Override
+	public List<PayrollPaymentResponseVO> findPaymentHistory(
+			int employeeNo,
+			int payrollYear,
+			int payrollMonth) {
+
+		// =========================
+		// 급여 조회
+		// =========================
+
+		PayrollDto payrollDto =
+				payrollDao.findByEmployeeAndPeriod(
+						employeeNo,
+						payrollYear,
+						payrollMonth
+				);
+
+		if (payrollDto == null) {
+			throw new TargetNotfoundException();
+		}
+
+
+		long payrollNo =
+				payrollDto.getPayrollNo();
+
+
+		// =========================
+		// 지급 / 취소 이력 조회
+		// =========================
+
+		List<PayrollPaymentDto> paymentDtoList =
+				payrollPaymentDao
+						.findAllByPayroll(
+								payrollNo
+						);
+
+
+		List<PayrollPaymentResponseVO> paymentList =
+				new ArrayList<>();
+
+
+		for (PayrollPaymentDto paymentDto
+				: paymentDtoList) {
+
+			PayrollPaymentResponseVO paymentVO =
+					PayrollPaymentResponseVO.builder()
+							.payrollPaymentNo(
+									paymentDto.getPayrollPaymentNo()
+							)
+							.paymentAmount(
+									paymentDto.getPaymentAmount()
+							)
+							.paymentAt(
+									paymentDto.getPaymentAt()
+							)
+							.paymentMethod(
+									paymentDto.getPaymentMethod()
+							)
+							.paymentNote(
+									paymentDto.getPaymentNote()
+							)
+							.paymentStatus(
+									paymentDto.getPaymentStatus()
+							)
+							.cancelTargetPaymentNo(
+									paymentDto.getCancelTargetPaymentNo()
+							)
+							.build();
+
+
+			paymentList.add(
+					paymentVO
+			);
+		}
+
+
+		return paymentList;
+	}
+	
+	
+	@Override
+	public List<PayrollListResponseVO> findAllByEmployee(
+			int employeeNo) {
+
+		// =========================
+		// 직원 급여 전체 조회
+		// =========================
+
+		List<PayrollDto> payrollDtoList =
+				payrollDao.findAllByEmployee(
+						employeeNo
+				);
+
+
+		List<PayrollListResponseVO> payrollList =
+				new ArrayList<>();
+
+
+		// 급여내역이 없어도
+		// 목록 조회이므로 빈 List 반환
+		if (payrollDtoList.isEmpty()) {
+
+			return payrollList;
+		}
+
+
+		// =========================
+		// 급여별 목록 응답 생성
+		// =========================
+
+		for (PayrollDto payrollDto
+				: payrollDtoList) {
+
+			long payrollNo =
+					payrollDto.getPayrollNo();
+
+
+			// =========================
+			// 현재 지급금액 계산
+			// =========================
+
+			List<PayrollPaymentDto> paymentList =
+					payrollPaymentDao
+							.findAllByPayroll(
+									payrollNo
+							);
+
+
+			long paidAmount = 0;
+
+			long cancelledAmount = 0;
+
+
+			for (PayrollPaymentDto paymentDto
+					: paymentList) {
+
+				if ("paid".equals(
+						paymentDto.getPaymentStatus())) {
+
+					paidAmount +=
+							paymentDto.getPaymentAmount();
+				}
+
+
+				else if ("cancelled".equals(
+						paymentDto.getPaymentStatus())) {
+
+					cancelledAmount +=
+							paymentDto.getPaymentAmount();
 				}
 			}
 
-			String wageType = contractDto.getWageType();
 
-			long baseWage = contractDto.getBaseWage();
+			long currentPaidAmount =
+					paidAmount
+					- cancelledAmount;
 
-			// =========================
-			// 월급제
-			// =========================
-			if ("monthly".equals(wageType)) {
 
-				// 급여월 마지막 날짜
-				LocalDate payrollEnd = end.minusDays(1);
+			// 지급취소 데이터가
+			// 원 지급액보다 많으면 데이터 이상
+			if (currentPaidAmount < 0) {
 
-				LocalDate contractStart = contractDto.getContractStart().toLocalDateTime().toLocalDate();
-
-				LocalDate contractEnd = contractDto.getContractEnd() == null ? payrollEnd
-						: contractDto.getContractEnd().toLocalDateTime().toLocalDate();
-
-				// 급여월 시작일과 계약 시작일 중 더 늦은 날짜
-				LocalDate appliedStart = contractStart.isAfter(start) ? contractStart : start;
-
-				// 급여월 마지막날과 계약 종료일 중 더 빠른 날짜
-				LocalDate appliedEnd = contractEnd.isBefore(payrollEnd) ? contractEnd : payrollEnd;
-
-				if (appliedEnd.isBefore(appliedStart)) {
-					continue;
-				}
-
-				// 해당 월에서 이 계약이 적용된 역일수
-				long appliedDays = ChronoUnit.DAYS.between(appliedStart, appliedEnd) + 1;
-
-				// 결근 / 무급휴가 일수
-				long unpaidDays = 0;
-
-				for (EmployeeWorkScheduleDto scheduleDto : contractScheduleList) {
-
-					EmployeeAttendanceDto attendanceDto = employeeAttendanceDao
-							.findBySchedule(scheduleDto.getWorkScheduleNo());
-
-					if (attendanceDto == null) {
-						continue;
-					}
-
-					if ("absent".equals(attendanceDto.getAttendanceType())
-							|| "unpaid_leave".equals(attendanceDto.getAttendanceType())) {
-
-						unpaidDays++;
-					}
-				}
-
-				// 실제 급여 지급 대상 역일수
-				long paidDays = appliedDays - unpaidDays;
-
-				if (paidDays < 0) {
-					paidDays = 0;
-				}
-
-				// 해당 월의 역일수
-				int daysInMonth = start.lengthOfMonth();
-
-				// 월급 ÷ 해당 월 역일수 × 지급 대상 역일수
-				double contractBasePay = (double) baseWage / daysInMonth * paidDays;
-
-				basePay += Math.round(contractBasePay);
-			}
-
-			// =========================
-			// 시급제
-			// =========================
-			else if ("hourly".equals(wageType)) {
-
-				double contractWorkHours = 0;
-
-				for (EmployeeWorkScheduleDto scheduleDto : contractScheduleList) {
-
-					if (scheduleDto.getActualWorkHours() != null) {
-
-						contractWorkHours += scheduleDto.getActualWorkHours();
-					}
-				}
-
-				// actualWorkHours 전체에 기본 시급 지급
-				// 연장 / 야간 / 휴일 가산분은 이후 따로 계산
-				double contractBasePay = baseWage * contractWorkHours;
-
-				basePay += Math.round(contractBasePay);
-			}
-
-			// =========================
-			// 일급제
-			// =========================
-			else if ("daily".equals(wageType)) {
-
-				long paidDays = 0;
-
-				for (EmployeeWorkScheduleDto scheduleDto : contractScheduleList) {
-
-					EmployeeAttendanceDto attendanceDto = employeeAttendanceDao
-							.findBySchedule(scheduleDto.getWorkScheduleNo());
-
-					if (attendanceDto == null) {
-						continue;
-					}
-
-					// 정상 근무
-					if ("normal".equals(attendanceDto.getAttendanceType())) {
-
-						paidDays++;
-					}
-
-					// 유급휴가도 지급 대상
-					else if ("paid_leave".equals(attendanceDto.getAttendanceType())) {
-
-						paidDays++;
-					}
-				}
-
-				basePay += baseWage * paidDays;
-			}
-
-			else {
 				throw new GetOutException();
 			}
 
-			// =========================
-			// 2. 계약별 연장수당 계산
-			// =========================
-
-			// 현재 계약의 일반 근무일 연장시간 합계
-			double contractOvertimeHours = 0;
-
-			for (EmployeeWorkScheduleDto scheduleDto : contractScheduleList) {
-
-				// 휴일 / 휴무일 연장은
-				// overtimePay가 아니라 holidayPay에서 처리
-				if ("holiday".equals(scheduleDto.getScheduledDayType())
-						|| "dayOff".equals(scheduleDto.getScheduledDayType())) {
-
-					continue;
-				}
-
-				if (scheduleDto.getActualOvertimeHours() != null) {
-
-					contractOvertimeHours += scheduleDto.getActualOvertimeHours();
-				}
-			}
-
-			// 통상시급
-			double ordinaryHourlyWage = 0;
-
-			// 시급제
-			if ("hourly".equals(wageType)) {
-
-				ordinaryHourlyWage = baseWage;
-			}
-
-			// 일급제
-			else if ("daily".equals(wageType)) {
-
-				if (contractDto.getDailyWorkHours() == null || contractDto.getDailyWorkHours() <= 0) {
-
-					throw new GetOutException();
-				}
-
-				ordinaryHourlyWage = (double) baseWage / contractDto.getDailyWorkHours();
-			}
-
-			// 월급제
-			else if ("monthly".equals(wageType)) {
-
-				if (contractDto.getWeeklyWorkHours() == null || contractDto.getWeeklyWorkHours() <= 0) {
-
-					throw new GetOutException();
-				}
-
-				// 현재 KH EDU 기준
-				// 주 40시간 월급제는 월 통상임금 산정시간 209시간 사용
-				if (contractDto.getWeeklyWorkHours() == 40) {
-
-					ordinaryHourlyWage = (double) baseWage / 209;
-				}
-
-				else {
-
-					throw new GetOutException();
-				}
-			}
-
-			// 월급제 / 일급제는
-			// 기존 basePay에 연장근무시간의 기본 1배가 포함되지 않으므로 추가
-			if ("monthly".equals(wageType) || "daily".equals(wageType)) {
-
-				double overtimeBasePay = ordinaryHourlyWage * contractOvertimeHours;
-
-				basePay += Math.round(overtimeBasePay);
-			}
-
-			// overtimePay에는
-			// 연장근무로 발생한 가산분 0.5만 저장
-			double contractOvertimePay = ordinaryHourlyWage * contractOvertimeHours * 0.5;
-
-			overtimePay += Math.round(contractOvertimePay);
 
 			// =========================
-			// 3. 계약별 야간수당 계산
+			// 목록 응답 생성
 			// =========================
 
-			double contractNightHours = 0;
+			PayrollListResponseVO payrollVO =
+					PayrollListResponseVO.builder()
+							.payrollNo(
+									payrollDto.getPayrollNo()
+							)
 
-			for (EmployeeWorkScheduleDto scheduleDto : contractScheduleList) {
+							.payrollYear(
+									payrollDto.getPayrollYear()
+							)
 
-				if (scheduleDto.getActualNightHours() != null) {
+							.payrollMonth(
+									payrollDto.getPayrollMonth()
+							)
 
-					contractNightHours += scheduleDto.getActualNightHours();
-				}
-			}
+							.totalWorkHours(
+									payrollDto.getTotalWorkHours()
+							)
 
-			// nightPay에는
-			// 야간근무로 발생한 가산분 0.5만 저장
-			double contractNightPay = ordinaryHourlyWage * contractNightHours * 0.5;
+							.grossPay(
+									payrollDto.getGrossPay()
+							)
 
-			nightPay += Math.round(contractNightPay);
+							.totalDeduction(
+									payrollDto.getTotalDeduction()
+							)
 
-			// =========================
-			// 계약별 휴일근로수당 계산
-			// =========================
+							.netPay(
+									payrollDto.getNetPay()
+							)
 
-			for(EmployeeWorkScheduleDto scheduleDto
-					: contractScheduleList) {
+							.payrollStatus(
+									payrollDto.getPayrollStatus()
+							)
 
-				// 휴일 / 휴무일 근무만 계산
-				if(!"holiday".equals(
-						scheduleDto.getScheduledDayType())
-						&& !"dayOff".equals(
-								scheduleDto.getScheduledDayType())) {
+							.calculatedAt(
+									payrollDto.getCalculatedAt()
+							)
 
-					continue;
-				}
+							.confirmedAt(
+									payrollDto.getConfirmedAt()
+							)
 
+							.currentPaidAmount(
+									currentPaidAmount
+							)
 
-				// 실제 휴일근무시간이 없으면 계산하지 않음
-				if(scheduleDto.getActualHolidayHours() == null
-						|| scheduleDto.getActualHolidayHours() <= 0) {
-
-					continue;
-				}
-
-
-				double holidayHours =
-						scheduleDto.getActualHolidayHours();
-
-
-				// =========================
-				// 휴일근무 기본 1배 처리
-				// =========================
-
-				// 시급제는 actualWorkHours 전체를 이용해
-				// 이미 basePay를 계산했으므로 기본 1배 추가하지 않음
+							.build();
 
 
-				// 월급제는 휴일에 실제 근무한 시간의
-				// 기본 1배가 basePay에 포함되어 있지 않으므로 추가
-				if("monthly".equals(wageType)) {
-
-					basePay +=
-							Math.round(
-									ordinaryHourlyWage
-									* holidayHours
-							);
-				}
-
-
-				// 일급제는 하루 일급에 dailyWorkHours까지의
-				// 기본임금이 이미 포함되어 있으므로
-				// dailyWorkHours 초과분만 기본 1배 추가
-				else if("daily".equals(wageType)) {
-
-					double extraBasicHours =
-							holidayHours
-							- contractDto.getDailyWorkHours();
-
-
-					if(extraBasicHours > 0) {
-
-						basePay +=
-								Math.round(
-										ordinaryHourlyWage
-										* extraBasicHours
-								);
-					}
-				}
-
-
-				// =========================
-				// 휴일근로 가산분 계산
-				// =========================
-
-				double contractHolidayPay = 0;
-
-
-				// 휴일근로 8시간 이내
-				if(holidayHours <= 8) {
-
-					contractHolidayPay =
-							ordinaryHourlyWage
-							* holidayHours
-							* 0.5;
-				}
-
-
-				// 휴일근로 8시간 초과
-				else {
-
-					// 최초 8시간은 0.5배 가산
-					double firstEightHoursPay =
-							ordinaryHourlyWage
-							* 8
-							* 0.5;
-
-
-					// 8시간 초과분은 1.0배 가산
-					double overEightHours =
-							holidayHours - 8;
-
-
-					double overEightHoursPay =
-							ordinaryHourlyWage
-							* overEightHours
-							* 1.0;
-
-
-					contractHolidayPay =
-							firstEightHoursPay
-							+ overEightHoursPay;
-				}
-
-
-				holidayPay +=
-						Math.round(
-								contractHolidayPay
-						);
-			}
-		
-		
-		
-		
+			payrollList.add(
+					payrollVO
+			);
 		}
 
-//		주휴 부터 해야 함
-		
-		
-		
-	}
 
+		return payrollList;
+	}
+	
+	@Override
+	public List<PayrollMonthlyListResponseVO> findAllByPeriod(
+			int payrollYear,
+			int payrollMonth) {
+
+		// =========================
+		// 연도 / 월 검증
+		// =========================
+
+		if (payrollYear <= 0) {
+			throw new GetOutException();
+		}
+
+
+		if (payrollMonth < 1
+				|| payrollMonth > 12) {
+
+			throw new GetOutException();
+		}
+
+
+		// =========================
+		// 조회기간 생성
+		// =========================
+
+		LocalDate start =
+				LocalDate.of(
+						payrollYear,
+						payrollMonth,
+						1
+				);
+
+
+		LocalDate end =
+				start.plusMonths(1);
+
+
+		Timestamp startDate =
+				Timestamp.valueOf(
+						start.atStartOfDay()
+				);
+
+
+		Timestamp endDate =
+				Timestamp.valueOf(
+						end.atStartOfDay()
+				);
+
+
+		// =========================
+		// 해당 월 계약 직원 조회
+		// =========================
+
+		List<Integer> employeeNoList =
+				contractDao.findEmployeeNoByPeriod(
+						startDate,
+						endDate
+				);
+
+
+		List<PayrollMonthlyListResponseVO> result =
+				new ArrayList<>();
+
+
+		// =========================
+		// 직원별 급여 현황 조립
+		// =========================
+
+		for (int employeeNo : employeeNoList) {
+
+
+			// =========================
+			// 직원 정보 조회
+			// =========================
+
+			AdminEmployeeDetailVO employeeVO =
+					employeeDao
+							.selectAdminEmployeeDetailByEmployeeNo(
+									employeeNo
+							);
+
+
+			if (employeeVO == null) {
+				continue;
+			}
+
+
+			// =========================
+			// 직원 급여 목록 조회
+			// =========================
+
+			List<PayrollDto> payrollList =
+					payrollDao.findAllByEmployee(
+							employeeNo
+					);
+
+
+			PayrollDto payrollDto = null;
+
+
+			// =========================
+			// 요청 연 / 월 급여 찾기
+			// =========================
+
+			for (PayrollDto findPayrollDto
+					: payrollList) {
+
+
+				if (findPayrollDto.getPayrollYear()
+						== payrollYear
+
+						&& findPayrollDto.getPayrollMonth()
+						== payrollMonth) {
+
+
+					payrollDto =
+							findPayrollDto;
+
+
+					break;
+				}
+			}
+
+
+			// =========================
+			// 기본 응답 생성
+			// =========================
+
+			PayrollMonthlyListResponseVO responseVO =
+					PayrollMonthlyListResponseVO
+							.builder()
+
+							.employeeNo(
+									employeeNo
+							)
+
+							.accountName(
+									employeeVO
+											.getAccountName()
+							)
+
+							.payrollYear(
+									payrollYear
+							)
+
+							.payrollMonth(
+									payrollMonth
+							)
+
+							.build();
+
+
+			// =========================
+			// 급여가 존재하는 경우
+			// =========================
+
+			if (payrollDto != null) {
+
+				responseVO.setPayrollNo(
+						payrollDto
+								.getPayrollNo()
+				);
+
+
+				responseVO.setTotalWorkHours(
+						payrollDto
+								.getTotalWorkHours()
+				);
+
+
+				responseVO.setGrossPay(
+						payrollDto
+								.getGrossPay()
+				);
+
+
+				responseVO.setTotalDeduction(
+						payrollDto
+								.getTotalDeduction()
+				);
+
+
+				responseVO.setNetPay(
+						payrollDto
+								.getNetPay()
+				);
+
+
+				responseVO.setPayrollStatus(
+						payrollDto
+								.getPayrollStatus()
+				);
+			}
+
+
+			result.add(
+					responseVO
+			);
+		}
+
+
+		return result;
+	}
+	
 }
-/*
- * 이후 구현 순서
- *
- * 1. 계약별 basePay 계산
- *
- * 2. 연장수당 계산
- *
- * 3. 야간수당 계산
- *
- * 4. 휴일근로수당 계산
- *
- * 5. 주휴수당 계산
- *
- * 6. 계약별 결과 월 전체 합산
- *
- * 7. grossPay 계산
- *
- * 8. PayrollDto 생성
- *
- * 9. payrollDao.add()
- *
- * 10. 공제 계산
- *
- * 11. totalDeduction 계산
- *
- * 12. netPay 계산
- * 
- */
+
