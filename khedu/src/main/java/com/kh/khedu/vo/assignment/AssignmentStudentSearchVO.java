@@ -17,4 +17,7 @@ public class AssignmentStudentSearchVO extends PaginationVO {
     private Integer studentNo;
     //과제 제출 상태
     private String submitStatus;
+    
+    // 실제 과제 상태 : 제출가능 / 마감
+    private String assignmentPhase;
 }

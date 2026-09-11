@@ -205,5 +205,23 @@ public class AssignmentRestController {
     			assignmentNo
     	);
     }
+    
+    // 과제 마감
+    @Operation(summary = "과제 마감")
+    @PutMapping("/{assignmentNo}/close")
+    public boolean close(
+            @PathVariable int assignmentNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+
+        boolean tutor =
+                parseVO.getRoleNames()
+                        .contains(RoleType.TUTOR.getCode());
+
+        return assignmentService.close(
+                assignmentNo,
+                parseVO.getNoType(),
+                tutor
+        );
+    }
 
 }

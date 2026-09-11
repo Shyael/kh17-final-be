@@ -31,7 +31,9 @@ public class StudentExamListVO {
     private Integer examLimit;
     // 시험 상태
     private String examStatus;
-
+    // 실제 시험 상태 : 예정 / 응시가능 / 종료
+    private String examPhase;
+    
     // ==================== 학생 응시정보 ====================
     // 응시 번호
     // 아직 응시하지 않았다면 null

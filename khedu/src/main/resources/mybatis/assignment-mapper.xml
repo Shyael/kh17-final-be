@@ -20,19 +20,35 @@
 	
 	        <!-- 과제 제목 -->
 	        <if test="assignmentTitle != null and assignmentTitle != ''">
-	            and ass.assignment_title like '%' || #{assignmentTitle} || '%'
+	            and ass.assignment_title
+	                like '%' || #{assignmentTitle} || '%'
 	        </if>
 	
-	        <!-- 과제 상태 -->
-	        <if test="assignmentStatus != null and assignmentStatus != ''">
-	            and ass.assignment_status = #{assignmentStatus}
-	        </if>
+	        <!-- 실제 과제 상태 : 제출가능 / 마감 -->
+	        <if test="assignmentPhase != null and assignmentPhase != ''">
+	            <choose>
+	                <when test="assignmentPhase == '제출가능'">
+	                    and ass.assignment_status != '마감'
+	                    and (
+	                        ass.assignment_due_date is null
+	                        or ass.assignment_due_date > systimestamp
+	                    )
+	                </when>
 	
+	                <when test="assignmentPhase == '마감'">
+	                    and (
+	                        ass.assignment_status = '마감'
+	                        or ass.assignment_due_date <![CDATA[ <= ]]> systimestamp
+	                    )
+	                </when>
+	            </choose>
+	        </if>
 	    </where>
 	</sql>
 	
 	<!-- ==================== 학생용 과제 검색 조건 ==================== -->
 	<sql id="assignmentStudentSearchCondition">
+	
 	    <where>
 	
 	        <!-- 로그인한 학생 + 현재 수강중인 강의 -->
@@ -50,9 +66,28 @@
 	                like '%' || #{assignmentTitle} || '%'
 	        </if>
 	
-	        <!-- 과제 상태 검색 -->
-	        <if test="assignmentStatus != null and assignmentStatus != ''">
-	            and ass.assignment_status = #{assignmentStatus}
+	        <!-- 실제 과제 상태 -->
+	        <if test="assignmentPhase != null and assignmentPhase != ''">
+	
+	            <choose>
+	
+	                <when test="assignmentPhase == '제출가능'">
+	                    and ass.assignment_status != '마감'
+	                    and (
+	                        ass.assignment_due_date is null
+	                        or ass.assignment_due_date > systimestamp
+	                    )
+	                </when>
+	
+	                <when test="assignmentPhase == '마감'">
+	                    and (
+	                        ass.assignment_status = '마감'
+	                        or ass.assignment_due_date <![CDATA[ <= ]]> systimestamp
+	                    )
+	                </when>
+	
+	            </choose>
+	
 	        </if>
 	
 	        <!-- 제출 상태 -->
@@ -60,18 +95,15 @@
 	
 	            <choose>
 	
-	                <!-- 미제출 -->
 	                <when test="submitStatus == '미제출'">
 	                    and s.submit_no is null
 	                </when>
 	
-	                <!-- 제출했지만 피드백 전 -->
 	                <when test="submitStatus == '제출완료'">
 	                    and s.submit_no is not null
 	                    and s.submit_comment is null
 	                </when>
 	
-	                <!-- 피드백 완료 -->
 	                <when test="submitStatus == '채점완료'">
 	                    and s.submit_no is not null
 	                    and s.submit_comment is not null
@@ -82,6 +114,7 @@
 	        </if>
 	
 	    </where>
+	
 	</sql>
 	
 	<!-- ==================== 과제 정보 ==================== -->
@@ -211,8 +244,9 @@
 	
 	</select>
 	
-	<!-- 강사용 과제 목록 + 페이지네이션 -->
+	<!-- ==================== 강사용 과제 목록 + 페이지네이션 ==================== -->
 	<select id="selectManageSearchList" resultType="AssignmentListVO">
+	
 	    select *
 	    from (
 	        select inner_table.*, ROWNUM rn
@@ -223,28 +257,50 @@
 	                c.course_title,
 	                ass.assignment_title,
 	                ass.assignment_status,
+	
+	                case
+	                    when ass.assignment_status = '마감'
+	                         or systimestamp >= ass.assignment_due_date
+	                    then '마감'
+	                    else '제출가능'
+	                end as assignment_phase,
+	
 	                ass.assignment_due_date,
 	                ass.assignment_wtime
+	
 	            from assignment ass
+	
 	            join course c
 	                on ass.course_no = c.course_no
+	
 	            <include refid="assignmentManageSearchCondition"/>
+	
 	            order by ass.assignment_no desc
+	
 	        ) inner_table
+	
 	        where ROWNUM <![CDATA[ <= ]]> #{endRow}
 	    )
+	
 	    where rn <![CDATA[ >= ]]> #{beginRow}
+	
 	</select>
 	
-	<!-- 강사용 과제 검색 결과 개수 -->
+	
+	<!-- ==================== 강사용 과제 검색 결과 개수 ==================== -->
 	<select id="selectManageCount" resultType="int">
+	
 	    select count(*)
 	    from assignment ass
+	
 	    <include refid="assignmentManageSearchCondition"/>
+	
 	</select>
+	
 	
 	<!-- ==================== 학생용 과제 목록 + 페이지네이션 ==================== -->
 	<select id="selectStudentSearchList" resultType="StudentAssignmentListVO">
+	
 	    select *
 	    from (
 	        select inner_table.*, ROWNUM rn
@@ -256,6 +312,14 @@
 	                acc.account_name,
 	                ass.assignment_title,
 	                ass.assignment_status,
+	
+	                case
+	                    when ass.assignment_status = '마감'
+	                         or systimestamp >= ass.assignment_due_date
+	                    then '마감'
+	                    else '제출가능'
+	                end as assignment_phase,
+	
 	                ass.assignment_due_date,
 	                ass.assignment_wtime,
 	
@@ -294,18 +358,26 @@
 	    )
 	
 	    where rn <![CDATA[ >= ]]> #{beginRow}
+	
 	</select>
+	
 	
 	<!-- ==================== 학생용 과제 검색 결과 개수 ==================== -->
 	<select id="selectStudentCount" resultType="int">
+	
 	    select count(*)
+	
 	    from assignment ass
+	
 	    join student_course sc
 	        on ass.course_no = sc.course_no
+	
 	    left join assignment_submit s
 	        on ass.assignment_no = s.assignment_no
 	        and s.student_no = #{studentNo}
+	
 	    <include refid="assignmentStudentSearchCondition"/>
+	
 	</select>
 
     <!-- 과제 수정 -->
@@ -339,4 +411,12 @@
     	where assignment_no = #{assignmentNo}
     	order by attach_no asc
     </select>
+    
+    <!-- 과제 마감 -->
+	<update id="close" parameterType="int">
+	    update assignment
+	    set assignment_status = '마감'
+	    where assignment_no = #{assignmentNo}
+	</update>
+	
 </mapper>

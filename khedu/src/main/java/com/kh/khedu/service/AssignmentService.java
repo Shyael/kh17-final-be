@@ -67,4 +67,11 @@ public interface AssignmentService {
     );
     // 학부모용 : 자녀 과제 상세 조회
     AssignmentDetailVO selectOneByParentStudent(int parentNo, int studentNo, int assignmentNo);
+    
+    // 과제 마감
+    boolean close(
+            int assignmentNo,
+            int employeeNo,
+            boolean tutor
+    );
 }

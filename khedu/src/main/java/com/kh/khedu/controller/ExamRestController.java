@@ -22,6 +22,7 @@ import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamDraftRequestVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamResultVO;
 import com.kh.khedu.vo.exam.ExamSearchVO;
 import com.kh.khedu.vo.exam.ExamStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
@@ -176,5 +177,68 @@ public class ExamRestController {
     			examNo,
     			parseVO.getNoType(),
     			tutor);
+    }
+    
+    // 학부모 - 자녀 시험 목록
+    @Operation(summary = "학부모용 자녀 시험 목록 조회")
+    @GetMapping("/parent/student/{studentNo}")
+    public PageResponseVO<StudentExamListVO> selectParentStudentList(
+            @PathVariable int studentNo,
+            @ModelAttribute StudentExamSearchVO search,
+            @CurrentUser TokenParseResponseVO parseVO) {
+
+        return examService.selectParentStudentList(
+                search,
+                parseVO.getNoType(), // parentNo
+                studentNo
+        );
+    }
+    
+    // 학부모 - 자녀 시험 상세
+    @Operation(summary = "학부모용 자녀 시험 상세 조회")
+    @GetMapping("/parent/student/{studentNo}/{examNo}")
+    public StudentExamDetailVO selectParentStudentDetail(
+            @PathVariable int studentNo,
+            @PathVariable int examNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+
+        return examService.selectParentStudentDetail(
+                examNo,
+                parseVO.getNoType(), // parentNo
+                studentNo
+        );
+    }
+    
+    // 학부모 - 자녀 시험 결과 조회
+    @Operation(summary = "학부모용 자녀 시험 결과 조회")
+    @GetMapping("/parent/student/{studentNo}/attempt/{attemptNo}/result")
+    public ExamResultVO selectParentStudentResult(
+            @PathVariable int studentNo,
+            @PathVariable int attemptNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+
+        return examService.selectParentStudentResult(
+                attemptNo,
+                parseVO.getNoType(), // parentNo
+                studentNo
+        );
+    }
+    
+    // 시험 마감
+    @Operation(summary = "시험 마감")
+    @PutMapping("/{examNo}/close")
+    public boolean close(
+            @PathVariable int examNo,
+            @CurrentUser TokenParseResponseVO parseVO) {
+
+        boolean tutor =
+                parseVO.getRoleNames()
+                        .contains(RoleType.TUTOR.getCode());
+
+        return examService.close(
+                examNo,
+                parseVO.getNoType(),
+                tutor
+        );
     }
 }

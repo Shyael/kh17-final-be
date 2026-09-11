@@ -12,6 +12,7 @@ public class StudentExamSearchVO extends PaginationVO {
     private String examTitle;
     //응시상태
     private String attemptStatus;
+    private String examPhase;
     //서버 내부용
     private Integer studentNo;
 }

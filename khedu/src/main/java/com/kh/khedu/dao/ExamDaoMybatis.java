@@ -117,4 +117,9 @@ public class ExamDaoMybatis implements ExamDao {
 	public int selectStudentCount(StudentExamSearchVO search) {
 		return sqlSession.selectOne("mapper.exam.selectStudentCount", search);
 	}
+	
+	@Override
+	public boolean close(int examNo) {
+	    return sqlSession.update("mapper.exam.close", examNo) > 0;
+	}
 }
