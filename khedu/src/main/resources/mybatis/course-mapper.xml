@@ -89,6 +89,22 @@
         )
         where course_no = #{courseNo}
     </update>
+    
+    <!-- courseNo로 학생 번호와 계정 정보 -->
+    <select id="selectCourseStudentList" resultType="CourseStudentListVO">
+	    SELECT 
+	        s.student_no                                       AS studentNo,
+	        ac.account_name                                    AS studentName,
+	        ac.account_phone                                   AS studentPhone,
+	        NVL(sc.student_course_status, '수강중')             AS studentStatus
+	    FROM student_course sc
+	    JOIN student s   ON sc.student_no = s.student_no
+	    JOIN account ac  ON s.account_no = ac.account_no
+	    WHERE sc.course_no = #{courseNo}
+	    ORDER BY ac.account_name ASC
+	</select>
+    
+    
 	<!-- 
 		검색 기능 구현을 위한 필요 구문 [1] [2] [3] 참조
 	 -->

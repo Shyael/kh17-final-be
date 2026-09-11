@@ -32,4 +32,7 @@ public class CourseDetailResponseVO {
 	// [4] 시험 정보
 	private List<ExamListVO> examList;
 	
+	// [5] 학생 정보
+	private List<CourseStudentListVO> studentList;
+	
 }
