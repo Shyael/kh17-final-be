@@ -50,4 +50,17 @@
         inner join grade G on C.grade_no = G.grade_no
         where C.course_no = #{courseNo}
     </select>
+    
+    <!-- 강의 현재 수강 인원 갱신 -->
+    <update id="updateCourseCurrentCount">
+        update course
+        set course_current_count = (
+            select count(*)
+            from student_course
+            where course_no = #{courseNo}
+              -- 상태가 신청/수강중인 학생만 카운트
+              and student_course_status in ('신청', '수강중')
+        )
+        where course_no = #{courseNo}
+    </update>
 </mapper>

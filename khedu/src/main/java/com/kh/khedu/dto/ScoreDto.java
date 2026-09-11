@@ -1,7 +1,7 @@
 package com.kh.khedu.dto;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +17,6 @@ public class ScoreDto {
 	private String scoreSubject;
 	private int scoreScore;
 	private int scoreRank;
-	private LocalDateTime scoreDate;
+	private LocalDate scoreDate;
 	private Timestamp scoreWtime;
 }

@@ -49,6 +49,11 @@ public class CourseDaoMybatis implements CourseDao {
     public String selectCourseGrade(int courseNo) {
         return sqlSession.selectOne("mapper.course.selectCourseGrade", courseNo);
     }
+	
+	@Override
+    public void updateCourseCurrentCount(int courseNo) {
+        sqlSession.update("mapper.course.updateCourseCurrentCount", courseNo);
+    }
 
 
 }

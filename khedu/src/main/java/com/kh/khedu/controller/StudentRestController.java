@@ -112,9 +112,9 @@ public class StudentRestController {
     }
     
     // 모달창 셀렉트 박스용 강의 목록 조회 API
-    @GetMapping("/course/list")
-    public ResponseEntity<List<AvailableCourseVO>> getAvailableCourseList() {
-        List<AvailableCourseVO> list = studentCourseService.getAvailableCourseList();
+    @GetMapping("/course/list/{studentNo}")
+    public ResponseEntity<List<AvailableCourseVO>> getAvailableCourseList(@PathVariable int studentNo) {
+        List<AvailableCourseVO> list = studentCourseService.getAvailableCourseList(studentNo);
         return ResponseEntity.ok(list);
     }
     
@@ -123,5 +123,13 @@ public class StudentRestController {
     public ResponseEntity<List<StudentCourseVO>> getEnrolledCourses(@PathVariable int studentNo) {
         List<StudentCourseVO> list = studentCourseService.getListByStudentNo(studentNo);
         return ResponseEntity.ok(list);
+    }
+    
+ // 2. 수강 취소 기능
+    @DeleteMapping("/course/cancel/{studentNo}/{courseNo}")
+    public ResponseEntity<String> cancelCourse(@PathVariable int studentNo, @PathVariable int courseNo) {
+        // Service -> Dao 연동하여 위의 cancelCourse 호출 (MyBatis @Param 사용 권장)
+        studentCourseService.cancelCourse(studentNo, courseNo);
+        return ResponseEntity.ok("수강이 취소되었습니다.");
     }
 }

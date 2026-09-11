@@ -37,7 +37,15 @@ public class StudentCourseDaoMybatis implements StudentCourseDao {
     }
     
     @Override
-    public List<AvailableCourseVO> selectAllCourse() {
-        return sqlSession.selectList("mapper.studentCourse.selectAllCourse");
+    public List<AvailableCourseVO> selectAvailableCourseList(int studentNo) {
+        return sqlSession.selectList("mapper.studentCourse.selectAvailableCourseList", studentNo);
+    }
+    
+    @Override
+    public void cancelCourse (int studentNo, int courseNo) {
+    	StudentCourseDto studentCourseDto = new StudentCourseDto();
+        studentCourseDto .setStudentNo(studentNo);
+        studentCourseDto.setCourseNo(courseNo);
+    	sqlSession.delete("mapper.studentCourse.cancelCourse", studentCourseDto);
     }
 }

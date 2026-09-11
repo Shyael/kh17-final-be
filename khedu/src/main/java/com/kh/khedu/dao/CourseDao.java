@@ -21,5 +21,8 @@ public interface CourseDao {
 	
 	// 강의 대상 학년 조회
     String selectCourseGrade(int courseNo);
+    
+    // 강의 현재 수강 인원 갱신
+    void updateCourseCurrentCount(int courseNo);
 
 }

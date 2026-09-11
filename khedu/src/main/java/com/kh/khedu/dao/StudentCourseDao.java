@@ -12,5 +12,6 @@ public interface StudentCourseDao {
     List<StudentCourseVO> selectListByStudentNo(int studentNo);
     String checkEnrollmentValidation(StudentCourseDto studentCourseDto);
     // 모집중인 전체 강의 목록 조회
-    List<AvailableCourseVO> selectAllCourse();
+    List<AvailableCourseVO> selectAvailableCourseList(int studentNo);
+    void cancelCourse (int studentNo, int courseNo); 
 }

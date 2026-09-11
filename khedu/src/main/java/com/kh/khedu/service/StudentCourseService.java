@@ -1,6 +1,8 @@
 package com.kh.khedu.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,10 @@ public class StudentCourseService {
 
         // 3. 모든 검증을 무사히 통과했다면 수강 내역
         studentCourseDao.insert(studentCourseDto);
+        
+        // 4. 수강인원 업데이트
+        courseDao.updateCourseCurrentCount(studentCourseDto.getCourseNo());
+        
         return "SUCCESS";
     }
 
@@ -49,7 +55,12 @@ public class StudentCourseService {
     }
     
     // 모달창에 띄울 모집중인 강의 목록 가져오기
-    public List<AvailableCourseVO> getAvailableCourseList() {
-        return studentCourseDao.selectAllCourse();
+    public List<AvailableCourseVO> getAvailableCourseList(int studentNo) {
+        return studentCourseDao.selectAvailableCourseList(studentNo);
+    }
+    
+    public void cancelCourse(int studentNo, int courseNo) {
+    	studentCourseDao.cancelCourse(studentNo, courseNo);
+    	courseDao.updateCourseCurrentCount(courseNo);
     }
 }
