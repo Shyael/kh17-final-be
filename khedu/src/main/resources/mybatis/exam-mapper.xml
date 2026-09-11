@@ -176,28 +176,34 @@
 	        )
 	</select>
 
-    <select id="selectListByCourse" resultType="ExamListVO">
-	    select
-	        e.exam_no,
-	        e.course_no,
-	        c.course_title,
-	        e.employee_no,
-	        a.account_name,
-	        e.exam_title,
-	        e.exam_start,
-	        e.exam_end,
-	        e.exam_limit,
-	        e.exam_status,
-	        e.exam_wtime
-	    from exam e
-	    join course c
-	        on e.course_no = c.course_no
-	    join employee emp
-	        on e.employee_no = emp.employee_no
-	    join account a
-	        on emp.account_no = a.account_no
-	    where e.course_no = #{courseNo}
-	    order by e.exam_wtime desc
+    <!-- 특정 강의의 최근 시험 5개 조회 -->
+	<select id="selectRecentListByCourse" resultType="ExamListVO">
+	    select *
+	    from (
+	        select
+	            e.exam_no,
+	            e.course_no,
+	            c.course_title,
+	            e.employee_no,
+	            a.account_name,
+	            e.exam_title,
+	            e.exam_start,
+	            e.exam_end,
+	            e.exam_limit,
+	            e.exam_status,
+	            e.exam_wtime
+	        from exam e
+	        join course c
+	            on e.course_no = c.course_no
+	        join employee emp
+	            on e.employee_no = emp.employee_no
+	        join account a
+	            on emp.account_no = a.account_no
+	        where e.course_no = #{courseNo}
+	        order by e.exam_wtime desc,
+	                 e.exam_no desc
+	    )
+	    where ROWNUM <![CDATA[ <= ]]> 5
 	</select>
 
 	<!-- 학생 시험 목록 조회 -->

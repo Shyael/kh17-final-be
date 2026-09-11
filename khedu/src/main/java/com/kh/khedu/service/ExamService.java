@@ -31,8 +31,10 @@ public interface ExamService {
     );
     // 학생용 상세조회
     StudentExamDetailVO selectDetailByStudent(int examNo, int studentNo);
-    // 특정 강의의 시험 목록 조회
-    List<ExamListVO> selectListByCourse(int courseNo);
+    
+    // 특정 강의의 최근 시험 5개 조회
+    List<ExamListVO> selectRecentListByCourse(int courseNo);
+    
     //학생 시험 목록 조회
     List<StudentExamListVO> selectListByStudent(int studentNo);
     //강사 페이지네이션 + 검색 + 시험 목록

@@ -29,8 +29,8 @@ public interface ExamDao {
     // 학생용 시험 상세 조회
     StudentExamDetailVO selectDetailByStudent(int examNo, int studentNo);
     
-    // 특정 강의의 시험 목록 조회
-    List<ExamListVO> selectListByCourse(int courseNo);
+    // 특정 강의의 최근 시험 5개 조회
+    List<ExamListVO> selectRecentListByCourse(int courseNo);
     
     // 학생 시험 목록 조회
     List<StudentExamListVO> selectListByStudent(int studentNo);

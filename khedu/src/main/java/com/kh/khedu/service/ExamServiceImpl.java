@@ -270,10 +270,10 @@ public class ExamServiceImpl implements ExamService {
 		return exam;
 	}
 
-	//특정 강의의 시험 목록 조회
+	// 특정 강의의 최근 시험 5개 조회
 	@Override
-	public List<ExamListVO> selectListByCourse(int courseNo) {
-		return examDao.selectListByCourse(courseNo);
+	public List<ExamListVO> selectRecentListByCourse(int courseNo) {
+	    return examDao.selectRecentListByCourse(courseNo);
 	}
 	
 	@Override

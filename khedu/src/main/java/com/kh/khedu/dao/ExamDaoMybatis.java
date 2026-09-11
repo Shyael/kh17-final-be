@@ -57,10 +57,10 @@ public class ExamDaoMybatis implements ExamDao {
 		return sqlSession.selectOne("mapper.exam.selectDetailByStudent",params);
 	}
 
-	//특정 강의의 시험 목록 조회
+	// 특정 강의의 최근 시험 5개 조회
 	@Override
-	public List<ExamListVO> selectListByCourse(int courseNo) {
-		return sqlSession.selectList("mapper.exam.selectListByCourse", courseNo);
+	public List<ExamListVO> selectRecentListByCourse(int courseNo) {
+	    return sqlSession.selectList("mapper.exam.selectRecentListByCourse", courseNo);
 	}
 
 	@Override
