@@ -34,7 +34,7 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 		param.put("employeeNo", employeeNo);
 		param.put("request", request);
 		
-		return sqlSession.selectOne("mapper.schedule.checkTutorScheduleConfilct", param);
+		return sqlSession.selectOne("mapper.schedule.checkTutorScheduleConflict", param);
 	}
 	
 	//강의실 기존 수업과 충돌 확인
@@ -43,7 +43,7 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 		Map<String, Object> param = new HashMap<>();
 		param.put("classroomNo", classroomNo);
 		param.put("request", request);
-		return sqlSession.selectOne("mapper.classroom.checkClassroomScheduleConflict", param);
+		return sqlSession.selectOne("mapper.schedule.checkClassroomScheduleConflict", param);
 	}
 
 }

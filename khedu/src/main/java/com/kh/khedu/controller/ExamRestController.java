@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,13 +17,16 @@ import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dto.ExamDto;
 import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.service.ExamService;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamDraftRequestVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamSearchVO;
 import com.kh.khedu.vo.exam.ExamStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
 import com.kh.khedu.vo.exam.StudentExamListVO;
+import com.kh.khedu.vo.exam.StudentExamSearchVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,24 +49,31 @@ public class ExamRestController {
             @RequestBody ExamDto examDto,
             @CurrentUser TokenParseResponseVO parseVO) {
 
-        // 로그인한 직원 번호를 출제자로 설정
-        examDto.setEmployeeNo(parseVO.getNoType());
+    	  boolean tutor = parseVO.getRoleNames()
+    	            .contains(RoleType.TUTOR.getCode());
 
-        return examService.insert(examDto);
+    	  return examService.insert(
+    	            examDto,
+    	            parseVO.getNoType(),
+    	            tutor
+    	  );
     }
 
-    // 직원용 시험 목록 조회
-    @Operation(summary = "직원용 시험 목록 조회")
+    //강사/관리자 시험 목록
+    @Operation(summary = "시험 관리 목록 조회")
     @GetMapping("/manage")
-    public List<ExamListVO> selectManageList(@CurrentUser TokenParseResponseVO parseVO) {
-        // 강사는 본인이 등록한 시험만 조회
-        if (parseVO.getRoleNames().contains(RoleType.TUTOR.getCode())) {
-        	
-            return examService.selectListByEmployee(parseVO.getNoType());
-        }
+    public PageResponseVO<ExamListVO> selectManageList(
+            @ModelAttribute ExamSearchVO search,
+            @CurrentUser TokenParseResponseVO parseVO) {
 
-        // 원장, 데스크 등은 전체 시험
-        return examService.selectList();
+        boolean tutor = parseVO.getRoleNames()
+                .contains(RoleType.TUTOR.getCode());
+
+        return examService.selectManageList(
+                search,
+                parseVO.getNoType(), //employeeNo
+                tutor
+        );
     }
 
     // 시험 단일 조회
@@ -84,12 +95,16 @@ public class ExamRestController {
     	return examService.selectDetailByStudent(examNo, parseVO.getNoType());
     }
 
-    // 학생용 시험 목록 조회
+    //학생 시험 목록
     @Operation(summary = "학생 시험 목록 조회")
     @GetMapping("/student")
-    public List<StudentExamListVO> selectListByStudent(
-    		@CurrentUser TokenParseResponseVO parseVO){
-    	return examService.selectListByStudent(parseVO.getNoType());
+    public PageResponseVO<StudentExamListVO> selectStudentList(
+            @ModelAttribute StudentExamSearchVO search,
+            @CurrentUser TokenParseResponseVO parseVO) {
+        return examService.selectStudentList(
+                search,
+                parseVO.getNoType() //studentNo
+        );
     }
 
     // 시험 수정

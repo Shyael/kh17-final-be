@@ -11,10 +11,12 @@ import com.kh.khedu.dto.ExamDto;
 import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamListVO;
+import com.kh.khedu.vo.exam.ExamSearchVO;
 import com.kh.khedu.vo.exam.ExamStatisticsVO;
 import com.kh.khedu.vo.exam.QuestionStatisticsVO;
 import com.kh.khedu.vo.exam.StudentExamDetailVO;
 import com.kh.khedu.vo.exam.StudentExamListVO;
+import com.kh.khedu.vo.exam.StudentExamSearchVO;
 
 @Repository
 public class ExamDaoMybatis implements ExamDao {
@@ -55,24 +57,12 @@ public class ExamDaoMybatis implements ExamDao {
 		return sqlSession.selectOne("mapper.exam.selectDetailByStudent",params);
 	}
 
-	//전체 시험 목록 조회
+	// 특정 강의의 최근 시험 5개 조회
 	@Override
-	public List<ExamListVO> selectList() {
-		return sqlSession.selectList("mapper.exam.selectList");
-	}
-	
-	//특정 강의의 시험 목록 조회
-	@Override
-	public List<ExamListVO> selectListByCourse(int courseNo) {
-		return sqlSession.selectList("mapper.exam.selectListByCourse", courseNo);
+	public List<ExamListVO> selectRecentListByCourse(int courseNo) {
+	    return sqlSession.selectList("mapper.exam.selectRecentListByCourse", courseNo);
 	}
 
-	//특정 강사가 등록한 시험 목록 조회
-	@Override
-	public List<ExamListVO> selectListByEmployee(int employeeNo) {
-		return sqlSession.selectList("mapper.exam.selectListByEmployee", employeeNo);
-	}
-	
 	@Override
 	public List<StudentExamListVO> selectListByStudent(int studentNo) {
 		return sqlSession.selectList("mapper.exam.selectListByStudent", studentNo);
@@ -106,5 +96,25 @@ public class ExamDaoMybatis implements ExamDao {
 	@Override
 	public List<QuestionStatisticsVO> selectQuestionStatistics(int examNo) {
 		return sqlSession.selectList("mapper.exam.selectQuestionStatistics", examNo);
+	}
+
+	@Override
+	public List<ExamListVO> selectManageSearchList(ExamSearchVO search) {
+		return sqlSession.selectList("mapper.exam.selectManageSearchList", search);
+	}
+
+	@Override
+	public int selectManageCount(ExamSearchVO search) {
+		return sqlSession.selectOne("mapper.exam.selectManageCount", search);
+	}
+
+	@Override
+	public List<StudentExamListVO> selectStudentSearchList(StudentExamSearchVO search) {
+		return sqlSession.selectList("mapper.exam.selectStudentSearchList", search);
+	}
+
+	@Override
+	public int selectStudentCount(StudentExamSearchVO search) {
+		return sqlSession.selectOne("mapper.exam.selectStudentCount", search);
 	}
 }

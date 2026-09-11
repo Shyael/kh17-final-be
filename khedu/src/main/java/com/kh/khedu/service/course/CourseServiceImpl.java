@@ -12,19 +12,26 @@ import com.kh.khedu.dao.AcademySubjectDao;
 import com.kh.khedu.dao.ClassroomDao;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.GradeDao;
+import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.ScheduleDao;
 import com.kh.khedu.dao.TutorDao;
 import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.error.AlreadyExistsException;
+import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
 import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
+import com.kh.khedu.vo.course.CourseSearchVO;
+import com.kh.khedu.vo.course.CourseSimpleListVO;
+import com.kh.khedu.vo.course.StudentCourseListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 import com.kh.khedu.vo.schedule.ScheduleCreateRequestVO;
 
 @Service
@@ -42,7 +49,26 @@ public class CourseServiceImpl implements CourseService {
 	private AcademySubjectDao academySubjectDao;
 	@Autowired
 	private GradeDao gradeDao;
+	@Autowired
+	private ParentStudentDao parentStudentDao;
 	
+	//	공통메소드
+	//학부모-자녀 관계 확인
+    private void checkParentStudent(
+    		int parentNo,
+    		int studentNo) {
+    	List<ParentStudentVO> studentList = 
+    			parentStudentDao.findByParentNo(parentNo);
+    	
+    	boolean connected = 
+    			studentList.stream()
+    				.anyMatch(student ->
+    						student.getStudentNo() == studentNo
+    				);
+    	if(!connected) {
+    		throw new GetOutException();
+    	}
+    }
 	
 	//강좌 등록화면 진입 시 최초 조회
 	@Override
@@ -218,12 +244,55 @@ public class CourseServiceImpl implements CourseService {
 	public List<CourseListVO> getCourseList() {
 		return courseDao.selectCourseList();
 	}
-	
+
+	//강좌 검색조회
+	@Override
+	public PageResponseVO<CourseListVO> selectList(CourseSearchVO search) {
+		
+		// 현재 페이지의 강좌 목록 조회
+		List<CourseListVO> list = courseDao.selectSearchList(search);
+		
+		// 검색 조건에 해당하는 전체 강좌 수
+		int totalCount = courseDao.selectCount(search);
+		
+		//페이지 정보까지 계산하여 반환
+		return new PageResponseVO<>(
+				list,
+				totalCount,
+				search
+		);
+	}
 	
 	//강좌 상세
 	@Override
 	public CourseDetailVO getCourseDetail(int courseNo) {
 		return courseDao.selectCourseDetail(courseNo);
+	}
+
+	@Override
+	public List<StudentCourseListVO> selectListByStudent(int studentNo) {
+	    return courseDao.selectListByStudent(studentNo);
+	}
+	
+	@Override
+	public List<StudentCourseListVO> selectListByParentStudent(
+	        int parentNo,
+	        int studentNo) {
+
+	    //부모-자녀 관계 확인
+	    checkParentStudent(parentNo, studentNo);
+
+	    return courseDao.selectListByStudent(studentNo);
+	}
+	
+	@Override
+	public List<CourseSimpleListVO> selectManageCourseList(
+	        int employeeNo,
+	        boolean tutor) {
+	    if(tutor) {
+	        return courseDao.selectManageCourseListByEmployee(employeeNo);
+	    }
+	    return courseDao.selectManageCourseList();
 	}
 
 }
