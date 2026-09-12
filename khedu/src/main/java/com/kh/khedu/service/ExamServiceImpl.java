@@ -17,13 +17,13 @@ import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.QuestionDao;
 import com.kh.khedu.dao.QuestionOptionDao;
 import com.kh.khedu.dto.AttachDto;
+import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ExamDto;
 import com.kh.khedu.dto.QuestionDto;
 import com.kh.khedu.dto.QuestionOptionDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.util.PageResponseVO;
-import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamDraftRequestVO;
@@ -172,7 +172,7 @@ public class ExamServiceImpl implements ExamService {
 	        boolean tutor) {
 
 	    //선택한 강의 조회
-	    CourseDetailVO course = courseDao.selectCourseDetail(examDto.getCourseNo());
+		CourseDto course = courseDao.selectOneByCourseNo(examDto.getCourseNo());
 
 	    if(course == null) {
 	        throw new TargetNotfoundException("존재하지 않는 강의입니다.");

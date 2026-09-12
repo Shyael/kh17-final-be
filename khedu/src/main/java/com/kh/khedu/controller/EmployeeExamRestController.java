@@ -41,7 +41,7 @@ public class EmployeeExamRestController {
 	// 시험 등록
     @Operation(summary = "시험 등록")
     @ApiResponse(responseCode = "200", description = "시험 등록 성공")
-    @PostMapping("/")
+    @PostMapping
     public int insert(
             @RequestBody ExamDto examDto,
             @CurrentUser TokenParseResponseVO parseVO) {
