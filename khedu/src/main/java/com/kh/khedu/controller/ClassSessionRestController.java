@@ -24,7 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "실제 수업 관리")
 @RestController
 @RequestMapping("/api/employee/class-session")
-public class ClassSessionController {
+public class ClassSessionRestController {
 	
 	@Autowired
 	private ClassSessionService classSessionService;

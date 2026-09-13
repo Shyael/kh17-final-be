@@ -83,10 +83,6 @@ public class SecurityConfiguration {
 						.requestMatchers("/api/employe/**").permitAll()
 						//직원(강사 정보 수정)
 						.requestMatchers("/api/tutor/**").permitAll() 
-						//메소드(crud) 중 일부 메소드만 허용하고 싶은경우 아래와 같이 추가
-						//예시
-						//.requestMatchers(HttpMethod.POST, "/api/lecture").authenticated()
-						//.requestMatchers(HttpMethod.PUT, "/api/lecture/**").authenticated()
 						
 						//임시 전부 공개화면 
 //						.requestMatchers(
@@ -134,6 +130,19 @@ public class SecurityConfiguration {
 								RoleType.DESK.getCode(),
 								RoleType.ADMIN.getCode()
 						)
+						
+						// [2] 학생
+						.requestMatchers(
+								"/api/academy/assignment/student/**"
+						)
+						.hasAnyAuthority(RoleType.STUDENT.getCode())
+						
+						// [3] 학부모
+						.requestMatchers(
+								"/api/academy/assignment/parent/student/**"
+						)
+						.hasAnyAuthority(RoleType.PARENT.getCode())
+						
 						// [3] 데스크
 						// [4] 원장
 						// [5] 직원

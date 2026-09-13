@@ -22,4 +22,5 @@ public class CourseListVO {
     private String classroomInfo;
     
     private String courseStatus;
+   
 }
