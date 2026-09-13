@@ -53,6 +53,13 @@
 		select * from course where course_no = #{courseNo}
 	</select>
 	
+	<!-- Course상세조회 -->
+	<select id="detail" resultType="CourseDetailVO">
+	    select * 
+	    from course 
+	    where course_no = #{courseNo}
+	</select>
+	
 	<!-- 강사 사번(employee_no)로 강사 이름 조회 -->
 	<select id="selectTutorNameByEmployeeNo" resultType="String">
 		select a.account_name
