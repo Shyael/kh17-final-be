@@ -45,8 +45,7 @@ public class AccountService {
 		// 입력받은 정보가 없는경우
 		if(accountDto == null) {
 			throw new TargetNotfoundException();
-		}
-		
+		}	
 		// 2. 임시비밀번호 생성
 		String tempPassword = randomService.generatePassword(8);
 		
