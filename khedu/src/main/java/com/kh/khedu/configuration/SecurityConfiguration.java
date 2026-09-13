@@ -74,6 +74,7 @@ public class SecurityConfiguration {
 							"/active"  //체크용 페이지 허용
 							,"/swagger-ui/**" //springdoc ui
 							,"/v3/api-docs/**" //springdoc json
+							
 							,"/api/admin/employee/**"
 							,"/api/account/check-id/**"
 						).permitAll()

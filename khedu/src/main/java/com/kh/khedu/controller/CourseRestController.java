@@ -102,7 +102,7 @@ public class CourseRestController {
 	
 	//강좌 상세정보
 	@ApiResponse(responseCode = "200", description = "강좌 상세페이지 조회 성공")
-	@GetMapping("/{courseNo}")
+	@GetMapping("/detail/{courseNo}")
     public ResponseEntity<CourseDetailResponseVO> getCourseDetail(
             @PathVariable int courseNo,
             @CurrentUser TokenParseResponseVO parseVO) {

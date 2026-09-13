@@ -63,7 +63,6 @@ public class ContractController {
 	//계약 조회	
 	@GetMapping("/detail/{contractNo}")
 	public ContractDetailResponseVO find (@PathVariable long contractNo, @CurrentUser TokenParseResponseVO parseVO) {
-		System.out.println(">>> 컨트롤러 진입 성공! contractNo: " + contractNo);
 		return contractService.find(contractNo, parseVO);
 	}
 	

@@ -56,7 +56,7 @@ public class ClassSessionRestController {
      * - 원장/데스크/관리자: 모든 스케줄 등록 가능
      * - 강사: 본인이 담당하는 스케줄만 등록 가능
      */
-	@PostMapping
+	@PostMapping("/")
     public ResponseEntity<String> insertSession(
             @CurrentUser TokenParseResponseVO parseVO,
             @RequestBody AdminClassSessionInsertVO request) {
