@@ -104,7 +104,7 @@ public class EmployeeRestController {
 	}
 	
 	@ApiResponse(responseCode= "200", description = "이름 검색 성공")
-	@PatchMapping(value="/searchName/{accountName}", produces="application/json")
+	@GetMapping(value="/searchName/{accountName}", produces="application/json")
 	public List<EmployeeSearchByNameVO> searchName(@PathVariable String accountName){
 		List<EmployeeSearchByNameVO> result = employeeDao.searchByName(accountName);
 		return result;
