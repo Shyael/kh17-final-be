@@ -68,41 +68,47 @@ public class SecurityConfiguration {
 			// .hasAuthority() - 사용자가 임의로 지정한 역할
 		
 			.authorizeHttpRequests(
-				auth -> auth	
-					.requestMatchers(
-						// 무조건 허용
-							"/active"  //체크용 페이지 허용
-							,"/swagger-ui/**" //springdoc ui
-							,"/v3/api-docs/**" //springdoc json
-							
-							,"/api/admin/employee/**"
-							,"/api/account/check-id/**"
+					auth -> auth	
+						// [0] React SPA 정적 리소스 및 프론트엔드 화면 경로 무조건 허용 (최상단 배치 필수)
+						.requestMatchers(
+							"/",
+							"/index.html",
+							"/assets/**",
+							"/favicon.ico",
+							"/*.svg",
+							"/*.png",
+							"/*.ico",
+							"/error",
+							"/employee/**" // React의 employee 관련 모든 화면 경로 허용
 						).permitAll()
-						
+
+						// [기존] 무조건 허용 API
+						.requestMatchers(
+							"/active",  //체크용 페이지 허용
+							"/swagger-ui/**", //springdoc ui
+							"/v3/api-docs/**", //springdoc json
+							"/api/admin/employee/**",
+							"/api/account/check-id/**"
+						).permitAll()
+							
 						//직원(학원 정보 수정)
 						.requestMatchers("/api/academy/**").permitAll()
 						.requestMatchers("/api/employe/**").permitAll()
 						//직원(강사 정보 수정)
 						.requestMatchers("/api/tutor/**").permitAll() 
 						
-						//임시 전부 공개화면 
-//						.requestMatchers(
-//							
-//						).permitAll()
-					
 						//auth service
 						.requestMatchers(
-							"/service/auth/login" //로그인 페이지
-							,"/service/auth/logout" //로그아웃 페이지
-							,"/service/auth/refresh" //로그인 갱신페이지
-							,"/api/account/find-id" //아이디
-							,"/api/account/find-password"//비밀번호 찾기
+							"/service/auth/login", //로그인 페이지
+							"/service/auth/logout", //로그아웃 페이지
+							"/service/auth/refresh", //로그인 갱신페이지
+							"/api/account/find-id", //아이디
+							"/api/account/find-password" //비밀번호 찾기
 						).permitAll()
 						
-
 						//임시 전부 공개화면 
 						.requestMatchers(
-								"/api/employee/**" // 원장, 데스크만 접근 가능하게
+							"/api/employee/**" // 원장, 데스크만 접근 가능하게
 						).permitAll()
 
 						//cert service
@@ -120,52 +126,42 @@ public class SecurityConfiguration {
 						// 조건부 허용(내가 만든 요소들)
 						
 						// [1] 회원
-						.requestMatchers(
-							"/api/account/**"
-						)
-						//.authenticated()//인증필요
+						.requestMatchers("/api/account/**")
 						.hasAnyAuthority(
-								RoleType.STUDENT.getCode(),
-								RoleType.PARENT.getCode(),
-								RoleType.TUTOR.getCode(), 
-								RoleType.DESK.getCode(),
-								RoleType.ADMIN.getCode()
+							RoleType.STUDENT.getCode(),
+							RoleType.PARENT.getCode(),
+							RoleType.TUTOR.getCode(), 
+							RoleType.DESK.getCode(),
+							RoleType.ADMIN.getCode()
 						)
 						
 						// [2] 학생
-						.requestMatchers(
-								"/api/academy/assignment/student/**"
-						)
+						.requestMatchers("/api/academy/assignment/student/**")
 						.hasAnyAuthority(RoleType.STUDENT.getCode())
 						
 						// [3] 학부모
-						.requestMatchers(
-								"/api/academy/assignment/parent/student/**"
-						)
+						.requestMatchers("/api/academy/assignment/parent/student/**")
 						.hasAnyAuthority(RoleType.PARENT.getCode())
 						
-						// [3] 데스크
-						// [4] 원장
-						// [5] 직원
+						// [4] 데스크 / 원장 / 직원
 						.requestMatchers(
-								"/api/employee/**"
-								,"/api/attendance/**"//근태관련
+							"/api/employee/**",
+							"/api/attendance/**" //근태관련
 						)
 						.hasAnyAuthority(
-								RoleType.TUTOR.getCode(), 
-								RoleType.DESK.getCode(),
-								RoleType.ADMIN.getCode()
+							RoleType.TUTOR.getCode(), 
+							RoleType.DESK.getCode(),
+							RoleType.ADMIN.getCode()
 						)
-						.requestMatchers(
-								"/api/admin/employee/**"
-						)
+						.requestMatchers("/api/admin/employee/**")
 						.hasAnyAuthority(
-								RoleType.DESK.getCode(),
-								RoleType.ADMIN.getCode()
+							RoleType.DESK.getCode(),
+							RoleType.ADMIN.getCode()
 						)
+
 						//나머지 모두 허용
 						.anyRequest().permitAll()
-			)
+				)
 			//JWT를 어떻게 검증할 것인지 설정 (JwtDecoder가 반드시 필요)
 			//→ BearerTokenResolver :AccessToken을 꺼내서 Jwt를 뽑아내는 도구
 			//→ JwtAuthenticationConverter : Jwt의 authority를 Spring Security용으로 변환
@@ -248,6 +244,14 @@ public class SecurityConfiguration {
 		@Bean
 		public BearerTokenResolver bearerTokenResolver() {
 			return request -> {
+				String path = request.getServletPath();
+				
+				// 1. API 요청(/api/**, /service/**)이 아니면 토큰을 추출하지 않음
+		        // 즉, /employee/** 화면 진입, 정적 리소스 등은 토큰 검사를 아예 건너뛰고 화면을 바로 띄움
+		        if (!path.startsWith("/api/") && !path.startsWith("/service/")) {
+		            return null;
+		        }
+		        
 				//request는 요청정보이며 이 내부에 쿠키가 들어있으므로 
 				//accessToken을 찾아서 반환(jwtDecoder가 등록되어있으므로)
 				//만약 accessToken이 만료되어도 상관이 없는 주소라면 통과시킨다
