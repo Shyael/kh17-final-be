@@ -1,6 +1,8 @@
 package com.kh.khedu.dao;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,4 +50,12 @@ public class StudentCourseDaoMybatis implements StudentCourseDao {
         studentCourseDto.setCourseNo(courseNo);
     	sqlSession.delete("mapper.studentCourse.cancelCourse", studentCourseDto);
     }
+
+	@Override
+	public StudentCourseDto selectOneByStudentNo(int studentNo, int courseNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("studentNo", studentNo);
+		params.put("courseNo", courseNo);
+		return sqlSession.selectOne("mapper.studentCourse.selectOneByStudentNo", params);
+	}
 }

@@ -129,4 +129,10 @@
         where student_no = #{studentNo} 
           and course_no = #{courseNo}
     </delete>
+    
+    <!-- 학생번호로 학생-수강 테이블 조회 -->
+    <select id="selectOneByStudentNo" resultType="StudentCourseDto">
+    	select * from student_course 
+    	where student_no = #{studentNo} and course_no = #{courseNo}
+    </select>
 </mapper>

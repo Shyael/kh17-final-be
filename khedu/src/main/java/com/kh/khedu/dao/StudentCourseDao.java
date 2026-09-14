@@ -14,4 +14,7 @@ public interface StudentCourseDao {
     // 모집중인 전체 강의 목록 조회
     List<AvailableCourseVO> selectAvailableCourseList(int studentNo);
     void cancelCourse (int studentNo, int courseNo); 
+    
+    // 학생번호로 학생강좌테이블 조회
+    StudentCourseDto selectOneByStudentNo(int studentNo, int courseNo);
 }
