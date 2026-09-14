@@ -220,6 +220,7 @@ public class SecurityConfiguration {
 				"HEAD"
 		));
 		
+		
 		//[3] 허용할 HTTP헤더 설정
 		//→ 특정 헤더를 반드시 포함해야 하는 경우가 존재
 		//→ 보안이 강화되면 CSRF 헤더만 허용하는 경우가 있음 (CSRF: 사이트간 요청 위조 방지 헤더)
