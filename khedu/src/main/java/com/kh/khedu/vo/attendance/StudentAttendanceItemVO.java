@@ -13,8 +13,9 @@ import lombok.NoArgsConstructor;
 public class StudentAttendanceItemVO {
 	private int sessionNo; //세션 번호
 	private int roundNo; // 몇 회차인지
-	private Timestamp sessionStart; //수업 예정 시작 시간
+	private Timestamp sessionStart; // 수업 예정 시작 시간
 	private Timestamp sessionEnd; // 수업 예정 종료 시각
+	private String sessionStatus; // 대기, 진행중, 종료, 취소
 	private Timestamp attendanceAt; //학생이 실제 태그한 입실 시각
 	private String attendanceState; //출석, 지각, 조퇴, 결석, 미출결
 }
