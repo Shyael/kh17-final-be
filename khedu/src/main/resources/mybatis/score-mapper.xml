@@ -3,7 +3,7 @@
 
 <mapper namespace="mapper.score">
 
-    <!-- 1. 등록 (INSERT) -->
+    <!-- 1. 등록 (insert) -->
     <insert id="insert">
         insert into score (
             score_no, 
@@ -26,7 +26,7 @@
         )
     </insert>
 
-    <!-- 2. 단건 상세 조회 (SELECT) -->
+    <!-- 2. 단건 상세 조회 (select) -->
     <select id="selectOne" resultType="com.kh.khedu.dto.ScoreDto">
         select 
             score_no as scoreNo,
@@ -42,7 +42,7 @@
         where score_no = #{scoreNo}
     </select>
 
-    <!-- 3. 특정 학생의 성적 목록 조회 (SELECT LIST) -->
+    <!-- 3. 특정 학생의 성적 목록 조회 (select LIST) -->
     <select id="selectListByStudent" resultType="com.kh.khedu.dto.ScoreDto">
         select 
             score_no as scoreNo,
@@ -76,5 +76,56 @@
         delete from score 
         where score_no = #{scoreNo}
     </delete>
+    
+	<select id="selectSchoolExamScoreList" resultType="ScoreListResponseVO" parameterType="map">
+	    select 
+	        score_subject as scoreSubject, 
+	        score_score as scoreScore, 
+	        score_rank as scoreRank,
+	        -- 이전 시험 등급을 가져와서 현재 등급과 빼기 (낮아질수록 좋은 거라면 순서를 바꿔도 됨)
+	        score_rank - lag(score_rank, 1) over (partition by score_subject order by score_date asc) as rankDiff
+	    from score
+	    where student_no = #{studentNo}
+	      and score_name = #{scoreName} /* ex: '1학기 중간고사' */
+	      and score_type = '내신'
+	    order by 
+	        case 
+	            when score_subject like '%국어%' or score_subject in ('문학', '독서', '화법과 작문', '언어와 매체') then 1
+	            when score_subject like '%수학%' or score_subject in ('미적분', '기하', '확률과 통계') then 2
+	            when score_subject like '%영어%' then 3
+	            when score_subject like '%사회%' or score_subject like '%과학%' or score_subject like '%탐구%' then 4
+	            when score_subject like '%한국사%' or score_subject like '%역사%' then 5
+	            else 6
+	        end asc,
+	        score_subject asc
+	</select>
+
+	<select id="selectMockExamScoreList" resultType="ScoreListResponseVO" parameterType="map">
+	    select 
+	        sc.score_subject as scoreSubject, 
+	        sc.score_score as scoreScore, 
+	        sc.score_rank as scoreRank,
+	        sc.score_rank - lag(sc.score_rank, 1) over (partition by sc.score_subject order by sc.score_date asc) as rankDiff
+	    from score sc
+	    -- 과목명이 똑같은 것을 기준으로 조인 (left outer join으로 혹시 매칭 안 되는 과목도 성적은 나오게 방어)
+	    left outer join subject sb on sc.score_subject = sb.subject_name
+	    where sc.student_no = #{studentNo}
+	      and sc.score_name = #{scoreName} /* ex: '3월 모의고사' */
+	      and sc.score_type = '모의고사' or '수능'
+	    order by 
+	        sb.subject_code asc nulls last -- 과목 코드가 낮은 순(국->수->영...)으로 정렬, 매칭 안 된 건 맨 뒤로
+	</select>
+
+	<!-- 학생이 응시한 시험 목록 조회 (셀렉트박스용) -->
+	<select id="selectStudentExamList" resultType="StudentExamVO" parameterType="int">
+	    select 
+	        score_name as scoreName,
+	        score_type as scoreType
+	    from score
+	    where student_no = #{studentNo}
+	    group by score_name, score_type
+	    order by max(score_date) desc
+	</select>
+
 
 </mapper>

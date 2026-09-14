@@ -24,7 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "수납 관리")
 @RestController
-@RequestMapping("/api/payment")
+@RequestMapping("/api/employee/payment")
 public class PaymentRestController {
 
     @Autowired
