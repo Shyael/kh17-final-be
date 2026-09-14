@@ -88,7 +88,9 @@ public class SecurityConfiguration {
 							"/swagger-ui/**", //springdoc ui
 							"/v3/api-docs/**", //springdoc json
 							"/api/admin/employee/**",
-							"/api/account/check-id/**"
+							"/api/account/check-id/**",
+							"/ws/**", 
+							"/ws-member/**"
 						).permitAll()
 							
 						//직원(학원 정보 수정)
@@ -248,7 +250,7 @@ public class SecurityConfiguration {
 				
 				// 1. API 요청(/api/**, /service/**)이 아니면 토큰을 추출하지 않음
 		        // 즉, /employee/** 화면 진입, 정적 리소스 등은 토큰 검사를 아예 건너뛰고 화면을 바로 띄움
-		        if (!path.startsWith("/api/") && !path.startsWith("/service/")) {
+		        if (!path.startsWith("/api/") && !path.startsWith("/service/") && !path.startsWith("/ws")) {
 		            return null;
 		        }
 		        
@@ -260,7 +262,8 @@ public class SecurityConfiguration {
 					"/service/auth/logout",
 					"/service/auth/refresh",
 					"/service/cert/send",
-					"/service/cert/check"
+					"/service/cert/check",
+					"/academy"
 				);
 				
 				if(allowPaths.contains(request.getServletPath())) {
