@@ -88,8 +88,7 @@ public class StudentService {
 		// [2] 상담 정보 등록 
 		// 상담테이블에서 이름과 핸드폰 번호로 가져오기(map형태나 vo만들어서 나중에 하기)
 		//int consultCustommerNo = consultCustomerDao.selectOne(accountVO.getAccountPhone(), accountVO.getAccountName());
-
-		
+	
 		// [3] student 등록
 		int studentNo = studentDao.sequence();
 		
