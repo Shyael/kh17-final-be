@@ -457,7 +457,6 @@ public class ExamServiceImpl implements ExamService {
 	            );
 	        }
 
-
 	        for (QuestionDraftVO questionVO : request.getQuestionList()) {
 
 	            if (questionVO.getOptionList() == null) {
