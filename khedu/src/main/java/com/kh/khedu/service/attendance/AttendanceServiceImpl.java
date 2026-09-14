@@ -26,6 +26,7 @@ import com.kh.khedu.vo.attendance.KioskAttendanceResponseVO;
 import com.kh.khedu.vo.attendance.KioskStudentCandidateVO;
 import com.kh.khedu.vo.attendance.KioskTargetSessionVO;
 import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
+import com.kh.khedu.vo.attendance.StudentAttendanceResponseVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import lombok.extern.slf4j.Slf4j;
@@ -230,6 +231,13 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .attendanceTime(tagTime)
                 .message(studentName + " 학생, [" + target.getCourseTitle() + "] 수업에 " + determinedState + " 처리되었습니다.")
                 .build();
+	}
+
+//	
+	@Override
+	public StudentAttendanceResponseVO getStudentAttendanceDetail(int studentNo, int courseNo) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	

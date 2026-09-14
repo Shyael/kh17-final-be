@@ -2,12 +2,13 @@ package com.kh.khedu.dao;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Map;
 
 import com.kh.khedu.dto.AttendanceDto;
 import com.kh.khedu.vo.attendance.AttendanceStudentResponseVO;
 import com.kh.khedu.vo.attendance.KioskStudentCandidateVO;
 import com.kh.khedu.vo.attendance.KioskTargetSessionVO;
+import com.kh.khedu.vo.attendance.StudentAttendanceItemVO;
+import com.kh.khedu.vo.course.CourseSelectBarVO;
 
 public interface AttendanceDao {
 
@@ -40,4 +41,12 @@ public interface AttendanceDao {
     KioskTargetSessionVO selectCurrentTargetAttendance(int studentNo);
     // 출결 상태 업데이트
     int updateKioskAttendance(int attendanceNo, String attendanceState);
+    
+    /*
+     * 학생의 본인 출결 확인용 
+    */
+    // 학생의 수강중인 강좌 조회용(셀렉트바용)    
+    List<CourseSelectBarVO> selectStudentCourseList(int studentNo);
+    //학생이 본인 수강중인 정보 목록
+    List<StudentAttendanceItemVO> selectStudentAttendanceList(int studentNo, int courseNo);
 }

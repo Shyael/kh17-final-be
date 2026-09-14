@@ -2,6 +2,7 @@ package com.kh.khedu.dao;
 
 import java.util.List;
 
+import com.kh.khedu.vo.classSession.CourseSessionVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 

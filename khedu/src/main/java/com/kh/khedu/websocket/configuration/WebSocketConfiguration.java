@@ -26,12 +26,18 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
 	//연결 설정
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
-		registry.addEndpoint(
-					"/ws",//클라이언트가 접속하려면 반드시 /ws로 해야한다 (=전화번호)
-					"/ws-member"//회원 전용 접속 주소
-				)
-				.setAllowedOriginPatterns("*")//접속 가능한 클라이언트 설정 (=CORS)
-				.withSockJS();//SockJS 기술을 사용하도록 선언 (웹소켓을 HTTP로 사용가능하게 해줌)
+	    registry.addEndpoint("/ws", "/ws-member")
+	            .setAllowedOriginPatterns("*")
+	            // 아래 setHandshakeHandler 추가
+	            .setHandshakeHandler(new DefaultHandshakeHandler() {
+	                @Override
+	                protected Principal determineUser(ServerHttpRequest request, 
+	                                                  WebSocketHandler wsHandler, 
+	                                                  Map<String, Object> attributes) {
+	                    return SecurityContextHolder.getContext().getAuthentication();
+	                }
+	            })
+	            .withSockJS();
 	}
 	//수신과 발신 채널을 설정
 	@Override

@@ -8,6 +8,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.kh.khedu.vo.classSession.CourseSessionVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 
@@ -38,5 +39,5 @@ public class ClassroomDaoMybatis implements ClassroomDao {
 		
 		return sqlSession.selectOne("mapper.classroom.checkClassroom", param);
 	}
-
+	
 }

@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import com.kh.khedu.dto.ClassSessionDto;
+import com.kh.khedu.vo.classSession.CourseSessionVO;
 
 public interface ClassSessionDao {
 	
@@ -38,4 +39,7 @@ public interface ClassSessionDao {
   	List<ClassSessionDto> selectExpiredRunningSessions();
   	//세션 상태 '종료'로 변경
   	boolean updateSessionStatusToClosed(int sessionNo);
+  	
+  //강의 세션 조회
+  	List<CourseSessionVO> selectSessionListByCourseNo(int courseNo);
 }
