@@ -31,7 +31,7 @@ public class AcademyTutorRestController {
 	
 	@Operation(summary = "강사 목록 조회 + 검색 + 페이지네이션")
 	@ApiResponse(responseCode = "200", description = "강사 목록 조회 성공")
-	@GetMapping
+	@GetMapping("/")
 	public PageResponseVO<TutorListVO> selectList(
 	        @ModelAttribute TutorSearchVO search) {
 	    return tutorService.selectList(search);

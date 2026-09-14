@@ -105,6 +105,11 @@ public class AssignmentDaoMybatis implements AssignmentDao {
 	public boolean close(int assignmentNo) {
 	    return sqlSession.update("mapper.assignment.close", assignmentNo) > 0;
 	}
+	
+	@Override
+	public int closeExpiredAssignments() {
+	    return sqlSession.update("mapper.assignment.closeExpiredAssignments");
+	}
 
 	
 

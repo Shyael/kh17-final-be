@@ -8,9 +8,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kh.khedu.dao.AssignmentDao;
 import com.kh.khedu.dao.AttendanceDao;
 import com.kh.khedu.dao.ClassSessionDao;
 import com.kh.khedu.dao.CourseDao;
+import com.kh.khedu.dao.ExamDao;
 import com.kh.khedu.dao.ScheduleDao;
 import com.kh.khedu.dto.ClassSessionDto;
 import com.kh.khedu.dto.CourseDto;
@@ -29,6 +31,10 @@ public class SessionSchedulerService {
     private ScheduleDao scheduleDao;
     @Autowired
     private CourseDao courseDao;
+    @Autowired
+    private AssignmentDao assignmentDao;
+    @Autowired
+    private ExamDao examDao;
     
     
     /**
@@ -71,6 +77,23 @@ public class SessionSchedulerService {
         }
     }
     
+    //제출기한 지나면 마감처리
+    @Scheduled(
+	    cron = "0 0 0,12 * * *",
+	    zone = "Asia/Seoul"
+	)
+	@Transactional
+	public void closeExpiredContents() {
+	    int assignmentCount = assignmentDao.closeExpiredAssignments();
+
+	    int examCount = examDao.closeExpiredExams();
+
+	    log.info(
+	        "[스케줄러] 자동 마감 - 과제 {}건 / 시험 {}건",
+	        assignmentCount,
+	        examCount
+	    );
+	}
     
     /**
      * 매일 새벽 00:10 당일 수업 세션 및 출석부 일괄 생성

@@ -41,8 +41,7 @@ public class AcademyAssignmentSubmitRestController {
     @Operation(summary = "과제 제출")
     @ApiResponse(responseCode = "200", description = "과제 제출 성공")
     @PostMapping(
-		value = "/",
-		consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+		value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public AssignmentSubmitDto insert(
     		  @RequestPart("submit")
