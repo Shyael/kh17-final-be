@@ -17,6 +17,7 @@ import com.kh.khedu.vo.consult.ConsultUpdateRequestVO;
 public interface ConsultDao {
 	//상담 예약
 	ReservationDto selectReservationOne(int reservationNo);
+	int selectReservationListCount(ConsultReservationListRequestVO request);
 	List<ConsultReservationListItemVO> selectReservationList(ConsultReservationListRequestVO request);
 	
 	boolean reservationUpdate(int reservationNo, ConsultReservationUpdateRequestVO request);

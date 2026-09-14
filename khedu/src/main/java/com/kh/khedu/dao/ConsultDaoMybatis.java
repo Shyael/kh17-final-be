@@ -32,6 +32,11 @@ public class ConsultDaoMybatis implements ConsultDao {
 	}
 	
 	@Override
+	public int selectReservationListCount(ConsultReservationListRequestVO request) {
+		return sqlSession.selectOne("mapper.consult.reservationListCount", request);
+	}
+	
+	@Override
 	public List<ConsultReservationListItemVO> selectReservationList(ConsultReservationListRequestVO request) {
 		List<ReservationDto> dtoList = sqlSession.selectList("mapper.consult.reservationList", request);
 		List<ConsultReservationListItemVO> voList = new ArrayList<>();
