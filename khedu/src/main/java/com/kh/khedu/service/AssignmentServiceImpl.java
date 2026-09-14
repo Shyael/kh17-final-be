@@ -16,6 +16,7 @@ import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dto.AssignmentDto;
 import com.kh.khedu.dto.AttachDto;
+import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.util.PageResponseVO;
@@ -24,7 +25,6 @@ import com.kh.khedu.vo.assignment.AssignmentListVO;
 import com.kh.khedu.vo.assignment.AssignmentSearchVO;
 import com.kh.khedu.vo.assignment.AssignmentStudentSearchVO;
 import com.kh.khedu.vo.assignment.StudentAssignmentListVO;
-import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 @Service
@@ -100,7 +100,7 @@ public class AssignmentServiceImpl implements AssignmentService {
             ) throws IllegalStateException, IOException {
 
         //선택한 강의 조회
-        CourseDetailVO course = courseDao.selectCourseDetail(assignmentDto.getCourseNo());
+        CourseDto course = courseDao.selectOneByCourseNo(assignmentDto.getCourseNo());
 
         if(course == null) {
             throw new TargetNotfoundException("존재하지 않는 강의입니다.");

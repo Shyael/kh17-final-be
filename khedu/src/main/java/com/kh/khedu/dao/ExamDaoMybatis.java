@@ -122,4 +122,9 @@ public class ExamDaoMybatis implements ExamDao {
 	public boolean close(int examNo) {
 	    return sqlSession.update("mapper.exam.close", examNo) > 0;
 	}
+	
+	@Override
+	public int closeExpiredExams() {
+	    return sqlSession.update("mapper.exam.closeExpiredExams");
+	}
 }

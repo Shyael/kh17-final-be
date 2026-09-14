@@ -54,4 +54,7 @@ public interface AssignmentDao {
 	
 	// 과제 마감
 	boolean close(int assignmentNo);
+	
+	//제출기한 지나면 마감처리
+	int closeExpiredAssignments();
 }

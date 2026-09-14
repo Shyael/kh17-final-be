@@ -41,7 +41,7 @@ public class EmployeeExamRestController {
 	// 시험 등록
     @Operation(summary = "시험 등록")
     @ApiResponse(responseCode = "200", description = "시험 등록 성공")
-    @PostMapping
+    @PostMapping("/")
     public int insert(
             @RequestBody ExamDto examDto,
             @CurrentUser TokenParseResponseVO parseVO) {
@@ -58,7 +58,7 @@ public class EmployeeExamRestController {
 
     //강사/관리자 시험 목록
     @Operation(summary = "시험 관리 목록 조회")
-    @GetMapping
+    @GetMapping("/")
     public PageResponseVO<ExamListVO> selectManageList(
             @ModelAttribute ExamSearchVO search,
             @CurrentUser TokenParseResponseVO parseVO) {

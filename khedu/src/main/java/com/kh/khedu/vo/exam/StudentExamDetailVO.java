@@ -41,4 +41,6 @@ public class StudentExamDetailVO {
     private Timestamp attemptSubmit;
     // 제출 전이면 null
     private Integer attemptScore;
+    
+    private String examPhase;
 }
