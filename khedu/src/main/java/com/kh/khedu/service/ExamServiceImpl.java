@@ -477,7 +477,6 @@ public class ExamServiceImpl implements ExamService {
 	                        "보기 순서가 중복되었습니다."
 	                );
 	            }
-
 	            //작성중에는 정답이 없어도 되지만
 	            //정답이 2개 이상이면 안 됨
 	            long answerCount = questionVO.getOptionList()
