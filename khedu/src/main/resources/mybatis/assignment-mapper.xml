@@ -419,4 +419,13 @@
 	    where assignment_no = #{assignmentNo}
 	</update>
 	
+	<!--  제출기한 지나면 마감처리 -->
+	<update id="closeExpiredAssignments">
+	    update assignment
+	    set assignment_status = '마감'
+	    where assignment_status = '게시'
+	      and assignment_due_date is not null
+	      and assignment_due_date <![CDATA[ <= ]]> systimestamp
+	</update>
+	
 </mapper>

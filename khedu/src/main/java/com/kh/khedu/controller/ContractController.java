@@ -59,33 +59,23 @@ public class ContractController {
 
 	@Autowired
 	private ContractService contractService;
-	
-
-	
-
-	
-	//계약 조회
-	
+		
+	//계약 조회	
 	@GetMapping("/detail/{contractNo}")
 	public ContractDetailResponseVO find (@PathVariable long contractNo, @CurrentUser TokenParseResponseVO parseVO) {
 		return contractService.find(contractNo, parseVO);
 	}
 	
-
-	
-
-	
-
 	//서명 전 작성 된 정보 불러오기
-		@PatchMapping("recallBefore/{contractNo}")
-		public ContractSignDetailResponseVO recallBefore(
-				@PathVariable long contractNo,
-				@CurrentUser TokenParseResponseVO parseVO) {
-			 return contractService.recallBefore(
-			            contractNo,
-			            parseVO
-			    );
-		}
+	@PatchMapping("recallBefore/{contractNo}")
+	public ContractSignDetailResponseVO recallBefore(
+			@PathVariable long contractNo,
+			@CurrentUser TokenParseResponseVO parseVO) {
+		 return contractService.recallBefore(
+		            contractNo,
+		            parseVO
+		    );
+	}
 
 	// 을(직원) 서명 //권한 설정 완
 	@PatchMapping("/{contractNo}/employeeSign")

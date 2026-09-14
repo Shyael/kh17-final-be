@@ -13,4 +13,6 @@ public class CourseSearchVO extends PaginationVO {
 	private String courseSubject;
 	private Integer gradeNo;
 	private String courseStatus;
+	 
+    private Integer employeeNo;
 }

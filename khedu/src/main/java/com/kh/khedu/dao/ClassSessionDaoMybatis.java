@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.ClassSessionDto;
+import com.kh.khedu.vo.classSession.CourseSessionVO;
 
 @Repository
 public class ClassSessionDaoMybatis implements ClassSessionDao {
@@ -87,5 +88,10 @@ public class ClassSessionDaoMybatis implements ClassSessionDao {
 	public boolean updateSessionStatusToClosed(int sessionNo) {
 		return sqlSession.update("mapper.classSession.updateSessionStatusToClosed", sessionNo) > 0;
 	}
-	
+
+	@Override
+	public List<CourseSessionVO> selectSessionListByCourseNo(int courseNo) {
+		return sqlSession.selectList("mapper.classSession.selectSessionListByCourseNo", courseNo);
+	}
+		
 }

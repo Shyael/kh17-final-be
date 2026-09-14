@@ -119,5 +119,32 @@
 	    SET session_status = '종료'
 	    WHERE session_no = #{sessionNo}
 	</update>
+	
+	<!-- 특정 강좌의 전체 세션 목록 및 출결 집계 조회  -->
+	<select id="selectSessionListByCourseNo" resultType="CourseSessionVO">
+		select
+			cs.session_no AS sessionNo,
+			cs.schedule_no AS scheduleNo,
+			cs.classroom_no AS classroomNo,
+			cs.session_start AS sessionStart,
+			cs.session_end AS sessionEnd,
+			cs.session_status AS sessionStatus,
+			count(a.attendance_no)												   AS totalCount,
+			COUNT(CASE WHEN a.attendance_state = '출석' THEN 1 END)                 AS presentCount,
+            COUNT(CASE WHEN a.attendance_state = '지각' THEN 1 END)                 AS lateCount,
+            COUNT(CASE WHEN a.attendance_state = '결석' THEN 1 END)                 AS absentCount
+		from class_session cs
+		join schedule s on cs.schedule_no = s.schedule_no
+		left join attendance a on cs.session_no = a.class_session_no
+		where s.course_no = #{courseNo}
+		Group by
+			cs.session_no,
+			cs.schedule_no,
+			cs.classroom_no,
+			cs.session_start,
+			cs.session_end,
+			cs.session_status
+		order by cs.session_start asc
+	</select>
 
 </mapper>

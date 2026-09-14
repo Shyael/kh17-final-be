@@ -13,6 +13,8 @@ import com.kh.khedu.dto.AttendanceDto;
 import com.kh.khedu.vo.attendance.AttendanceStudentResponseVO;
 import com.kh.khedu.vo.attendance.KioskStudentCandidateVO;
 import com.kh.khedu.vo.attendance.KioskTargetSessionVO;
+import com.kh.khedu.vo.attendance.StudentAttendanceItemVO;
+import com.kh.khedu.vo.course.CourseSelectBarVO;
 
 @Repository
 public class AttendanceDaoMyBatis implements AttendanceDao {
@@ -99,6 +101,22 @@ public class AttendanceDaoMyBatis implements AttendanceDao {
 	    param.put("attendanceNo", attendanceNo);
 	    param.put("attendanceState", attendanceState);
 		return sqlSession.update("mapper.attendance.updateKioskAttendance", param);
+	}
+
+	/*
+	 * 학생 본인 출결 관련
+	 * */
+	@Override
+	public List<CourseSelectBarVO> selectStudentCourseList(int studentNo) {
+		return sqlSession.selectList("mapper.attendance.selectStudentCourseList", studentNo);
+	}
+
+	@Override
+	public List<StudentAttendanceItemVO> selectStudentAttendanceList(int studentNo, int courseNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("studentNo", studentNo);
+		params.put("courseNo", courseNo);
+		return sqlSession.selectList("mapper.attendance.selectStudentAttendanceList", params);
 	}
 
 }
