@@ -700,6 +700,14 @@
         <if test="contractStatus != null and contractStatus != ''">
     		and C.contract_status = #{contractStatus}	
 		</if>
+		
+		
+					<!-- 직원이 대기 + 계약상태 전체일 경우 -->
+<if test="employeeStatus == '대기'
+        and (contractStatus == null or contractStatus == '')">
+    and C.contract_status = 'pending'
+</if>
+		
 
     </where>
             
@@ -766,6 +774,7 @@
             and E.employee_status
                 = #{employeeStatus}
 
+			
         </if>
         
         <if test="contractStatus != null
@@ -775,8 +784,15 @@
         	
         </if>
 
+			<!-- 직원이 대기 + 계약상태 전체일 경우 -->
+<if test="employeeStatus == '대기'
+        and (contractStatus == null or contractStatus == '')">
+    and C.contract_status = 'pending'
+</if>
+		
     </where>
-
+	
+	
 </select>
 
 
