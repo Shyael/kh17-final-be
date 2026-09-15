@@ -332,7 +332,7 @@
 	   	WHERE s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
 	   		and c.course_status in ('모집중', '진행중')
 	   	order by s.schedule_start asc
-   	) WHERE ROWNUM &lt;= 5	
+   	)	
    </select>
 
 </mapper>

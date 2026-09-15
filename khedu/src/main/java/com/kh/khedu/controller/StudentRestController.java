@@ -121,6 +121,7 @@ public class StudentRestController {
     @GetMapping("/course/list/{studentNo}")
     public ResponseEntity<List<AvailableCourseVO>> getAvailableCourseList(@PathVariable int studentNo) {
         List<AvailableCourseVO> list = studentCourseService.getAvailableCourseList(studentNo);
+        System.out.println("신청강좌정보" + list);
         return ResponseEntity.ok(list);
     }
     

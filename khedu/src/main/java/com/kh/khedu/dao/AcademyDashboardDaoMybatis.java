@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.vo.dashboard.DashboardAssignmentVO;
 import com.kh.khedu.vo.dashboard.DashboardChildVO;
+import com.kh.khedu.vo.dashboard.DashboardCourseVO;
 import com.kh.khedu.vo.dashboard.DashboardExamVO;
 
 @Repository
@@ -46,4 +47,16 @@ public class AcademyDashboardDaoMybatis implements AcademyDashboardDao {
     public List<DashboardChildVO> selectChildren(int parentNo) {
         return sqlSession.selectList("mapper.academyDashboard.selectChildren", parentNo);
     }
+    
+    // 학생 - 금일 수업 개수
+	@Override
+	public int countStudentDashboardTodayCourses(int noType) {
+		return sqlSession.selectOne("mapper.academyDashboard.countStudentDashboardTodayCourses", noType);
+	}
+	
+	// 학생 - 금일 수업 목록
+	@Override
+	public List<DashboardCourseVO> selectStudentDashboardTodayCourses(int noType) {
+		return sqlSession.selectList("mapper.academyDashboard.selectStudentDashboardTodayCourses", noType);
+	}
 }

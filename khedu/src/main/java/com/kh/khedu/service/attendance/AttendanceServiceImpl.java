@@ -31,6 +31,7 @@ import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
 import com.kh.khedu.vo.attendance.StudentAttendanceItemVO;
 import com.kh.khedu.vo.attendance.StudentAttendanceResponseVO;
 import com.kh.khedu.vo.attendance.StudentAttendanceSummaryVO;
+import com.kh.khedu.vo.course.CourseTutorVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 import lombok.extern.slf4j.Slf4j;
@@ -246,6 +247,8 @@ public class AttendanceServiceImpl implements AttendanceService {
 		CourseDto course = courseDao.selectOneByCourseNo(courseNo);
 		String courseTitle = course.getCourseTitle();
 		
+		// [1-1] 강좌의 강사 조회
+		CourseTutorVO tutor = courseDao.selectTutorByEmployeeNo(course.getEmployeeNo());
 		// [2] 최신순 이력 조회
 		List<StudentAttendanceItemVO> list = attendanceDao.selectStudentAttendanceList(studentNo, courseNo);
 		if(list == null) list = Collections.emptyList();
@@ -301,6 +304,8 @@ public class AttendanceServiceImpl implements AttendanceService {
         return StudentAttendanceResponseVO.builder()
                 .courseNo(courseNo)
                 .courseTitle(courseTitle)
+                .tutorNo(tutor.getTutorNo())
+                .tutorName(tutor.getAccountName())
                 .summary(summary)
                 .attendanceList(list)
                 .studentCourseStatus(studentCourseStatus)

@@ -34,6 +34,8 @@ public class AcademyDashboardServiceImpl implements AcademyDashboardService {
 	                    .availableExamCount(academyDashboardDao.countAvailableExams(noType))
 	                    .upcomingExamCount(academyDashboardDao.countUpcomingExams(noType))
 	                    .exams(academyDashboardDao.selectDashboardExams(noType))
+	                    .todayCourses(academyDashboardDao.countStudentDashboardTodayCourses(noType))
+	                    .courses(academyDashboardDao.selectStudentDashboardTodayCourses(noType))
                     .build();
         }
 
@@ -66,6 +68,12 @@ public class AcademyDashboardServiceImpl implements AcademyDashboardService {
                         academyDashboardDao
                                 .selectDashboardExams(studentNo)
                 );
+                child.setTodayCourses(
+                		academyDashboardDao
+                				.countStudentDashboardTodayCourses(noType));
+                child.setCourses(
+                		academyDashboardDao
+                				.selectStudentDashboardTodayCourses(noType));
             }
 
             // 모든 자녀를 처리한 뒤 반환
