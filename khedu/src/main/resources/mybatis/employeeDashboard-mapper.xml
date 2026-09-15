@@ -142,7 +142,10 @@
   		   c.course_no                         AS courseNo,
            c.course_title                      AS courseTitle,
            c.course_subject                    AS courseSubject,
-           e.employee_name                     AS tutorName,
+           g.grade_level                       AS gradeLevel,
+           NVL(act.account_name, '미지정')      AS tutorName,
+           s.schedule_start || ' ~ ' || s.schedule_end AS scheduleInfo,
+           NVL(cs.classroom_no, s.classroom_no) || '호' AS classroomInfo,
            s.schedule_no                       AS scheduleNo,
            s.schedule_start                    AS scheduleStart,
            s.schedule_end                      AS scheduleEnd,
@@ -153,10 +156,12 @@
            c.course_limit                      AS courseLimit
 	   	from schedule s
 	   	join course c on s.course_no = c.course_no
+	   	LEFT JOIN grade g ON c.grade_no = g.grade_no
 	   	left join employee e on c.employee_no = e.employee_no
+	   	left join account act ON e.account_no = act.account_no
 	   	left join class_session cs
 	   			on s.schedule_no = cs.schedule_no
-	   			and TRUNC(CAST(cs.session_start AS DATE)) == TRUNC(SYSDATE)
+	   			and TRUNC(CAST(cs.session_start AS DATE)) = TRUNC(SYSDATE)
 	   	WHERE s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
 	   		and c.course_status in ('모집중', '진행중')
 	   		and c.employee_no = #{employeeNo}
@@ -304,7 +309,10 @@
   		   c.course_no                         AS courseNo,
            c.course_title                      AS courseTitle,
            c.course_subject                    AS courseSubject,
-           e.employee_name                     AS tutorName,
+           g.grade_level                       AS gradeLevel,
+           NVL(act.account_name, '미지정')      AS tutorName,
+           s.schedule_start || ' ~ ' || s.schedule_end AS scheduleInfo,
+           NVL(cs.classroom_no, s.classroom_no) || '호' AS classroomInfo,
            s.schedule_no                       AS scheduleNo,
            s.schedule_start                    AS scheduleStart,
            s.schedule_end                      AS scheduleEnd,
@@ -315,14 +323,16 @@
            c.course_limit                      AS courseLimit
 	   	from schedule s
 	   	join course c on s.course_no = c.course_no
+	   	LEFT JOIN grade g ON c.grade_no = g.grade_no
 	   	left join employee e on c.employee_no = e.employee_no
+	   	left join account act ON e.account_no = act.account_no
 	   	left join class_session cs
 	   			on s.schedule_no = cs.schedule_no
-	   			and TRUNC(CAST(cs.session_start AS DATE)) == TRUNC(SYSDATE)
+	   			and TRUNC(CAST(cs.session_start AS DATE)) = TRUNC(SYSDATE)
 	   	WHERE s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
 	   		and c.course_status in ('모집중', '진행중')
 	   	order by s.schedule_start asc
-   	) 	
+   	) WHERE ROWNUM &lt;= 5	
    </select>
 
 </mapper>
