@@ -119,4 +119,14 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 	            requestVO
 	    );
 	}
+	
+	@Override
+	public int adminEmployeeSearchCount(
+	        AdminEmployeeSearchRequestVO requestVO) {
+
+	    return sqlSession.selectOne(
+	            "mapper.employee.adminEmployeeSearchCount",
+	            requestVO
+	    );
+	}
 }

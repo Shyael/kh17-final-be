@@ -25,4 +25,7 @@ public class ContractListSearchVO
 
     // 직원 상태
     private String employeeStatus;
+    
+    //
+    private String contractStatus;
 }
