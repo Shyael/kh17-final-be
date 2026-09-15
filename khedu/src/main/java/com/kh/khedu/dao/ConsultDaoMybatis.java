@@ -72,6 +72,14 @@ public class ConsultDaoMybatis implements ConsultDao {
 	}
 	
 	@Override
+	public Integer selectConsultCustomerNo(String customerName, String customerMobile) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("customerName", customerName);
+		params.put("customerMobile", customerMobile);
+		return sqlSession.selectOne("mapper.consult.customerNo", params);
+	}
+	
+	@Override
 	public ConsultCustomerDto selectConsultCustomerOne(int customerNo) {
 		return sqlSession.selectOne("mapper.consult.customerInfo", customerNo);
 	}

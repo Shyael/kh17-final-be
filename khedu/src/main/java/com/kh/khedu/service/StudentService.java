@@ -15,6 +15,7 @@ import com.kh.khedu.dao.AccountDao;
 import com.kh.khedu.dao.AccountRolesDao;
 import com.kh.khedu.dao.AttendanceDao;
 import com.kh.khedu.dao.ClassSessionDao;
+import com.kh.khedu.dao.ConsultDao;
 import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.StudentDao;
 import com.kh.khedu.dao.StudentLinkDao;
@@ -70,6 +71,8 @@ public class StudentService {
 	private ClassSessionDao classSessionDao;
 	@Autowired
 	private AttendanceDao attendanceDao;
+	@Autowired
+	private ConsultDao consultDao;
 	
 	//학생 정보 등록
 	@Transactional
@@ -87,7 +90,7 @@ public class StudentService {
 		
 		// [2] 상담 정보 등록 
 		// 상담테이블에서 이름과 핸드폰 번호로 가져오기(map형태나 vo만들어서 나중에 하기)
-//		int consultCustommerNo = consultCustomerDao.selectOne(accountVO.getAccountPhone(), accountVO.getAccountName());
+		Integer consultCustommerNo = consultDao.selectConsultCustomerNo(accountVO.getAccountName(), accountVO.getAccountPhone());
 		
 		// [3] student 등록
 		int studentNo = studentDao.sequence();
@@ -95,7 +98,7 @@ public class StudentService {
 		StudentVO studentVO = StudentVO.builder()
 					.studentNo(studentNo)
 					.accountNo(accountNo)
-					.consultCustomerNo(null)
+					.consultCustomerNo(consultCustommerNo)
 					.studentSchool(request.getStudentSchool())
 					.studentGrade(request.getStudentGrade())
 					.studentGender(request.getStudentGender())

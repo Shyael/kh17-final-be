@@ -71,6 +71,13 @@
 		select consult_customer_seq.nextval from dual
 	</select>
 	
+	<select id="customerNo" resultType="int">
+		select 	customer_no
+		from 	consult_customer
+		where	customer_name = #{customerName}
+		  and	customer_mobile = #{customerMobile}
+	</select>
+	
 	<select id="customerInfo" resultType="ConsultCustomerDto">
 		select	*
 		from	consult_customer

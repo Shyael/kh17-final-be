@@ -24,6 +24,7 @@ public interface ConsultDao {
 	
 	//고객 정보
 	int customerSequence();
+	Integer selectConsultCustomerNo(String customerName, String customerMobile);
 	ConsultCustomerDto selectConsultCustomerOne(int customerNo);
 	ConsultCustomerDto selectConsultCustomerDupCheck(ConsultCustomerListItemVO request);
 	List<ConsultCustomerListItemVO> selectConsultCustomerList(ConsultCustomerListRequestVO request);

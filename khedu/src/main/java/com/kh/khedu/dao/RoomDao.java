@@ -25,4 +25,7 @@ public interface RoomDao {
 	
 	void readRoomUser(int roomNo, int accountNo);
 	void readRoomEmployee(int roomNo);
+	
+	void enter(int sequence, int roomNo, int accountNo);
+	void leave(int roomNo, int accountNo);
 }

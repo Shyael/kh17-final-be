@@ -71,4 +71,19 @@ public class RoomDaoMybatis implements RoomDao {
 	public void readRoomEmployee(int roomNo) {
 		sqlSession.update("mapper.room.readRoomEmployee", roomNo);
 	}
+	@Override
+	public void enter(int sequence, int roomNo, int accountNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("roomUserNo", sequence);
+		params.put("roomNo", roomNo);
+		params.put("accountNo", accountNo);
+		sqlSession.insert("mapper.room.enter", params);
+	}
+	@Override
+	public void leave(int roomNo, int accountNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("roomNo", roomNo);
+		params.put("accountNo", accountNo);
+		sqlSession.insert("mapper.room.leave", params);
+	}
 }
