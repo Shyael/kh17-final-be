@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
 
+import com.kh.khedu.dto.ScoreDto;
 import com.kh.khedu.vo.score.ScoreListResponseVO;
 import com.kh.khedu.vo.score.StudentExamVO;
 
@@ -17,14 +18,13 @@ import lombok.RequiredArgsConstructor;
 public class StudentScoreDaoMybatis implements StudentScoreDao {
 
     private final SqlSession sqlSession;
-    private final String NAMESPACE = "scoreMapper."; // 실제 매퍼 네임스페이스에 맞게 수정하세요!
 
     @Override
     public List<ScoreListResponseVO> selectSchoolExamScoreList(int studentNo, String scoreName) {
         Map<String, Object> params = new HashMap<>();
         params.put("studentNo", studentNo);
         params.put("scoreName", scoreName); // ex: '1학기 중간고사'
-        return sqlSession.selectList(NAMESPACE + "selectSchoolExamScoreList", params);
+        return sqlSession.selectList("mapper.score.selectSchoolExamScoreList", params);
     }
 
     @Override
@@ -32,11 +32,20 @@ public class StudentScoreDaoMybatis implements StudentScoreDao {
         Map<String, Object> params = new HashMap<>();
         params.put("studentNo", studentNo);
         params.put("scoreName", scoreName); // ex: '3월 모의고사'
-        return sqlSession.selectList(NAMESPACE + "selectMockExamScoreList", params);
+        return sqlSession.selectList("mapper.score.selectMockExamScoreList", params);
     }
     
     @Override
     public List<StudentExamVO> selectStudentExamList(int studentNo) {
-        return sqlSession.selectList(NAMESPACE + "selectStudentExamList", studentNo);
+        return sqlSession.selectList("mapper.score.selectStudentExamList", studentNo);
+    }
+    
+    public Integer selectStudentNoByAccountNo(int accountNo) {
+        return sqlSession.selectOne("mapper.score.selectStudentNoByAccountNo", accountNo);
+    }
+    
+    @Override
+    public List<ScoreDto> selectListByStudent(int studentNo) {
+        return sqlSession.selectList("mapper.score.selectListByStudent", studentNo);
     }
 }

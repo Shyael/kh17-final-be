@@ -68,10 +68,10 @@
             P.payment_amount as totalAmount,
             
             -- 납부 내역(history) 테이블에서 해당 결제건의 납부액을 모두 더함 (없으면 0)
-            NVL((select sum(payment_history_amount) from payment_history where payment_no = P.payment_no), 0) as paidAmount,
+            NVL((select sum(payment_history_amount) from payment_history where payment_history_status = '결제완료' and payment_no = P.payment_no), 0) as paidAmount,
             
             -- 총액 - 납부액 = 남은 금액
-            P.payment_amount - NVL((select sum(payment_history_amount) from payment_history where payment_no = P.payment_no), 0) as remainingAmount,
+            P.payment_amount - NVL((select sum(payment_history_amount) from payment_history where payment_no = P.payment_no and payment_history_status = '결제완료'), 0) as remainingAmount,
             
             -- 최근 납부일 (가장 마지막에 돈 낸 날짜)
             (select max(payment_history_at) from payment_history where payment_no = P.payment_no) as lastPaidDate
@@ -156,13 +156,17 @@
             payment_history_no, 
             payment_no, 
             payment_history_amount, 
-            payment_history_at
+            payment_history_at, 
+            payment_history_tid, 
+            payment_history_status
         )
         values (
             payment_history_seq.nextval, 
             #{paymentNo}, 
             #{paymentHistoryAmount}, 
-            sysdate
+            sysdate, 
+            #{paymentHistoryTid},
+            '결제완료'
         )
     </insert>
 
@@ -171,6 +175,7 @@
         select NVL(sum(payment_history_amount), 0) 
         from payment_history 
         where payment_no = #{paymentNo}
+        and payment_history_status = '결제완료'
     </select>
 
     <!-- 3. 영수증(마스터) 상태 업데이트 -->
@@ -178,6 +183,14 @@
         update payment 
         set payment_status = #{paymentStatus} 
         where payment_no = #{paymentNo}
+    </update>
+    
+    <update id="updatePaymentHistoryCancel">
+        update payment_history 
+        set payment_history_status = '결제취소', 
+            payment_history_cancel_reason = #{cancelReason}, 
+            payment_history_canceled_at = systimestamp
+        where payment_history_no = #{paymentHistoryNo}
     </update>
   
 </mapper>

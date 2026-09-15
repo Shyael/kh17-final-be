@@ -2,12 +2,16 @@ package com.kh.khedu.controller;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.khedu.dto.ScoreDto;
+import com.kh.khedu.service.ScoreService;
 import com.kh.khedu.service.StudentScoreService;
 import com.kh.khedu.vo.score.ScoreListResponseVO;
 import com.kh.khedu.vo.score.StudentExamVO;
@@ -18,8 +22,9 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/academy/score")
 @RequiredArgsConstructor
 public class StudentScoreRestController {
-
-    private final StudentScoreService studentScoreService;
+	
+	@Autowired
+    private StudentScoreService studentScoreService;
 
     // 성적 리스트 및 등락 조회 API
     // GET /api/academy/score/student/list?studentNo=1&scoreName=3월 모의고사&scoreType=모의고사
@@ -41,5 +46,18 @@ public class StudentScoreRestController {
     public ResponseEntity<List<StudentExamVO>> getStudentExamList(@RequestParam int studentNo) {
         List<StudentExamVO> examList = studentScoreService.getStudentExamList(studentNo);
         return ResponseEntity.ok(examList);
+    }
+    
+ // 학생 본인의 studentNo 가져오기 API
+    @GetMapping("/student-no")
+    public ResponseEntity<Integer> getStudentNo(@RequestParam int accountNo) {
+        Integer studentNo = studentScoreService.selectStudentNoByAccountNo(accountNo);
+        return ResponseEntity.ok(studentNo);
+    }
+    
+    @GetMapping("/history")
+    public ResponseEntity<List<ScoreDto>> getScoreHistory(@RequestParam int studentNo) {
+        List<ScoreDto> historyList = studentScoreService.getScoreHistory(studentNo);
+        return ResponseEntity.ok(historyList);
     }
 }

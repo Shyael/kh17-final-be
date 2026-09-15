@@ -2,6 +2,7 @@ package com.kh.khedu.dao;
 
 import java.util.List;
 
+import com.kh.khedu.dto.ScoreDto;
 import com.kh.khedu.vo.score.ScoreListResponseVO;
 import com.kh.khedu.vo.score.StudentExamVO;
 
@@ -13,4 +14,6 @@ public interface StudentScoreDao {
     List<ScoreListResponseVO> selectMockExamScoreList(int studentNo, String scoreName);
     
     List<StudentExamVO> selectStudentExamList(int studentNo);
+    Integer selectStudentNoByAccountNo(int accountNo);
+    List<ScoreDto> selectListByStudent(int studentNo);
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.kh.khedu.dao.StudentScoreDao;
+import com.kh.khedu.dto.ScoreDto;
 import com.kh.khedu.vo.score.ScoreListResponseVO;
 import com.kh.khedu.vo.score.StudentExamVO;
 
@@ -38,5 +39,15 @@ public class StudentScoreServiceImpl implements StudentScoreService {
     @Override
     public List<StudentExamVO> getStudentExamList(int studentNo) {
         return studentScoreDao.selectStudentExamList(studentNo);
+    }
+    
+    @Override
+    public Integer selectStudentNoByAccountNo(int accountNo) {
+    	return studentScoreDao.selectStudentNoByAccountNo(accountNo);
+    }
+    
+    @Override
+    public List<ScoreDto> getScoreHistory(int studentNo) {
+        return studentScoreDao.selectListByStudent(studentNo);
     }
 }

@@ -81,7 +81,10 @@
 	    select 
 	        score_subject as scoreSubject, 
 	        score_score as scoreScore, 
-	        score_rank as scoreRank,
+	        score_rank as scoreRank, 
+	        score_name as scoreName, 
+	        score_type as scoreType, 
+	        score_date as scoreDate,
 	        -- 이전 시험 등급을 가져와서 현재 등급과 빼기 (낮아질수록 좋은 거라면 순서를 바꿔도 됨)
 	        score_rank - lag(score_rank, 1) over (partition by score_subject order by score_date asc) as rankDiff
 	    from score
@@ -111,7 +114,7 @@
 	    left outer join subject sb on sc.score_subject = sb.subject_name
 	    where sc.student_no = #{studentNo}
 	      and sc.score_name = #{scoreName} /* ex: '3월 모의고사' */
-	      and sc.score_type = '모의고사' or '수능'
+	      and sc.score_type in ('모의고사', '수능')
 	    order by 
 	        sb.subject_code asc nulls last -- 과목 코드가 낮은 순(국->수->영...)으로 정렬, 매칭 안 된 건 맨 뒤로
 	</select>
@@ -126,6 +129,13 @@
 	    group by score_name, score_type
 	    order by max(score_date) desc
 	</select>
+	
+	<!-- accountNo로 studentNo 찾기 -->
+    <select id="selectStudentNoByAccountNo" resultType="Integer" parameterType="int">
+        select student_no 
+        from student 
+        where account_no = #{accountNo}
+    </select>
 
 
 </mapper>
