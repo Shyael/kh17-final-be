@@ -77,4 +77,11 @@
 		and classroom_capacity >= #{courseLimit}
 	</select>
 	
+	<!-- 동시성 제어를 위한 비관적 락(Pessimistic Lock) -->
+	<select id="selectClassroomForUpdate" resultType="int">
+		select classroom_no
+		from classroom
+		where classroom_no = #{classroomNo}
+		FOR UPDATE
+	</select>
 </mapper>

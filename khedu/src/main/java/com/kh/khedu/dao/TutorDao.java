@@ -40,4 +40,7 @@ public interface TutorDao {
 	int checkTutorSubject(int employeeNo, int academySubjectNo);
 	// =========== 강사 조회  =============
 	List<TutorSubjectVO> tutorListBySubject();
+	
+	// 동시성 요청을 제어하기 위한 비관적 락(Pessimistic Lock) 설정
+	Integer selectTutorForUpdate(int employeeNo);
 }

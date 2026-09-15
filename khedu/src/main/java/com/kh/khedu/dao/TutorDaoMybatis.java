@@ -99,6 +99,13 @@ public class TutorDaoMybatis implements TutorDao {
 	public int selectCount(TutorSearchVO search) {
 		return sqlSession.selectOne("mapper.tutor.selectCount", search);
 	}
+	
+	
+	// 동시성 제어를 위한 비관적 락(Pessimistic Lock) 설정
+	@Override
+	public Integer selectTutorForUpdate(int employeeNo) {
+		return sqlSession.selectOne("mapper.tutor.selectTutorForUpdate", employeeNo);
+	}
 
 
 }
