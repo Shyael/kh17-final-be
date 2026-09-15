@@ -22,10 +22,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "시험 보기 관리")
+@Tag(name = "시험 보기 관리(직원)")
 @RestController
-@RequestMapping("/api/question-option")
-public class QuestionOptionRestController {
+@RequestMapping("/api/employee/question-option")
+public class EmployeeQuestionOptionRestController {
 
     @Autowired
     private QuestionOptionService questionOptionService;

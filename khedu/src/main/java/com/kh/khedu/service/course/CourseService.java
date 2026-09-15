@@ -3,6 +3,7 @@ package com.kh.khedu.service.course;
 import java.util.List;
 
 import com.kh.khedu.util.PageResponseVO;
+import com.kh.khedu.vo.classSession.CourseSessionVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
@@ -47,5 +48,5 @@ public interface CourseService {
 	        int employeeNo,
 	        boolean tutor
 	);
-
+	
 }

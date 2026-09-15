@@ -219,35 +219,56 @@
 	        e.exam_end,
 	        e.exam_limit,
 	        e.exam_status,
+	
+	        case
+	            when e.exam_status = '마감'
+	                 or systimestamp >= e.exam_end
+	            then '종료'
+	
+	            when systimestamp <![CDATA[ < ]]> e.exam_start
+	            then '예정'
+	
+	            else '응시가능'
+	        end as exam_phase,
+	
 	        (
 	            select count(*)
 	            from question q
 	            where q.exam_no = e.exam_no
 	        ) as question_count,
+	
 	        (
 	            select nvl(sum(q.question_score), 0)
 	            from question q
 	            where q.exam_no = e.exam_no
 	        ) as total_score,
+	
 	        at.attempt_no,
 	        at.attempt_status,
 	        at.attempt_start,
 	        at.attempt_submit,
 	        at.attempt_score
+	
 	    from exam e
+	
 	    join course c
 	        on e.course_no = c.course_no
+	
 	    left join attempt at
 	        on e.exam_no = at.exam_no
 	        and at.student_no = #{studentNo}
+	
 	    where e.exam_no = #{examNo}
 	        and e.exam_status in ('공개', '마감')
+	
 	        and exists (
 	            select 1
 	            from student_course sc
 	            where sc.course_no = e.course_no
 	                and sc.student_no = #{studentNo}
+	                and sc.student_course_status = '수강중'
 	        )
+	
 	</select>
 
     <!-- 특정 강의의 최근 시험 5개 조회 -->
@@ -663,5 +684,13 @@
 	    update exam
 	    set exam_status = '마감'
 	    where exam_no = #{examNo}
+	</update>
+	
+	<!-- 제출기한 지나면 마감 처리 -->
+	<update id="closeExpiredExams">
+	    update exam
+	    set exam_status = '마감'
+	    where exam_status = '공개'
+	      and exam_end <![CDATA[ <= ]]> systimestamp
 	</update>
 </mapper>

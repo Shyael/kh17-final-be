@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,25 +20,20 @@ import com.kh.khedu.dto.TutorCareerDto;
 import com.kh.khedu.dto.TutorDto;
 import com.kh.khedu.dto.TutorSubjectDto;
 import com.kh.khedu.service.TutorService;
-import com.kh.khedu.util.PageResponseVO;
-import com.kh.khedu.vo.tutor.TutorDetailVO;
 import com.kh.khedu.vo.tutor.TutorEmployeeVO;
-import com.kh.khedu.vo.tutor.TutorListVO;
-import com.kh.khedu.vo.tutor.TutorSearchVO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "강사 정보 관리 서비스")
+@Tag(name = "강사 정보 관리 서비스(직원)")
 @RestController
-@RequestMapping("/api/tutor")
-public class TutorRestController {
-
+@RequestMapping("/api/employee/tutor")
+public class EmployeeTutorRestController {
+	
 	@Autowired
 	private TutorService tutorService;
-
-
+	
 	// ==================== 강사 기본정보 ====================
 	@Operation(summary = "강사 정보 등록")
 	@ApiResponse(responseCode = "200", description = "강사 등록 성공")
@@ -50,23 +44,6 @@ public class TutorRestController {
 			MultipartFile image
 			) throws IllegalStateException, IOException {
 	    return tutorService.insert(tutorDto, image);
-	}
-	
-	@Operation(summary = "강사 목록 조회 + 검색 + 페이지네이션")
-	@ApiResponse(responseCode = "200", description = "강사 목록 조회 성공")
-	@GetMapping
-	public PageResponseVO<TutorListVO> selectList(
-	        @ModelAttribute TutorSearchVO search) {
-	    return tutorService.selectList(search);
-	}
-	
-	@Operation(summary = "강사 상세정보 조회")
-	@ApiResponse(responseCode = "200", description = "강사 상세정보 조회 성공")
-	@GetMapping(value = "/{tutorNo}", produces = "application/json")
-	public TutorDetailVO selectDetail(
-			@PathVariable int tutorNo) {
-
-		return tutorService.selectDetail(tutorNo);
 	}
 	
 	@Operation(summary = "강사 정보 수정")
@@ -90,20 +67,16 @@ public class TutorRestController {
 
 		return tutorService.delete(tutorNo);
 	}
-
-
-	// ==================== 강사 등록 가능 직원 ====================
 	
+	// ==================== 강사 등록 가능 직원 ====================
 	@Operation(summary = "강사 등록 가능 직원 목록 조회")
 	@ApiResponse(responseCode = "200", description = "강사 등록 가능 직원 목록 조회 성공")
 	@GetMapping(value = "/available-employee", produces = "application/json")
 	public List<TutorEmployeeVO> selectAvailableEmployeeList() {
 		return tutorService.selectAvailableEmployeeList();
 	}
-
-
-	// ==================== 강사 담당과목 ====================
 	
+	// ==================== 강사 담당과목 ====================
 	@Operation(summary = "강사 담당과목 등록")
 	@ApiResponse(responseCode = "200", description = "강사 담당과목 등록 성공")
 	@PostMapping(value = "/subject", produces = "application/json")
@@ -134,10 +107,8 @@ public class TutorRestController {
 
 		return tutorService.deleteSubject(tutorSubjectNo);
 	}
-
-
-	// ==================== 강사 학력/경력 ====================
 	
+	// ==================== 강사 학력/경력 ====================
 	@Operation(summary = "강사 학력/경력 등록")
 	@ApiResponse(responseCode = "200", description = "강사 학력/경력 등록 성공")
 	@PostMapping(value = "/career", produces = "application/json")
@@ -176,5 +147,5 @@ public class TutorRestController {
 	public void deleteImage(@PathVariable int tutorNo) {
 		tutorService.deleteImage(tutorNo);
 	}
-
+	
 }

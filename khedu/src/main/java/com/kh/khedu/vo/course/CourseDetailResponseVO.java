@@ -7,6 +7,7 @@ import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.vo.assignment.AssignmentListVO;
 import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
+import com.kh.khedu.vo.classSession.CourseSessionVO;
 import com.kh.khedu.vo.exam.ExamListVO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -32,4 +33,9 @@ public class CourseDetailResponseVO {
 	// [4] 시험 정보
 	private List<ExamListVO> examList;
 	
+	// [5] 학생 정보
+	private List<CourseStudentListVO> studentList;
+	
+	// [6] 세션 목록
+	private List<CourseSessionVO> sessionList;
 }

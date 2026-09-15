@@ -23,12 +23,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "시험 답안 관리")
 @RestController
-@RequestMapping("/api/attempt-answer")
-public class AttemptAnswerRestController {
+@RequestMapping("/api/academy/attempt-answer")
+public class AcademyAttemptAnswerRestController {
 
     @Autowired
     private AttemptAnswerService attemptAnswerService;
-
 
     // 답안 등록
     @Operation(summary = "시험 답안 등록")

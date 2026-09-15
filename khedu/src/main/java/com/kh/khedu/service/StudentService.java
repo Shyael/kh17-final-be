@@ -3,9 +3,7 @@ package com.kh.khedu.service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +27,8 @@ import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
+import com.kh.khedu.util.PageResponseVO;
+import com.kh.khedu.util.PaginationVO;
 import com.kh.khedu.vo.account.AccountJoinResponseVO;
 import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.account.CheckPasswordRequestVO;
@@ -124,12 +124,16 @@ public class StudentService {
 
 
 	//학생 목록
-	public List<StudentListResponseVO> getStudentList(String filter, String searchKeyword) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("filter", filter);
-        params.put("searchKeyword", searchKeyword);
+	public PageResponseVO<StudentListResponseVO> getStudentList(String filter, String searchKeyword, PaginationVO pagination) {
         
-        return studentDao.selectList(params); // DAO 메서드 호출
+        // 1. 조건에 맞는 전체 데이터 개수 조회
+        int totalCount = studentDao.count(filter, searchKeyword);
+        
+        // 2. 페이징된 목록 조회
+        List<StudentListResponseVO> list = studentDao.list(filter, searchKeyword, pagination);
+        
+        // 3. 팀원이 만든 PageResponseVO에 통째로 담아서 컨트롤러로 리턴!
+        return new PageResponseVO<>(list, totalCount, pagination);
     }
 	
 	

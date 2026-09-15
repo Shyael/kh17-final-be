@@ -13,6 +13,7 @@ import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.course.CourseSimpleListVO;
+import com.kh.khedu.vo.course.CourseStudentListVO;
 import com.kh.khedu.vo.course.StudentCourseListVO;
 
 @Repository
@@ -47,12 +48,6 @@ public class CourseDaoMybatis implements CourseDao {
 	@Override
 	public List<CourseListVO> selectCourseList() {
 		return sqlSession.selectList("mapper.course.list");
-	}
-
-	//강좌 상세
-	@Override
-	public CourseDetailVO selectCourseDetail(int courseNo) {
-		return sqlSession.selectOne("mapper.course.detail", courseNo);
 	}
 	
 	@Override
@@ -111,6 +106,11 @@ public class CourseDaoMybatis implements CourseDao {
 	@Override
 	public List<CourseSimpleListVO> selectManageCourseListByEmployee(int employeeNo) {
 	    return sqlSession.selectList("mapper.course.selectManageCourseListByEmployee",employeeNo);
+	}
+
+	@Override
+	public List<CourseStudentListVO> selectCourseStudentList(int courseNo) {
+		return sqlSession.selectList("mapper.course.selectCourseStudentList", courseNo);
 	}
 
 	

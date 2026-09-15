@@ -107,7 +107,7 @@
 	</select>
 	
 	<!-- schedule_open을 오늘 날짜로 변경 -->
-	<update id="updateOpenByCourseNo">
+	<update id="updateOpen">
 		update schedule
 		set schedule_open = #{today}
 		where course_no = #{courseNo}

@@ -35,6 +35,7 @@ import com.kh.khedu.service.attendance.AttendanceService;
 import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.assignment.AssignmentListVO;
 import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
+import com.kh.khedu.vo.classSession.CourseSessionVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
@@ -43,6 +44,7 @@ import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.course.CourseSimpleListVO;
+import com.kh.khedu.vo.course.CourseStudentListVO;
 import com.kh.khedu.vo.course.StudentCourseListVO;
 import com.kh.khedu.vo.exam.ExamListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
@@ -321,7 +323,7 @@ public class CourseServiceImpl implements CourseService {
         String tutorName = courseDao.selectTutorNameByEmployeeNo(course.getEmployeeNo());
         List<ScheduleDto> scheduleList = scheduleDao.selectListByCourseNo(courseNo);
         
-     // [2] 오늘 날짜에 해당하는 세션 및 출결 현황 탐색
+        // [2] 오늘 날짜에 해당하는 세션 및 출결 현황 탐색
         ClassSessionDto todaySession = null;
         SessionAttendanceDetailVO attendanceDetail = null;
 
@@ -355,12 +357,18 @@ public class CourseServiceImpl implements CourseService {
         List<AssignmentListVO> assignmentList = assignmentService.selectRecentListByCourse(courseNo);
         // [4] 시험 정보 조회
         List<ExamListVO> examList = examService.selectRecentListByCourse(courseNo);
-        
+        // [5] 학생 정보 조회
+    	List<CourseStudentListVO> studentList = courseDao.selectCourseStudentList(courseNo);    	
+    	// [6] 강좌 수강생 목록 세팅
+    	List<CourseSessionVO> sessionList = classSessionDao.selectSessionListByCourseNo(courseNo);
+    	
         // null 방어 처리
         if (assignmentList == null) assignmentList = Collections.emptyList();
         if (examList == null) examList = Collections.emptyList();
+        if (studentList == null) studentList = Collections.emptyList(); 
+        if (sessionList == null) sessionList = Collections.emptyList();
         
-        // [3] 통합 응답 객체 생성 (3, 4번 과제/시험은 빈 리스트 유지)
+        // [7] 통합 응답 객체 생성 (3, 4번 과제/시험은 빈 리스트 유지)
         return CourseDetailResponseVO.builder()
                 .courseInfo(course)
                 .tutorName(tutorName)
@@ -369,6 +377,8 @@ public class CourseServiceImpl implements CourseService {
                 .attendanceDetail(attendanceDetail)
                 .assignmentList(assignmentList) // 과제 팀원 영역 (비워둠)
                 .examList(examList)       // 시험 팀원 영역 (비워둠)
+                .studentList(studentList) // 수강생 목록
+                .sessionList(sessionList) // 전체 회차 세션 목록
                 .build();
 	}
 

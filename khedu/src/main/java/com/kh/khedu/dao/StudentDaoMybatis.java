@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.StudentDto;
+import com.kh.khedu.util.PaginationVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
 import com.kh.khedu.vo.student.StudentDetailResponseVO;
 import com.kh.khedu.vo.student.StudentListResponseVO;
@@ -33,10 +34,24 @@ public class StudentDaoMybatis implements StudentDao {
 	}
 
     
-    // 학생 목록 전체 조회
 	@Override
-    public List<StudentListResponseVO> selectList(Map<String, Object> params) {
-        // sqlSession에게 "student"라는 namespace의 "list"라는 쿼리를 실행하라고 지시
+    public int count(String filter, String searchKeyword) {
+        // 파라미터가 2개이므로 Map 바구니에 담기
+        Map<String, Object> params = new HashMap<>();
+        params.put("filter", filter);
+        params.put("searchKeyword", searchKeyword);
+        
+        return sqlSession.selectOne("mapper.student.count", params);
+    }
+
+    @Override
+    public List<StudentListResponseVO> list(String filter, String searchKeyword, PaginationVO pagination) {
+        // 파라미터가 3개이므로 Map 바구니에 담기
+        Map<String, Object> params = new HashMap<>();
+        params.put("filter", filter);
+        params.put("searchKeyword", searchKeyword);
+        params.put("pagination", pagination); // XML에서 #{pagination.beginRow} 등으로 꺼내 씀
+        
         return sqlSession.selectList("mapper.student.list", params);
     }
 

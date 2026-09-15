@@ -7,6 +7,7 @@ import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.course.CourseSimpleListVO;
+import com.kh.khedu.vo.course.CourseStudentListVO;
 import com.kh.khedu.vo.course.StudentCourseListVO;
 
 public interface CourseDao {
@@ -23,10 +24,6 @@ public interface CourseDao {
 
 	// 강좌 목록
 	List<CourseListVO> selectCourseList();
-	
-
-	// 강좌 상세
-	CourseDetailVO selectCourseDetail(int courseNo);
 	
 	// 강의 대상 학년 조회
     String selectCourseGrade(int courseNo);
@@ -56,4 +53,8 @@ public interface CourseDao {
 	
 	// 강사 - 본인이 담당하는 강의 목록
 	List<CourseSimpleListVO> selectManageCourseListByEmployee(int employeeNo);
+
+	//courseNo로 학생 번호와 계정 번호
+	List<CourseStudentListVO> selectCourseStudentList(int courseNo);
+	
 }

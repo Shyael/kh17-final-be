@@ -20,14 +20,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "시험 응시 관리")
+@Tag(name = "시험 응시 관리(학생/학부모)")
 @RestController
-@RequestMapping("/api/attempt")
-public class AttemptRestController {
+@RequestMapping("/api/academy/attempt")
+public class AcademyAttemptRestController {
 
     @Autowired
     private AttemptService attemptService;
-
 
     // 시험 응시 시작
     @Operation(summary = "시험 응시 시작")
@@ -59,15 +58,5 @@ public class AttemptRestController {
     	return attemptService.selectResult(attemptNo, parseVO.getNoType());
     }
     
- // 강사용 학생 시험 결과 조회
-    @Operation(summary = "강사용 학생 시험 결과 조회")
-    @GetMapping("/{attemptNo}/result/manage")
-    public ExamResultVO selectResultByManage(
-            @PathVariable int attemptNo,
-            @CurrentUser TokenParseResponseVO parseVO) {
-    	//강사인지
-        boolean tutor =parseVO.getRoleNames().contains(RoleType.TUTOR.getCode());
-        
-        return attemptService.selectResultByManage(attemptNo,parseVO.getNoType(),tutor);
-    }
+    
 }

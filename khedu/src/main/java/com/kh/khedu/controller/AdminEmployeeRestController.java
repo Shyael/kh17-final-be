@@ -22,7 +22,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "관리자 직원 정보 관리")
 @RestController
-//@RequestMapping("/api/admin/employee") //기존코드
 @RequestMapping("/api/admin/employee")
 public class AdminEmployeeRestController {
 	
@@ -43,12 +42,7 @@ public class AdminEmployeeRestController {
 		return employeeService.findEmployeeInfo(employeeNo);
 	}
 	
-	//직원 수정
-	
-	
-	
-	//직원 검색(한성)
-	
+	//직원 검색
 	@GetMapping("/search")
 	public List<AdminEmployeeSearchResponseVO> adminEmployeeSearch(
 	        @ModelAttribute AdminEmployeeSearchRequestVO requestVO,
@@ -66,7 +60,6 @@ public class AdminEmployeeRestController {
 	public AdminEmployeeDetailVO findEmployeeInfo(
 	        @PathVariable int employeeNo
 	) {
-
 	    return employeeService.findEmployeeInfo(employeeNo);
 	}
 }
