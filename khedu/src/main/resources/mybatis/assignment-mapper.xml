@@ -386,7 +386,6 @@
         set
             assignment_title = #{assignmentTitle},
             assignment_content = #{assignmentContent},
-            assignment_status = #{assignmentStatus},
             assignment_due_date = #{assignmentDueDate}
         where assignment_no = #{assignmentNo}
     </update>
