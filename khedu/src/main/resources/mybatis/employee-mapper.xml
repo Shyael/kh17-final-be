@@ -117,7 +117,7 @@
     update employee
     set employee_status = '재직'
     where employee_no = #{employeeNo}
-      and employee_status = '대기'
+      and employee_status = '대기','종료'
 
 	</update>
 	
@@ -158,7 +158,7 @@
 
     set E.employee_status = '재직'
 
-    where E.employee_status = '대기'
+    where E.employee_status in ('대기','종료')
 
       and exists (
 
@@ -168,7 +168,7 @@
 
           where C.employee_no = E.employee_no
             and C.contract_status = 'active'
-            and C.signed_time is not null
+           
       )
 
 </update>		
@@ -323,39 +323,97 @@
 
 </select>
 
-<select
-    id="adminEmployeeSearch"
-    parameterType="AdminEmployeeSearchRequestVO"
-    resultType="AdminEmployeeSearchResponseVO">
+<select id="adminEmployeeSearch"
+        parameterType="AdminEmployeeSearchRequestVO"
+        resultType="AdminEmployeeSearchResponseVO">
 
-    select
-        E.employee_no as employeeNo,
-        E.employee_type as employeeType,
-        E.employee_htime as employeeHtime,
-        E.employee_status as employeeStatus,
+    select *
+    from (
 
-        A.account_id as accountId,
-        A.account_name as accountName,
-        A.account_phone as accountPhone,
-        A.account_birth as accountBirth,
-        A.account_status as accountStatus,
-        A.account_ctime as accountCtime
+        select
+            inner_table.*,
+            rownum rn
+
+        from (
+
+            select
+                E.employee_no as employeeNo,
+                E.employee_type as employeeType,
+                E.employee_htime as employeeHtime,
+                E.employee_status as employeeStatus,
+
+                A.account_id as accountId,
+                A.account_name as accountName,
+                A.account_phone as accountPhone,
+                A.account_birth as accountBirth,
+                A.account_status as accountStatus,
+                A.account_ctime as accountCtime
+
+            from employee E
+
+            join account A
+                on E.account_no = A.account_no
+
+            <where>
+
+        E.employee_type != '원장'
+
+        <if test="accountName != null and accountName != ''">
+
+            and A.account_name like #{accountName} || '%'
+
+        </if>
+
+        <if test="employeeType != null and employeeType != ''">
+
+            and E.employee_type = #{employeeType}
+
+        </if>
+
+    </where>
+
+            order by
+                E.employee_no desc
+
+        ) inner_table
+
+        where rownum <![CDATA[ <= ]]> #{endRow}
+
+    )
+
+    where rn <![CDATA[ >= ]]> #{beginRow}
+
+</select>
+
+
+<select id="adminEmployeeSearchCount"
+        parameterType="AdminEmployeeSearchRequestVO"
+        resultType="int">
+
+    select count(*)
 
     from employee E
+
     join account A
         on E.account_no = A.account_no
 
-    where E.employee_type != '원장'
+   <where>
 
-    <if test="accountName != null and accountName != ''">
-        and A.account_name like #{accountName} || '%'
-    </if>
+        E.employee_type != '원장'
 
-    <if test="employeeType != null and employeeType != ''">
-        and E.employee_type = #{employeeType}
-    </if>
+        <if test="accountName != null and accountName != ''">
 
-    order by A.account_name asc
+            and A.account_name like #{accountName} || '%'
+
+        </if>
+
+        <if test="employeeType != null and employeeType != ''">
+
+            and E.employee_type = #{employeeType}
+
+        </if>
+
+    </where>
 
 </select>
 

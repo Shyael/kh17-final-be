@@ -176,8 +176,8 @@ public class ContractServiceImpl implements ContractService {
 	        throw new TargetNotfoundException();
 
 
-	    // 최초 계약 대상은 대기 직원
-	    if (!"대기".equals(employeeStatus))
+	    //계약 대상은 대기 혹은 종료 직원
+	    if (!"대기".equals(employeeStatus) && !"종료".equals(employeeStatus))
 	        throw new GetOutException();
 
 
@@ -226,7 +226,7 @@ public class ContractServiceImpl implements ContractService {
 		        contractDto.getWeeklyWorkHours(),
 		        contractDto.getWrittenBreakMinutes()
 		);
-		// [6] 최초 등록 상태는 서명대기
+		// [6] 신규 등록 상태는 서명대기
 		contractDto.setContractStatus("pending");
 
 		// [7] 근로계약 번호 생성
@@ -486,7 +486,7 @@ public class ContractServiceImpl implements ContractService {
 		if (currentContract == null)
 			throw new TargetNotfoundException();
 
-		if (currentContract.getEmployeeSignature() != null)
+		if (currentContract.getEmployerSignature() != null)
 			throw new GetOutException();
 
 

@@ -19,6 +19,9 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	@Autowired
 	EmployeeDashboardDao employeeDashboardDao;
 	
+	 @Autowired
+	 private AdminDashboardService adminDashboardService;
+
 	@Override
     public EmployeeDashboardVO getDashboard(
             TokenParseResponseVO parseVO) {
@@ -33,6 +36,18 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	                     .availableExamCount(employeeDashboardDao.countAllAvailableExams())
 	                     .upcomingExamCount(employeeDashboardDao.countAllUpcomingExams())
 	                     .exams( employeeDashboardDao.selectAllDashboardExams())
+	                     
+
+	                     // 추가한 계약 / 급여
+	                     .pendingContractList(
+	                             adminDashboardService.getPendingContractList()
+	                     )
+	                     .contractExpiringList(
+	                             adminDashboardService.getContractExpiringList()
+	                     )
+	                     .payrollDueList(
+	                             adminDashboardService.getPayrollDueList()
+	                     )
                      .build();
         }
         
