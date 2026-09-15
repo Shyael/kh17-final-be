@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CurrentUser;
+import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.PrincipalChecker;
 import com.kh.khedu.service.payroll.PayrollService;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;

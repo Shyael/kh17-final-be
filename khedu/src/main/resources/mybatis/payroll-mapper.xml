@@ -695,6 +695,11 @@
                 = #{employeeStatus}
 
         </if>
+        
+        <!--계약 상태  -->
+        <if test="contractStatus != null and contractStatus != ''">
+    		and C.contract_status = #{contractStatus}	
+		</if>
 
     </where>
             
