@@ -293,15 +293,15 @@ public class EmployeeAttendanceServiceImpl
         }
 
 
-        // =========================
-        // 명시적 휴무일이면 출근 불가
-        // =========================
-
-        if ("dayOff".equals(
-                todaySchedule.getScheduledDayType())) {
-
-            throw new GetOutException();
-        }
+//        // =========================
+//        // 명시적 휴무일이면 출근 불가
+//        // =========================
+//
+//        if ("dayOff".equals(
+//                todaySchedule.getScheduledDayType())) {
+//
+//            throw new GetOutException();
+//        }
 
 
         // =========================
