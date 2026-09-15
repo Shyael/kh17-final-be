@@ -3,6 +3,7 @@ package com.kh.khedu.dao;
 import java.util.List;
 
 import com.kh.khedu.vo.dashboard.DashboardAssignmentVO;
+import com.kh.khedu.vo.dashboard.DashboardCourseVO;
 import com.kh.khedu.vo.dashboard.DashboardExamVO;
 
 public interface EmployeeDashboardDao {
@@ -21,6 +22,12 @@ public interface EmployeeDashboardDao {
     // 강사 - 가까운 시험 최대 5개
     List<DashboardExamVO> selectDashboardExams(int employeeNo);
     
+    // 강사 - 금일 본인 강좌 조회 
+    List<DashboardCourseVO> selectTutorDashboardTodayCourses(int employeeNo);
+    
+    // 강사 - 금일 모든 강좌 개수
+    int countTutorDashboardTodayCourses(int employeeNo);
+    
     //원장
     // 원장 / 데스크 - 전체 강사 수
     int countTutors();
@@ -37,4 +44,11 @@ public interface EmployeeDashboardDao {
 
     // 원장 / 데스크 - 다가오는 시험 최대 5개
     List<DashboardExamVO> selectAllDashboardExams();
+    
+    // 원장/데스크 - 금일 모든 강좌 조회(상위 5개만)
+    List<DashboardCourseVO> selectAdminDashboardTodayCourses();
+    
+    //원장/데스크 - 금일 모든 강좌 개수
+	int countAdminDashboardTodayCourses();
+    
 }

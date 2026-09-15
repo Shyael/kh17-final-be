@@ -35,8 +35,8 @@ public class ParentAcademyRestController {
 	@Autowired
 	private ParentService parentService;
 	
-	//학부모 등록
-	@ApiResponse(responseCode = "200", description="등록 성공")
+	//학부모 회원가입
+	@ApiResponse(responseCode = "200", description="회원가입 성공")
 	@PostMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
 	public AccountJoinResponseVO join(
 			@RequestBody ParentJoinRequestVO request) {

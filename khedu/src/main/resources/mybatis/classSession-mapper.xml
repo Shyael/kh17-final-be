@@ -9,7 +9,7 @@
 	<select id="selectTodaySession" resultType="ClassSessionDto">
 		select * from class_session 
 		where schedule_no = #{scheduleNo}
-		and session_start = #{sessionStart}
+		AND TRUNC(CAST(session_start AS DATE)) = TRUNC(CAST(#{sessionStart} AS DATE))
 	</select>
 	
 	<!-- classSessionNo생성 -->
@@ -61,7 +61,7 @@
 		where session_no = #{sessionNo}
 	</select>
 	
-	<!-- [수정1] 파라미터명 sessionStatus로 통일 및 session_end 업데이트 -->
+	<!-- session_end 업데이트 -->
 	<update id="updateSessionToEnd">
 		update class_session
 		set session_status = #{sessionStatus},
@@ -69,10 +69,37 @@
 		where session_no = #{sessionNo}
 	</update>
 
-	<!-- [추가1] 관리자용 단순 상태 변경 쿼리 (종료시각 강제덮어쓰기 방지) -->
+	<!-- 관리자용 단순 상태 변경 쿼리 (종료시각 강제덮어쓰기 방지) -->
 	<update id="updateStatusOnly">
 		update class_session
 		set session_status = #{sessionStatus}
+		where session_no = #{sessionNo}
+	</update>
+	
+	<!-- 특정 시간대에 해당 강의실을 쓰는 다른 세션이 있는지 조회(충돌체크) 본인 제외  -->
+	<select id="checkClassroomConflict" resultType="int">
+		select count(*)
+		from class_session cs
+		where cs.session_no != #{sessionNo}
+		and	  cs.classroom_no = #{classroomNo}
+		and cs.session_status != '취소'
+	    and cs.session_start &lt; #{sessionEnd}
+	    and cs.session_end &gt; #{sessionStart}
+	</select>
+	
+	<!-- 상태, 강의실, 시간 통합 수정 -->
+	<update id="updateSessionByAdmin">
+		update class_session
+		set session_status = #{sessionStatus}
+			<if test="classroomNo != null">
+	            , classroom_no = #{classroomNo}
+	        </if>
+	        <if test="sessionStart != null">
+	            , session_start = #{sessionStart}
+	        </if>
+	        <if test="sessionEnd != null">
+	            , session_end = #{sessionEnd}
+	        </if>
 		where session_no = #{sessionNo}
 	</update>
 	
@@ -145,6 +172,23 @@
 			cs.session_end,
 			cs.session_status
 		order by cs.session_start asc
+	</select>
+	
+	<!-- 자동 시작 대상 스케줄 조회 쿼리 -->
+	<select id="selectAutoStartTargets" resultType="ScheduleDto">
+    SELECT s.*
+    FROM schedule s
+    JOIN course c ON s.course_no = c.course_no
+    WHERE s.schedule_week = TO_CHAR(SYSDATE, 'DY')
+      AND s.schedule_start &lt;= TO_CHAR(SYSDATE, 'HH24:MI')
+      AND s.schedule_end &gt; TO_CHAR(SYSDATE, 'HH24:MI')
+      AND c.course_status IN ('모집중', '진행중')
+      AND NOT EXISTS (
+          SELECT 1 
+          FROM class_session cs
+          WHERE cs.schedule_no = s.schedule_no
+            AND TRUNC(cs.session_start) = TRUNC(SYSDATE)
+      )
 	</select>
 
 </mapper>

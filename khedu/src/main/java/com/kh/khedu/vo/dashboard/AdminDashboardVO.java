@@ -17,4 +17,8 @@ public class AdminDashboardVO implements EmployeeDashboardVO {
     private int availableExamCount;
     private int upcomingExamCount;
     private List<DashboardExamVO> exams;
+    
+    // 금일 강좌 목록
+    private int todayCourses; // 금일 강좌 개수
+    private List<DashboardCourseVO> courses;
 }

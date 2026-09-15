@@ -56,9 +56,9 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 	
 	//schedule_open의 날짜를 오늘로 변경
 	@Override
-	public boolean updateOpenByCourseNo(int scheduleNo, LocalDate today) {
+	public boolean updateOpenByCourseNo(int courseNo, LocalDate today) {
 		Map<String, Object> param = new HashMap<>();
-		param.put("scheduleNo", scheduleNo);
+		param.put("courseNo", courseNo);
 		param.put("today", today);
 		return sqlSession.update("mapper.schedule.updateOpen", param) > 0;
 	}

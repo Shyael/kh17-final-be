@@ -22,4 +22,8 @@ public class TutorDashboardVO implements EmployeeDashboardVO {
     
     // 가까운 시험 최대 5개
     private List<DashboardExamVO> exams;
+    
+    // 오늘의 강의 다 보여주기
+    private int todayCourses; // 금일 강좌 개수
+    private List<DashboardCourseVO> courses;
 }

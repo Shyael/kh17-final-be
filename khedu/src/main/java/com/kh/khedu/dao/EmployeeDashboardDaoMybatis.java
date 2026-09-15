@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.vo.dashboard.DashboardAssignmentVO;
+import com.kh.khedu.vo.dashboard.DashboardCourseVO;
 import com.kh.khedu.vo.dashboard.DashboardExamVO;
 
 @Repository
@@ -41,6 +42,16 @@ public class EmployeeDashboardDaoMybatis implements EmployeeDashboardDao {
         return sqlSession.selectList("mapper.employeeDashboard.selectDashboardExams", employeeNo);
     }
     
+    @Override
+    public List<DashboardCourseVO> selectTutorDashboardTodayCourses(int employeeNo) {
+    	return sqlSession.selectList("mapper.employeeDashboard.selectTutorDashboardTodayCourses", employeeNo);
+    }
+    
+    @Override
+    public int countTutorDashboardTodayCourses(int employeeNo) {
+    	return sqlSession.selectOne("mapper.employeeDashboard.countTutorDashboardTodayCourses", employeeNo);
+    }
+    
     //원장/데스크
 	@Override
 	public int countTutors() {
@@ -71,7 +82,15 @@ public class EmployeeDashboardDaoMybatis implements EmployeeDashboardDao {
 	public List<DashboardExamVO> selectAllDashboardExams() {
 		 return sqlSession.selectList("mapper.employeeDashboard.selectAllDashboardExams");
 	}
-
-
+	
+	@Override
+	public List<DashboardCourseVO> selectAdminDashboardTodayCourses() {
+		return sqlSession.selectList("mapper.employeeDashboard.selectAdminDashboardTodayCourses");
+	}
+	
+	@Override
+	public int countAdminDashboardTodayCourses() {
+		return sqlSession.selectOne("mapper.employeeDashboard.countAdminDashboardTodayCourses");
+	}
 	
 }
