@@ -16,6 +16,7 @@ import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.enums.RoleType;
+import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.service.course.CourseService;
 import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
@@ -73,11 +74,22 @@ public class CourseRestController {
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping("/list")
 	public PageResponseVO<CourseListVO> courseList(
-			@Valid @ModelAttribute CourseSearchVO search
+			@Valid @ModelAttribute CourseSearchVO search,
+			@CurrentUser TokenParseResponseVO parseVO
 	){
+		if(parseVO == null || parseVO.getRoleNames() == null) {
+			throw new TargetNotfoundException();
+		}
+		
+		List<String> roles = parseVO.getRoleNames();
+		boolean isStaff = roles.contains(RoleType.ADMIN.getCode())
+				|| roles.contains(RoleType.DESK.getCode());
+		//권한이 desk, 관리자가 아니고 직원이면
+		if(!isStaff && roles.contains(RoleType.TUTOR.getCode())) {
+			search.setEmployeeNo(parseVO.getNoType());
+		}
 		return courseService.selectList(search);
 	}
-	
 	
 	// 로그인한 강사의 진행중인 강의 목록 조회
 	@ApiResponse(responseCode = "200", description = "내가 수업중인 강의 목록 조회 성공")
@@ -90,7 +102,7 @@ public class CourseRestController {
 	
 	//강좌 상세정보
 	@ApiResponse(responseCode = "200", description = "강좌 상세페이지 조회 성공")
-	@GetMapping("/{courseNo}")
+	@GetMapping("/detail/{courseNo}")
     public ResponseEntity<CourseDetailResponseVO> getCourseDetail(
             @PathVariable int courseNo,
             @CurrentUser TokenParseResponseVO parseVO) {

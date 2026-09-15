@@ -4,6 +4,7 @@ import com.kh.khedu.vo.attendance.AttendanceUpdateByAdminVO;
 import com.kh.khedu.vo.attendance.KioskAttendanceRequestVO;
 import com.kh.khedu.vo.attendance.KioskAttendanceResponseVO;
 import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
+import com.kh.khedu.vo.attendance.StudentAttendanceResponseVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 public interface AttendanceService {
@@ -15,4 +16,7 @@ public interface AttendanceService {
 	
 	//키오스크 처리
 	KioskAttendanceResponseVO processKioskAttendance(KioskAttendanceRequestVO request);
+	
+	// 학생 본인 강좌 출결 조회용
+	StudentAttendanceResponseVO getStudentAttendanceDetail(int studentNo, int courseNo);
 }

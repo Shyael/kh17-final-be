@@ -1,16 +1,22 @@
 package com.kh.khedu.websocket.configuration;
 
+import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.messaging.context.AuthenticationPrincipalArgumentResolver;
 import org.springframework.security.messaging.context.SecurityContextChannelInterceptor;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 //웹소켓 설정
 //@EnableWebSocker//웹소켓을 서버에서 사용하는 것을 허용 (클래식 웹소켓)
@@ -20,12 +26,18 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
 	//연결 설정
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
-		registry.addEndpoint(
-					"/ws",//클라이언트가 접속하려면 반드시 /ws로 해야한다 (=전화번호)
-					"/ws-member"//회원 전용 접속 주소
-				)
-				.setAllowedOriginPatterns("*")//접속 가능한 클라이언트 설정 (=CORS)
-				.withSockJS();//SockJS 기술을 사용하도록 선언 (웹소켓을 HTTP로 사용가능하게 해줌)
+	    registry.addEndpoint("/ws", "/ws-member")
+	            .setAllowedOriginPatterns("*")
+	            // 아래 setHandshakeHandler 추가
+	            .setHandshakeHandler(new DefaultHandshakeHandler() {
+	                @Override
+	                protected Principal determineUser(ServerHttpRequest request, 
+	                                                  WebSocketHandler wsHandler, 
+	                                                  Map<String, Object> attributes) {
+	                    return SecurityContextHolder.getContext().getAuthentication();
+	                }
+	            })
+	            .withSockJS();
 	}
 	//수신과 발신 채널을 설정
 	@Override

@@ -60,4 +60,7 @@ public interface ExamDao {
     
     // 시험 마감
     boolean close(int examNo);
+    
+    //제출기한 지나면 마감처리
+    int closeExpiredExams();
 }

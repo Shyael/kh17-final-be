@@ -33,12 +33,6 @@ public class EmployeeWorkScheduleRestController {
     @Autowired
     private EmployeeAttendanceDao employeeAttendanceDao;
 
-   
-
-
-   
-
-
     // 특정 날짜 근무 일정 조회
     @ApiResponse(
             responseCode = "200",
@@ -59,7 +53,6 @@ public class EmployeeWorkScheduleRestController {
                 employeeVO,
                 scheduledWorkDate);
     }
-
 
     // 직원 기간별 근무 일정 조회
     @GetMapping("/mySearch")

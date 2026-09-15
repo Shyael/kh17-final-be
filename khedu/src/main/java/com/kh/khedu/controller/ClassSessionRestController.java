@@ -24,7 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "실제 수업 관리")
 @RestController
 @RequestMapping("/api/employee/class-session")
-public class ClassSessionController {
+public class ClassSessionRestController {
 	
 	@Autowired
 	private ClassSessionService classSessionService;
@@ -56,7 +56,7 @@ public class ClassSessionController {
      * - 원장/데스크/관리자: 모든 스케줄 등록 가능
      * - 강사: 본인이 담당하는 스케줄만 등록 가능
      */
-	@PostMapping
+	@PostMapping("/")
     public ResponseEntity<String> insertSession(
             @CurrentUser TokenParseResponseVO parseVO,
             @RequestBody AdminClassSessionInsertVO request) {

@@ -124,6 +124,11 @@
 			<if test="courseStatus != null and courseStatus != ''">
 				and c.course_status = #{courseStatus}
 			</if>
+			
+			<!-- 강사(TUTOR)일 때 본인 강좌만 조회하는 조건 -->
+	        <if test="employeeNo != null">
+	            and c.employee_no = #{employeeNo}
+	        </if>
 		</where>
 	</sql>
 	
