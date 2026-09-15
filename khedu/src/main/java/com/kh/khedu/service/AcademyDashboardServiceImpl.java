@@ -44,7 +44,7 @@ public class AcademyDashboardServiceImpl implements AcademyDashboardService {
             int parentNo = noType;
 
             List<DashboardChildVO> children = academyDashboardDao.selectChildren(parentNo);
-
+            System.out.println("내자식" + children);
             for (DashboardChildVO child : children) {
                 int studentNo = child.getStudentNo();
 
@@ -70,10 +70,10 @@ public class AcademyDashboardServiceImpl implements AcademyDashboardService {
                 );
                 child.setTodayCourses(
                 		academyDashboardDao
-                				.countStudentDashboardTodayCourses(noType));
+                				.countStudentDashboardTodayCourses(studentNo));
                 child.setCourses(
                 		academyDashboardDao
-                				.selectStudentDashboardTodayCourses(noType));
+                				.selectStudentDashboardTodayCourses(studentNo));
             }
 
             // 모든 자녀를 처리한 뒤 반환
