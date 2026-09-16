@@ -1,13 +1,16 @@
 package com.kh.khedu.service;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.kh.khedu.dao.AssignmentDao;
 import com.kh.khedu.dao.AssignmentSubmitDao;
@@ -247,10 +250,31 @@ public class AssignmentServiceImpl implements AssignmentService {
                 tutor
         );
     	
-    	//1. 과제 기본정보 수정
+    	// 2. 기존 과제 조회
+    	AssignmentDetailVO origin = assignmentDao.selectOne(assignmentDto.getAssignmentNo());
+    	
+    	// 3. 마감 여부 확인
+        boolean closed =
+                "마감".equals(origin.getAssignmentStatus())
+                ||
+                (
+                    origin.getAssignmentDueDate() != null
+                    && !origin.getAssignmentDueDate().after(
+                            new Timestamp(System.currentTimeMillis())
+                    )
+                );
+
+        if (closed) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "마감된 과제는 수정할 수 없습니다."
+            );
+        }
+    	
+    	//4. 과제 기본정보 수정
         boolean result = assignmentDao.update(assignmentDto);
         
-        //2. 신규 첨부파일 추가
+        //5. 신규 첨부파일 추가
         if(files != null && files.size() > 0) {
         	for(MultipartFile file : files) {
         		if(!file.isEmpty()) {

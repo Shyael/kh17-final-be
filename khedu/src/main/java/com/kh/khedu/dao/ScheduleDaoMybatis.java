@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.vo.schedule.ScheduleCreateRequestVO;
+import com.kh.khedu.vo.schedule.WeeklyScheduleVO;
 
 @Repository
 public class ScheduleDaoMybatis implements ScheduleDao {
@@ -56,9 +57,9 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 	
 	//schedule_open의 날짜를 오늘로 변경
 	@Override
-	public boolean updateOpenByCourseNo(int scheduleNo, LocalDate today) {
+	public boolean updateOpenByCourseNo(int courseNo, LocalDate today) {
 		Map<String, Object> param = new HashMap<>();
-		param.put("scheduleNo", scheduleNo);
+		param.put("courseNo", courseNo);
 		param.put("today", today);
 		return sqlSession.update("mapper.schedule.updateOpen", param) > 0;
 	}
@@ -77,6 +78,17 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 	@Override
 	public List<ScheduleDto> selectTodayActiveSchedules(String todayKorean) {
 		return sqlSession.selectList("mapper.schedule.selectTodayActiveSchedules", todayKorean);
+	}
+	
+	//주간 강의 시간표 조회
+	@Override
+	public List<WeeklyScheduleVO> selectWeeklySchedules(LocalDate weekStart, LocalDate weekEnd) {
+	    Map<String, Object> param = new HashMap<>();
+
+	    param.put("weekStart", weekStart);
+	    param.put("weekEnd", weekEnd);
+
+	    return sqlSession.selectList("mapper.schedule.selectWeeklySchedules", param);
 	}
 
 }

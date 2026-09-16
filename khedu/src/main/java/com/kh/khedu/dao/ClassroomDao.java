@@ -19,4 +19,7 @@ public interface ClassroomDao {
 	//강의실 사용 가능 여부 확인
 	int checkClassroom(int classroomNo, int courseLimit);
 	
+	//동시성 제어를 위한 비관적 락(pessimistic Lock) 설정
+	Integer selectClassroomForUpdate(int classroomNo);
+	
 }

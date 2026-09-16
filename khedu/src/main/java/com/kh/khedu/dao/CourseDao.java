@@ -3,11 +3,11 @@ package com.kh.khedu.dao;
 import java.util.List;
 
 import com.kh.khedu.dto.CourseDto;
-import com.kh.khedu.vo.course.CourseDetailVO;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.course.CourseSimpleListVO;
 import com.kh.khedu.vo.course.CourseStudentListVO;
+import com.kh.khedu.vo.course.CourseTutorVO;
 import com.kh.khedu.vo.course.StudentCourseListVO;
 
 public interface CourseDao {
@@ -46,7 +46,10 @@ public interface CourseDao {
 	
 	//강사 사번(employee_no)으로 강사 이름 조회
 	String selectTutorNameByEmployeeNo(int employeeNo);
-
+	
+	//강사 번호(employee_no)으로 강사 조회
+	CourseTutorVO selectTutorByEmployeeNo(int employeeNo);
+		
 	//관리 화면 강의 필터용
 	// 원장/데스크 - 전체 강의 목록
 	List<CourseSimpleListVO> selectManageCourseList();

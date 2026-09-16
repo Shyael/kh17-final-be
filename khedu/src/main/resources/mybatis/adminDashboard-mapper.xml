@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mapper.adminDashboard">
+<select id="findPendingContractList"
+        resultType="DashboardPendingContractVO">
+
+    select
+        C.contract_no as contractNo,
+        C.employee_no as employeeNo,
+        A.account_name as employeeName,
+        C.employee_signature as employeeSignature,
+        C.employer_signature as employerSignature
+
+    from employment_contract C
+
+    join employee E
+        on C.employee_no = E.employee_no
+
+    join account A
+        on E.account_no = A.account_no
+
+    where C.contract_status = 'pending'
+
+    order by C.contract_start asc,
+             C.contract_no asc
+
+</select>
+
+
+<select id="findContractExpiringList"
+        resultType="DashboardContractExpiringVO">
+
+    select
+        C.contract_no as contractNo,
+        C.employee_no as employeeNo,
+        A.account_name as employeeName,
+        C.contract_end as contractEnd,
+
+        C.contract_end
+        - systimestamp as dDay
+
+    from employment_contract C
+
+    join employee E
+        on C.employee_no = E.employee_no
+
+    join account A
+        on E.account_no = A.account_no
+
+    where C.contract_status = 'active'
+
+    and C.contract_end is not null
+
+    and C.contract_end
+        between systimestamp
+        and systimestamp + 7
+
+    order by C.contract_end asc
+
+</select>
+
+<!-- 급여일 임박 / 미지급 대상 조회 -->
+<select id="getPayrollDueList"
+        resultType="DashboardPayrollDueQueryVO">
+
+    select
+        X.payroll_no as payrollNo,
+        X.employee_no as employeeNo,
+        A.account_name as employeeName,
+        X.payroll_year as payrollYear,
+        X.payroll_month as payrollMonth,
+        X.payday as payday,
+        X.net_pay as netPay,
+        PP.payment_status as paymentStatus
+
+    from (
+
+        select
+            P.payroll_no,
+            P.employee_no,
+            P.payroll_year,
+            P.payroll_month,
+            P.net_pay,
+            C.contract_no,
+            C.payday,
+
+            row_number() over (
+                partition by P.payroll_no
+                order by max(S.scheduled_work_date) desc,
+                         C.contract_no desc
+            ) as rn
+
+        from payroll P
+
+        join employment_contract C
+            on P.employee_no = C.employee_no
+
+        join employee_work_schedule S
+            on C.contract_no = S.contract_no
+
+        where extract(year from S.scheduled_work_date) = P.payroll_year
+          and extract(month from S.scheduled_work_date) = P.payroll_month
+
+        group by
+            P.payroll_no,
+            P.employee_no,
+            P.payroll_year,
+            P.payroll_month,
+            P.net_pay,
+            C.contract_no,
+            C.payday
+
+    ) X
+
+    join employee E
+        on X.employee_no = E.employee_no
+
+    join account A
+        on E.account_no = A.account_no
+
+    left join payroll_payment PP
+        on X.payroll_no = PP.payroll_no
+
+    where X.rn = 1
+
+</select>
+
+
+
+</mapper>

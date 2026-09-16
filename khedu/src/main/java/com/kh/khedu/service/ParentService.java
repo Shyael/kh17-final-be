@@ -24,6 +24,7 @@ import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.account.AccountJoinResponseVO;
 import com.kh.khedu.vo.account.AccountRegisterVO;
 import com.kh.khedu.vo.account.CheckPasswordRequestVO;
@@ -32,6 +33,8 @@ import com.kh.khedu.vo.parent.ChangeParentRequestVO;
 import com.kh.khedu.vo.parent.ChangeParentResponseVO;
 import com.kh.khedu.vo.parent.ParentDetailVO;
 import com.kh.khedu.vo.parent.ParentJoinRequestVO;
+import com.kh.khedu.vo.parent.ParentSearchVO;
+import com.kh.khedu.vo.parent.ParentUpdateRequestVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentDetailVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentRelatioshipUpdateRequestVO;
 import com.kh.khedu.vo.studentLink.ParentLinkRequestVO;
@@ -306,4 +309,67 @@ public class ParentService {
         return parentDao.searchParents(keyword);
     }
 	
+    
+    //===============================================
+    // 관리자 기능
+    
+    // 학부모 조회
+    public PageResponseVO<ParentDetailVO> getParentList(
+    		ParentSearchVO searchVO,
+    		TokenParseResponseVO parseVO
+    ){
+    	if (!AccountType.EMPLOYEE.getDescription().equals(parseVO.getAccountType())) {
+    		throw new WhoAreYouException("직원 전용 기능입니다");
+    	}
+    	
+    	int totalCount = parentDao.count(searchVO);
+    	List<ParentDetailVO> list =parentDao.list(searchVO);
+    	
+    	return new PageResponseVO<>(list, totalCount, searchVO);
+    }
+    
+	 // ==========================================
+	 // 직원용: 학부모 가입 승인 (N -> Y)
+	 // ==========================================
+	 @Transactional
+	 public void approveParent(int parentNo, TokenParseResponseVO parseVO) {
+	     // 1. 로그인 유저 정보 및 직원 권한 검증 (NPE 방어)
+	     if (parseVO == null || !AccountType.EMPLOYEE.getDescription().equals(parseVO.getAccountType())) {
+	         throw new WhoAreYouException("로그인이 필요하거나 직원 전용 기능입니다.");
+	     }
+	
+	     // 2. DAO를 통해 account_status = 'Y'로 업데이트
+	     boolean result = parentDao.approveParent(parentNo);
+	     
+	     // 3. 대상 학부모가 없거나 업데이트 실패 시 예외 처리
+	     if (!result) {
+	         throw new TargetNotfoundException("해당 학부모 정보를 찾을 수 없거나 이미 승인된 계정입니다.");
+	     }
+	 }
+	 
+	// 학부모 단건 상세 조회
+	 public ParentDetailVO getParentDetail(int parentNo, TokenParseResponseVO parseVO) {
+	     if (parseVO == null || !AccountType.EMPLOYEE.getDescription().equals(parseVO.getAccountType())) {
+	         throw new WhoAreYouException("직원 전용 기능입니다.");
+	     }
+	     
+	     ParentDetailVO detail = parentDao.detail(parentNo);
+	     if (detail == null) {
+	         throw new TargetNotfoundException("해당 학부모 정보를 찾을 수 없습니다.");
+	     }
+	     return detail;
+	 }
+
+	 // 학부모 정보 수정
+	 @Transactional
+	 public void updateParentInfo(ParentUpdateRequestVO requestVO, TokenParseResponseVO parseVO) {
+	     if (parseVO == null || !AccountType.EMPLOYEE.getDescription().equals(parseVO.getAccountType())) {
+	         throw new WhoAreYouException("직원 전용 기능입니다.");
+	     }
+
+	     boolean result = parentDao.updateAccountInfo(requestVO);
+	     if (!result) {
+	         throw new TargetNotfoundException("수정 대상 학부모 계정을 찾을 수 없습니다.");
+	     }
+	 }
 }

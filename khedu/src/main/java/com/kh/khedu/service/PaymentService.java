@@ -249,4 +249,61 @@ public class PaymentService {
         params.put("paymentStatus", newStatus);
         paymentDao.updatePaymentStatus(params); // DAO에 Map 넘기기
     }
+    
+    public List<PaymentListResponseVO> getPaymentListByStudentNo(int studentNo) {
+        return paymentDao.selectPaymentListByStudentNo(studentNo);
+    }
+    
+    @Transactional // 도중에 에러나면 롤백되도록!
+    public void processPaymentSuccess(int paymentNo, int paidAmount, String tid) {
+        // 1. payment_history (납부 내역) 테이블에 인서트!
+        PaymentHistoryDto history = new PaymentHistoryDto();
+        history.setPaymentNo(paymentNo);
+        history.setPaymentHistoryAmount(paidAmount);
+        history.setPaymentHistoryTid(tid);
+        paymentDao.insertPaymentHistory(history);
+
+        // 2. 이 영수증의 총 납부액 조회 (방금 낸 돈 포함해서 얼마 냈나?)
+        int totalPaid = paymentDao.getTotalPaidAmount(paymentNo);
+        PaymentDto master = paymentDao.selectPaymentMaster(paymentNo);
+
+        // 3. 낸 돈이 청구액보다 크거나 같으면 '완납', 아니면 '부분납' 처리!
+        String status = (totalPaid >= master.getPaymentAmount()) ? "완납" : "부분납";
+        // 4. Map으로 파라미터 예쁘게 포장해서 DAO로 던지기!
+        Map<String, Object> updateParams = new HashMap<>();
+        updateParams.put("paymentNo", paymentNo);
+        updateParams.put("paymentStatus", status);
+        
+        paymentDao.updatePaymentStatus(updateParams);
+    }
+    
+    @Transactional
+    public void cancelHistoryAndUpdateStatus(int paymentHistoryNo, int paymentNo, String reason) {
+        
+        // 1. 해당 납부 이력을 '결제취소' 상태로 업데이트 (Soft Delete)
+        Map<String, Object> cancelParams = new HashMap<>();
+        cancelParams.put("paymentHistoryNo", paymentHistoryNo);
+        cancelParams.put("cancelReason", reason);
+        paymentDao.updatePaymentHistoryCancel(cancelParams); // 새로 만든 쿼리 실행
+        
+        // 2. 남은 유효한 납부액 다시 계산 (이제 취소된 건 알아서 빠짐!)
+        int currentTotalPaid = paymentDao.getTotalPaidAmount(paymentNo);
+        PaymentDto master = paymentDao.selectPaymentMaster(paymentNo);
+        
+        // 3. 상태 롤백 로직
+        String newStatus;
+        if (currentTotalPaid == 0) {
+            newStatus = "미납";
+        } else if (currentTotalPaid < master.getPaymentAmount()) {
+            newStatus = "부분납";
+        } else {
+            newStatus = "완납";
+        }
+        
+        // 4. 마스터 영수증 상태 업데이트
+        Map<String, Object> updateParams = new HashMap<>();
+        updateParams.put("paymentNo", paymentNo);
+        updateParams.put("paymentStatus", newStatus);
+        paymentDao.updatePaymentStatus(updateParams);
+    }
 }

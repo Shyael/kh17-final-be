@@ -11,9 +11,9 @@
 		from	reservation
 		where	reservation_no = #{reservationNo}
 	</select>
-
-	<select id="reservationList" resultType="reservationDto">
-		select	*
+	
+	<select id="reservationListCount" resultType="int">
+		select	count(*)
 		from	reservation
 		<where>
 			<if test="searchName != null and searchName.length() > 0">
@@ -30,6 +30,31 @@
 			</if>
 		</where>
 	</select>
+
+	<select id="reservationList" resultType="reservationDto">
+		select * 
+		from (
+			select	r.*, ROWNUM rn
+			from	reservation r
+			<where>
+				<if test="searchName != null and searchName.length() > 0">
+				and instr(reservation_name, #{searchName}) > 0
+				</if>
+				<if test="searchPhone != null and searchPhone.length() > 0">
+				and instr(reservation_phone, #{searchPhone}) > 0
+				</if>
+				<if test="searchType != null and searchType.length() > 0">
+				and reservation_type = #{searchType}
+				</if>
+				<if test="searchStatus != null and searchStatus.length() > 0">
+				and reservation_status = #{searchStatus}
+				</if>
+				and ROWNUM <![CDATA[ <= ]]> #{endRow}
+			</where>
+		)
+		
+		where rn <![CDATA[ >= ]]> #{beginRow}
+	</select>
 	
 	<update id="reservationUpdate">
 		update	reservation
@@ -44,6 +69,13 @@
 	
 	<select id="customerSequence" resultType="int">
 		select consult_customer_seq.nextval from dual
+	</select>
+	
+	<select id="customerNo" resultType="int">
+		select 	customer_no
+		from 	consult_customer
+		where	customer_name = #{customerName}
+		  and	customer_mobile = #{customerMobile}
 	</select>
 	
 	<select id="customerInfo" resultType="ConsultCustomerDto">

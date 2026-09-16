@@ -40,4 +40,10 @@ public class ClassroomDaoMybatis implements ClassroomDao {
 		return sqlSession.selectOne("mapper.classroom.checkClassroom", param);
 	}
 	
+	//동시성 제어를 위한 비관적 락(Pessimistic Lock)설정
+	@Override
+	public Integer selectClassroomForUpdate(int classroomNo) {
+		return sqlSession.selectOne("mapper.classroom.selectClassroomForUpdate", classroomNo);
+	}
+	
 }

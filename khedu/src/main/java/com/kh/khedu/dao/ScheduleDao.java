@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.vo.schedule.ScheduleCreateRequestVO;
+import com.kh.khedu.vo.schedule.WeeklyScheduleVO;
 
 public interface ScheduleDao {
 	
@@ -24,7 +25,7 @@ public interface ScheduleDao {
 	ScheduleDto selectOneByScheduleNo(int scheduleNo);
 	
 	//schedule_open의 날짜를 오늘로 변경
-	boolean updateOpenByCourseNo(int scheduleNo, LocalDate today);
+	boolean updateOpenByCourseNo(int courseNo, LocalDate today);
 
 	List<ScheduleDto> selectActiveSchedules();
 	//강좌넘버로 해당하는 schedule목록 불러오기
@@ -32,5 +33,11 @@ public interface ScheduleDao {
 	
 	// 개강일(schedule_open)이 도달했거나 null이 아닌 오늘 스케줄 조회
 	List<ScheduleDto> selectTodayActiveSchedules(String todayKorean);
+	
+	// 강의 주간 시간표 조회
+	List<WeeklyScheduleVO> selectWeeklySchedules(
+	        LocalDate weekStart,
+	        LocalDate weekEnd
+	);
 
 }

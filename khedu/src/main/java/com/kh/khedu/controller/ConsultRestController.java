@@ -14,12 +14,14 @@ import com.kh.khedu.dto.ConsultCustomerDto;
 import com.kh.khedu.dto.ConsultDto;
 import com.kh.khedu.dto.ReservationDto;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.consult.ConsultCustomerListItemVO;
 import com.kh.khedu.vo.consult.ConsultCustomerListRequestVO;
 import com.kh.khedu.vo.consult.ConsultCustomerListResponseVO;
 import com.kh.khedu.vo.consult.ConsultCustomerUpdateResponseVO;
 import com.kh.khedu.vo.consult.ConsultListRequestVO;
 import com.kh.khedu.vo.consult.ConsultListResponseVO;
+import com.kh.khedu.vo.consult.ConsultReservationListItemVO;
 import com.kh.khedu.vo.consult.ConsultReservationListRequestVO;
 import com.kh.khedu.vo.consult.ConsultReservationListResponseVO;
 import com.kh.khedu.vo.consult.ConsultReservationUpdateRequestVO;
@@ -40,14 +42,26 @@ public class ConsultRestController {
 	@Autowired
 	private ConsultDao consultDao;
 	
+//	//상담 예약 목록
+//	@ApiResponse(responseCode = "200", description = "조회 성공")
+//	@PostMapping(value ="/reservation", produces = MediaType.APPLICATION_JSON_VALUE)
+//	public ConsultReservationListResponseVO getReservationList(
+//			@RequestBody ConsultReservationListRequestVO request) {
+//		return ConsultReservationListResponseVO.builder()
+//					.items(consultDao.selectReservationList(request))
+//				.build();
+//	}
+	
 	//상담 예약 목록
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@PostMapping(value ="/reservation", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ConsultReservationListResponseVO getReservationList(
+	public PageResponseVO<ConsultReservationListItemVO> getReservationList(
 			@RequestBody ConsultReservationListRequestVO request) {
-		return ConsultReservationListResponseVO.builder()
-					.items(consultDao.selectReservationList(request))
-				.build();
+		return new PageResponseVO<>(
+				consultDao.selectReservationList(request),
+				consultDao.selectReservationListCount(request),
+				request
+				);
 	}
 	
 	//상담 예약 상태 변경

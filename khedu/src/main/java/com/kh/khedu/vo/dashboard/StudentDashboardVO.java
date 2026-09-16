@@ -23,4 +23,10 @@ public class StudentDashboardVO implements AcademyDashboardVO {
 
     // 응시가능 + 예정 시험 최대 5개
     private List<DashboardExamVO> exams;
+    
+    // 학생 - 본인의 금일 강좌 조회
+    private int todayCourses;
+    
+    // 학생 - 금일 수업 목록
+    private List<DashboardCourseVO> courses;
 }

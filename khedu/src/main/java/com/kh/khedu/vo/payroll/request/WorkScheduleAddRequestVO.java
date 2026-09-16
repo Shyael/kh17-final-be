@@ -1,4 +1,4 @@
-	package com.kh.khedu.vo.payroll.request;
+package com.kh.khedu.vo.payroll.request;
 
 import java.sql.Timestamp;
 
@@ -9,23 +9,23 @@ import lombok.Data;
 @Data
 public class WorkScheduleAddRequestVO {
 
-	@NotNull
-	@Positive
+    @Positive
     private int employeeNo;
-	
+
+    @NotNull
     private Timestamp scheduledWorkDate;
 
     private Timestamp scheduledClockIn;
 
     private Timestamp scheduledClockOut;
 
+    @NotNull
     private String scheduledDayType;
-    
-    @NotNull
-    @Positive
+
+
+    // Service에서 설정
     private long contractNo;
-    
-    @NotNull
-    @Positive
+
+    // Service에서 설정
     private long workScheduleNo;
 }

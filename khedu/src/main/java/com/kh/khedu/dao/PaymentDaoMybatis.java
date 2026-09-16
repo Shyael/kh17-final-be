@@ -127,4 +127,19 @@ public class PaymentDaoMybatis implements PaymentDao {
     public boolean updatePaymentStatus(Map<String, Object> params) {
         return sqlSession.update("mapper.payment.updatePaymentStatus", params) > 0;
     }
+    
+    @Override
+    public List<PaymentListResponseVO> selectPaymentListByStudentNo(int studentNo) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("studentNo", studentNo);
+        
+        // 💡 맵에 다른 검색조건(searchMonth 등)이 없으므로, XML의 동적 쿼리 <if>문들이 
+        // 아주 자연스럽게 무시되고 오직 studentNo 조건만 발동합니다! (완벽한 재활용)
+        return sqlSession.selectList("mapper.payment.selectPaymentList", params);
+    }
+    
+    @Override
+    public boolean updatePaymentHistoryCancel(Map<String, Object>cancelParams) {
+    	return sqlSession.update("mapper.payment.updatePaymentHistoryCancel", cancelParams) > 0;
+    }
 }

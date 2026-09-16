@@ -17,12 +17,14 @@ import com.kh.khedu.vo.consult.ConsultUpdateRequestVO;
 public interface ConsultDao {
 	//상담 예약
 	ReservationDto selectReservationOne(int reservationNo);
+	int selectReservationListCount(ConsultReservationListRequestVO request);
 	List<ConsultReservationListItemVO> selectReservationList(ConsultReservationListRequestVO request);
 	
 	boolean reservationUpdate(int reservationNo, ConsultReservationUpdateRequestVO request);
 	
 	//고객 정보
 	int customerSequence();
+	Integer selectConsultCustomerNo(String customerName, String customerMobile);
 	ConsultCustomerDto selectConsultCustomerOne(int customerNo);
 	ConsultCustomerDto selectConsultCustomerDupCheck(ConsultCustomerListItemVO request);
 	List<ConsultCustomerListItemVO> selectConsultCustomerList(ConsultCustomerListRequestVO request);

@@ -3,6 +3,7 @@ package com.kh.khedu.websocket.server;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +15,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Controller;
 
+import com.kh.khedu.controller.SseController;
 import com.kh.khedu.dao.MessageDao;
+import com.kh.khedu.dao.RoomDao;
 import com.kh.khedu.service.JwtService;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.room.RoomChatMessageVO;
+import com.kh.khedu.vo.room.RoomUserVO;
 import com.kh.khedu.websocket.vo.WebSocketChatVO;
 import com.kh.khedu.websocket.vo.WebSocketRequestVO;
 
@@ -33,6 +37,8 @@ public class WebSocketServer {
 	private JwtService jwtService;
 	@Autowired
 	private MessageDao messageDao;
+	@Autowired
+	private RoomDao roomDao;
 	
 	//메세지가 오는 채널명 : /app/방번호/chat
 	@MessageMapping("/{roomNo}/chat")
@@ -69,6 +75,13 @@ public class WebSocketServer {
 		
 		Map<String, Object> params = new HashMap<>();
 		params.put("roomNo", roomNo);
+
+		List<RoomUserVO> users = roomDao.getMemberInfo(roomNo);
+		if(users.size() == 1) {
+			if(!response.getSenderType().equals("직원")) {
+				SseController.sendToGroup("직원", null, "신규 채팅 알림");
+			}
+		}
 		simpMessagingTemplate.convertAndSend("/public/room/check", params);
 		simpMessagingTemplate.convertAndSend("/public/"+roomNo+"/chat", response);
 	}
