@@ -4,6 +4,8 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import com.kh.khedu.dto.ClassSessionDto;
+import com.kh.khedu.dto.ScheduleDto;
+import com.kh.khedu.vo.classSession.AdminClassSessionStatusVO;
 import com.kh.khedu.vo.classSession.CourseSessionVO;
 
 public interface ClassSessionDao {
@@ -29,7 +31,9 @@ public interface ClassSessionDao {
 	boolean updateSessionToEnd(int sessionNo, String statusClosed);
 	//관리자용 세션 상태 변경
 	boolean updateStatusOnly(int sessionNo, String sessionStatus);
-		
+	//담당 강사 - 당일 세션 수정 시 사용
+	boolean updateSessionByAdmin(AdminClassSessionStatusVO request);
+	
 	ClassSessionDto selectCurrentRunningSessionByStudent(int studentNo);
 	
     //세션의 담당 강사의 사번을 조회  
@@ -40,6 +44,13 @@ public interface ClassSessionDao {
   	//세션 상태 '종료'로 변경
   	boolean updateSessionStatusToClosed(int sessionNo);
   	
-  //강의 세션 조회
+  	//강의 세션 조회
   	List<CourseSessionVO> selectSessionListByCourseNo(int courseNo);
+  	
+  	//금일 세션을 자동 생성을 위한 메소드
+  	List<ScheduleDto> selectAutoStartTargets();
+  	
+  	// 기존 강의 충돌하는 개수 조회
+	int checkClassroomConflict(AdminClassSessionStatusVO request);
+	
 }

@@ -22,6 +22,6 @@ public class CourseSessionVO {
 	// 출결 요약 통계
 	private int totalCount;
 	private int presentCount;
-	private int ltateCount;
+	private int lateCount;
 	private int absentCount;
 }

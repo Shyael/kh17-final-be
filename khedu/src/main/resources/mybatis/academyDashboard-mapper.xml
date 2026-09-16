@@ -161,6 +161,51 @@
         where rownum <![CDATA[ <= ]]> 5
     </select>
     
+    <!-- 학생  - 금일 수업 개수(본인) -->
+    <select id="countStudentDashboardTodayCourses" resultType="int">
+    SELECT COUNT(*)
+    FROM student_course sc
+	    JOIN course c ON sc.course_no = c.course_no
+	    JOIN schedule s ON c.course_no = s.course_no
+    WHERE sc.student_no = #{studentNo}
+      AND sc.student_course_status = '수강중'
+      AND s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
+      AND c.course_status = '진행중'
+	</select>
+    <!-- 학생  - 금일 수업 목록(본인) -->
+    <select id="selectStudentDashboardTodayCourses" resultType="DashboardCourseVO">
+    SELECT 
+        c.course_no                         AS courseNo,
+        c.course_title                      AS courseTitle,
+        c.course_subject                    AS courseSubject,
+        g.grade_level                       AS gradeLevel,
+        NVL(act.account_name, '미지정')      AS tutorName,
+        s.schedule_start || ' ~ ' || s.schedule_end AS scheduleInfo,
+        NVL(cs.classroom_no, s.classroom_no) || '호' AS classroomInfo,
+        s.schedule_no                       AS scheduleNo,
+        s.schedule_start                    AS scheduleStart,
+        s.schedule_end                      AS scheduleEnd,
+        NVL(cs.classroom_no, s.classroom_no) AS classroomNo,
+        cs.session_no                       AS sessionNo,
+        cs.session_status                   AS sessionStatus,
+        c.course_current_count              AS courseCurrentCount,
+        c.course_limit                      AS courseLimit
+    FROM student_course sc
+    JOIN course c ON sc.course_no = c.course_no
+    JOIN schedule s ON c.course_no = s.course_no
+    LEFT JOIN grade g ON c.grade_no = g.grade_no
+    LEFT JOIN employee e ON c.employee_no = e.employee_no
+    LEFT JOIN account act ON e.account_no = act.account_no
+    LEFT JOIN class_session cs 
+           ON s.schedule_no = cs.schedule_no
+          AND TRUNC(CAST(cs.session_start AS DATE)) = TRUNC(SYSDATE)
+    WHERE sc.student_no = #{studentNo}
+      AND sc.student_course_status = '수강중'
+      AND s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
+      AND c.course_status = '진행중'
+    ORDER BY s.schedule_start ASC
+	</select>
+    
     <!-- 학부모 - 연결된 자녀 목록 -->
 	<select id="selectChildren" resultType="DashboardChildVO">
 	    select

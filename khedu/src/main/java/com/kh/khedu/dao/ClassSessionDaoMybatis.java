@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.ClassSessionDto;
+import com.kh.khedu.dto.ScheduleDto;
+import com.kh.khedu.vo.classSession.AdminClassSessionStatusVO;
 import com.kh.khedu.vo.classSession.CourseSessionVO;
 
 @Repository
@@ -93,5 +95,19 @@ public class ClassSessionDaoMybatis implements ClassSessionDao {
 	public List<CourseSessionVO> selectSessionListByCourseNo(int courseNo) {
 		return sqlSession.selectList("mapper.classSession.selectSessionListByCourseNo", courseNo);
 	}
-		
+
+	@Override
+	public List<ScheduleDto> selectAutoStartTargets() {
+		return sqlSession.selectList("mapper.classSession.selectAutoStartTargets");
+	}
+
+	@Override
+	public boolean updateSessionByAdmin(AdminClassSessionStatusVO request) {
+		return sqlSession.update("mapper.classSession.updateSessionByAdmin", request) > 0;
+	}
+	
+	@Override
+	public int checkClassroomConflict(AdminClassSessionStatusVO request) {
+		return sqlSession.selectOne("mapper.classSession.checkClassroomConflict", request);
+	}
 }

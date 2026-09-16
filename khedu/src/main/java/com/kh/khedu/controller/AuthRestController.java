@@ -87,7 +87,7 @@ public class AuthRestController {
 		ResponseCookie accessCookie = ResponseCookie
 				.from("accessToken", accessToken)
 				//각종 설정들
-				.maxAge(Duration.ofMinutes(jwtProperties.getAccessTokenValidity()))
+				.maxAge(Duration.ofSeconds(jwtProperties.getAccessTokenValidity()))
 				.path("/")//적용범위
 				.httpOnly(true) //true : 서버전용(등뒤), false : 클라이언트 겸용(이마)
 				.secure(false) //https사용여부 (나중에 true로 하고 배포하면됨)
@@ -96,7 +96,7 @@ public class AuthRestController {
 		
 		ResponseCookie refreshCookie = ResponseCookie
 				.from("refreshToken", refreshToken)
-				.maxAge(Duration.ofMinutes( //유효시간 설정 (JWT와 동일하게)
+				.maxAge(Duration.ofSeconds( //유효시간 설정 (JWT와 동일하게)
 						jwtProperties.getRefreshTokenValidity()
 				))
 				.path("/service/auth/") //이 컨트롤러 내에서 사용 가능
@@ -275,7 +275,7 @@ public class AuthRestController {
 		ResponseCookie accessCookie = ResponseCookie
 				.from("accessToken", accessToken)
 				//각종 설정들
-				.maxAge(Duration.ofMinutes(jwtProperties.getAccessTokenValidity()))
+				.maxAge(Duration.ofSeconds(jwtProperties.getAccessTokenValidity()))
 				.path("/")//적용범위
 				.httpOnly(true) //true : 서버전용(등뒤), false : 클라이언트 겸용(이마)
 				.secure(false) //https사용여부 (나중에 true로 하고 배포하면됨)
@@ -284,7 +284,7 @@ public class AuthRestController {
 		
 		ResponseCookie refreshCookie = ResponseCookie
 				.from("refreshToken", newRefreshToken) //새로만든 refresh Token
-				.maxAge(Duration.ofMinutes( //유효시간 설정 (JWT와 동일하게)
+				.maxAge(Duration.ofSeconds( //유효시간 설정 (JWT와 동일하게)
 						jwtProperties.getRefreshTokenValidity()
 				))
 				.path("/service/auth/") //정확하게 갱신매핑에서만 사용되도록

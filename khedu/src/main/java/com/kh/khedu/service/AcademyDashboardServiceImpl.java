@@ -34,6 +34,8 @@ public class AcademyDashboardServiceImpl implements AcademyDashboardService {
 	                    .availableExamCount(academyDashboardDao.countAvailableExams(noType))
 	                    .upcomingExamCount(academyDashboardDao.countUpcomingExams(noType))
 	                    .exams(academyDashboardDao.selectDashboardExams(noType))
+	                    .todayCourses(academyDashboardDao.countStudentDashboardTodayCourses(noType))
+	                    .courses(academyDashboardDao.selectStudentDashboardTodayCourses(noType))
                     .build();
         }
 
@@ -42,7 +44,7 @@ public class AcademyDashboardServiceImpl implements AcademyDashboardService {
             int parentNo = noType;
 
             List<DashboardChildVO> children = academyDashboardDao.selectChildren(parentNo);
-
+            System.out.println("내자식" + children);
             for (DashboardChildVO child : children) {
                 int studentNo = child.getStudentNo();
 
@@ -66,6 +68,12 @@ public class AcademyDashboardServiceImpl implements AcademyDashboardService {
                         academyDashboardDao
                                 .selectDashboardExams(studentNo)
                 );
+                child.setTodayCourses(
+                		academyDashboardDao
+                				.countStudentDashboardTodayCourses(studentNo));
+                child.setCourses(
+                		academyDashboardDao
+                				.selectStudentDashboardTodayCourses(studentNo));
             }
 
             // 모든 자녀를 처리한 뒤 반환

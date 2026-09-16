@@ -52,9 +52,11 @@ public interface EmployeeDao {
 			int accountNo,
 			int employeeNo
 	);
-	//원장 직원 목록 검색 결과
+	//직원 목록 검색 결과
 	 List<AdminEmployeeSearchResponseVO> adminEmployeeSearch(
 	            AdminEmployeeSearchRequestVO requestVO
 	    );
-
+	 int adminEmployeeSearchCount(
+		        AdminEmployeeSearchRequestVO requestVO
+		);
 }

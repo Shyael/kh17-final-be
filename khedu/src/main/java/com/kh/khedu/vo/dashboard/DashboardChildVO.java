@@ -24,4 +24,10 @@ public class DashboardChildVO {
 
     // 진행 중 + 예정 시험 최대 5개
     private List<DashboardExamVO> exams;
+    
+    // 금일 수업 개수
+    private int todayCourses;
+    
+    // 금일 수업 목록
+    private List<DashboardCourseVO> courses;
 }

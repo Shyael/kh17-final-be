@@ -19,6 +19,9 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	@Autowired
 	EmployeeDashboardDao employeeDashboardDao;
 	
+	 @Autowired
+	 private AdminDashboardService adminDashboardService;
+
 	@Override
     public EmployeeDashboardVO getDashboard(
             TokenParseResponseVO parseVO) {
@@ -33,6 +36,11 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	                     .availableExamCount(employeeDashboardDao.countAllAvailableExams())
 	                     .upcomingExamCount(employeeDashboardDao.countAllUpcomingExams())
 	                     .exams( employeeDashboardDao.selectAllDashboardExams())
+	                     .courses(employeeDashboardDao.selectAdminDashboardTodayCourses())
+	                     .todayCourses(employeeDashboardDao.countAdminDashboardTodayCourses())
+	                     .pendingContractList(adminDashboardService.getPendingContractList())
+	                     .contractExpiringList(adminDashboardService.getContractExpiringList())
+	                     .payrollDueList(adminDashboardService.getPayrollDueList())
                      .build();
         }
         
@@ -44,6 +52,8 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	                    .availableExamCount(employeeDashboardDao.countAllAvailableExams())
 	                    .upcomingExamCount(employeeDashboardDao.countAllUpcomingExams())
 	                    .exams( employeeDashboardDao.selectAllDashboardExams())
+	                    .courses(employeeDashboardDao.selectAdminDashboardTodayCourses())
+	                    .todayCourses(employeeDashboardDao.countAdminDashboardTodayCourses())
                     .build();
         }
 
@@ -57,6 +67,8 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
                         .availableExamCount(employeeDashboardDao.countAvailableExams(employeeNo))
                         .upcomingExamCount(employeeDashboardDao.countUpcomingExams(employeeNo))
                         .exams(employeeDashboardDao.selectDashboardExams(employeeNo))
+                        .courses(employeeDashboardDao.selectTutorDashboardTodayCourses(employeeNo))
+                        .todayCourses(employeeDashboardDao.countTutorDashboardTodayCourses(employeeNo))
                     .build();
         }
 

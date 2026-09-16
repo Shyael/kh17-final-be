@@ -17,4 +17,8 @@ public class DeskDashboardVO implements EmployeeDashboardVO {
     private int availableExamCount;
     private int upcomingExamCount;
     private List<DashboardExamVO> exams;
+    
+    // 데스크 - 금일 상위 5개의 강의만 보여줌
+    private int todayCourses; // 금일 강좌 개수
+    private List<DashboardCourseVO> courses;
 }

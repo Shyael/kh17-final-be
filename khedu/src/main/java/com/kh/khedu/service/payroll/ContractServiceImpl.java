@@ -176,8 +176,8 @@ public class ContractServiceImpl implements ContractService {
 	        throw new TargetNotfoundException();
 
 
-	    // 최초 계약 대상은 대기 직원
-	    if (!"대기".equals(employeeStatus))
+	    //계약 대상은 대기 혹은 종료 직원
+	    if (!"대기".equals(employeeStatus) && !"종료".equals(employeeStatus))
 	        throw new GetOutException();
 
 
@@ -226,7 +226,7 @@ public class ContractServiceImpl implements ContractService {
 		        contractDto.getWeeklyWorkHours(),
 		        contractDto.getWrittenBreakMinutes()
 		);
-		// [6] 최초 등록 상태는 서명대기
+		// [6] 신규 등록 상태는 서명대기
 		contractDto.setContractStatus("pending");
 
 		// [7] 근로계약 번호 생성
@@ -486,7 +486,7 @@ public class ContractServiceImpl implements ContractService {
 		if (currentContract == null)
 			throw new TargetNotfoundException();
 
-		if (currentContract.getEmployeeSignature() != null)
+		if (currentContract.getEmployerSignature() != null)
 			throw new GetOutException();
 
 
@@ -644,58 +644,77 @@ public class ContractServiceImpl implements ContractService {
 	}
 
 	// 직원의 전체 근로계약 조회
+	// 직원의 전체 근로계약 조회
 	@Override
-	public List<ContractHistoryResponseVO> findAllByEmployee(int employeeNo, TokenParseResponseVO parseVO) {
+	public List<ContractHistoryResponseVO> findAllByEmployee(
+	        int employeeNo,
+	        TokenParseResponseVO parseVO) {
 
-		boolean hasPermission =
-		        contractAuthorizationService
-		                .checkAdminOrPartyBOrDeskByEmployee(
-		                        parseVO,
-		                        employeeNo
-		                );
-		if(!hasPermission) throw new GetOutException();
-		
-		List<ContractDto> history =
-		        contractDao.findAllByEmployee(employeeNo);
+	    boolean hasPermission =
+	            contractAuthorizationService
+	                    .checkAdminOrPartyBOrDeskByEmployee(
+	                            parseVO,
+	                            employeeNo
+	                    );
 
-		if (history.size() == 0)
-			throw new TargetNotfoundException();
-		
-		 List<ContractHistoryResponseVO> response =
-		            history.stream()
-		                    .map(contractDto ->
-		                            ContractHistoryResponseVO.builder()
-		                                    .contractNo(
-		                                            contractDto.getContractNo()
-		                                    )
-		                                    .employeeNo(
-		                                            contractDto.getEmployeeNo()
-		                                    )
-		                                    .wageType(
-		                                            contractDto.getWageType()
-		                                    )
-		                                    .baseWage(
-		                                            contractDto.getBaseWage()
-		                                    )
-		                                    .contractStart(
-		                                            contractDto.getContractStart()
-		                                    )
-		                                    .contractEnd(
-		                                            contractDto.getContractEnd()
-		                                    )
-		                                    .contractStatus(
-		                                            contractDto.getContractStatus()
-		                                    )
-		                                    .signedTime(
-		                                            contractDto.getSignedTime()
-		                                    )
-		                                    .weeklyHolidayDay(contractDto.getWeeklyHolidayDay())
-		                                    .build()
-		                    )
-		                    .toList();
+	    if (!hasPermission)
+	        throw new GetOutException();
 
 
-		    return response;
+	    List<ContractDto> history =
+	            contractDao.findAllByEmployee(
+	                    employeeNo
+	            );
+
+
+	    List<ContractHistoryResponseVO> response =
+	            history.stream()
+	                    .map(contractDto ->
+	                            ContractHistoryResponseVO
+	                                    .builder()
+
+	                                    .contractNo(
+	                                            contractDto.getContractNo()
+	                                    )
+
+	                                    .employeeNo(
+	                                            contractDto.getEmployeeNo()
+	                                    )
+
+	                                    .wageType(
+	                                            contractDto.getWageType()
+	                                    )
+
+	                                    .baseWage(
+	                                            contractDto.getBaseWage()
+	                                    )
+
+	                                    .contractStart(
+	                                            contractDto.getContractStart()
+	                                    )
+
+	                                    .contractEnd(
+	                                            contractDto.getContractEnd()
+	                                    )
+
+	                                    .contractStatus(
+	                                            contractDto.getContractStatus()
+	                                    )
+
+	                                    .signedTime(
+	                                            contractDto.getSignedTime()
+	                                    )
+
+	                                    .weeklyHolidayDay(
+	                                            contractDto.getWeeklyHolidayDay()
+	                                    )
+
+	                                    .build()
+	                    )
+	                    .toList();
+
+
+	    return response;
 	}
 
 				

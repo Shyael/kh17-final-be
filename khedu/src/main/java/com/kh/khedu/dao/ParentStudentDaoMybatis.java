@@ -1,6 +1,8 @@
 package com.kh.khedu.dao;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +62,14 @@ public class ParentStudentDaoMybatis implements ParentStudentDao {
 	public boolean deleteRelationship(ParentStudentDto dto) {
 	    // 삭제된 행(row)이 1개 이상이면 true 반환
 	    return sqlSession.delete("mapper.parent-student.deleteRelationship", dto) > 0;
+	}
+
+	@Override
+	public boolean isChildOfParent(int parentNo, int studentNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("parentNo", parentNo);
+		params.put("studentNo", studentNo);
+		return sqlSession.selectOne("mapper.parent-student.isChildOfParent", params);
 	}
 
 }

@@ -6,7 +6,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,7 +21,11 @@ import com.kh.khedu.dto.AccountDto;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
 import com.kh.khedu.service.EmployeeService;
+import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.account.CheckPasswordRequestVO;
+import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
+import com.kh.khedu.vo.employee.AdminEmployeeSearchRequestVO;
+import com.kh.khedu.vo.employee.AdminEmployeeSearchResponseVO;
 import com.kh.khedu.vo.employee.ChangeEmployeeRequestVO;
 import com.kh.khedu.vo.employee.ChangeEmployeeResponseVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
@@ -104,9 +108,32 @@ public class EmployeeRestController {
 	}
 	
 	@ApiResponse(responseCode= "200", description = "이름 검색 성공")
-	@PatchMapping(value="/searchName/{accountName}", produces="application/json")
+	@GetMapping(value="/searchName/{accountName}", produces="application/json")
 	public List<EmployeeSearchByNameVO> searchName(@PathVariable String accountName){
 		List<EmployeeSearchByNameVO> result = employeeDao.searchByName(accountName);
 		return result;
 	}
+	
+	
+	//직원 검색
+	@GetMapping("/search")
+	public PageResponseVO<AdminEmployeeSearchResponseVO>
+	        adminEmployeeSearch(
+	                @ModelAttribute AdminEmployeeSearchRequestVO requestVO,
+	                @CurrentUser TokenParseResponseVO parseVO
+	        ) {
+
+	    return employeeService.adminEmployeeSearch(
+	            requestVO,
+	            parseVO
+	    );
+	}
+		
+		//직원 검색 창에서 상세
+		@GetMapping("/detail/{employeeNo}")
+		public AdminEmployeeDetailVO findEmployeeInfo(
+		        @PathVariable int employeeNo
+		) {
+		    return employeeService.findEmployeeInfo(employeeNo);
+		}
 }

@@ -125,6 +125,51 @@
         where rownum <![CDATA[ <= ]]> 5
     </select>
     
+    <!-- 강사 - 본인 오늘 강좌 수 -->
+	<select id="countTutorDashboardTodayCourses" parameterType="int" resultType="int">
+	    SELECT COUNT(*)
+	    FROM schedule s
+	    JOIN course c ON s.course_no = c.course_no
+	    WHERE s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
+	      AND c.course_status IN ('모집중', '진행중')
+	      AND c.employee_no = #{employeeNo}
+	</select>
+   <!-- 강사 - 오늘의 모든 강의 스케줄 조회  --> 
+   <select id="selectTutorDashboardTodayCourses" resultType="DashboardCourseVO">
+   	select * 
+   	from (
+   		select
+  		   c.course_no                         AS courseNo,
+           c.course_title                      AS courseTitle,
+           c.course_subject                    AS courseSubject,
+           g.grade_level                       AS gradeLevel,
+           NVL(act.account_name, '미지정')      AS tutorName,
+           s.schedule_start || ' ~ ' || s.schedule_end AS scheduleInfo,
+           NVL(cs.classroom_no, s.classroom_no) || '호' AS classroomInfo,
+           s.schedule_no                       AS scheduleNo,
+           s.schedule_start                    AS scheduleStart,
+           s.schedule_end                      AS scheduleEnd,
+           NVL(cs.classroom_no, s.classroom_no) AS classroomNo,
+           cs.session_no                       AS sessionNo,
+           cs.session_status                   AS sessionStatus,
+           c.course_current_count              AS courseCurrentCount,
+           c.course_limit                      AS courseLimit
+	   	from schedule s
+	   	join course c on s.course_no = c.course_no
+	   	LEFT JOIN grade g ON c.grade_no = g.grade_no
+	   	left join employee e on c.employee_no = e.employee_no
+	   	left join account act ON e.account_no = act.account_no
+	   	left join class_session cs
+	   			on s.schedule_no = cs.schedule_no
+	   			and TRUNC(CAST(cs.session_start AS DATE)) = TRUNC(SYSDATE)
+	   	WHERE s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
+	   		and c.course_status in ('모집중', '진행중')
+	   		and c.employee_no = #{employeeNo}
+	   	order by s.schedule_start asc
+   	) 	
+   </select>
+   
+    
     <!-- 원장 / 데스크 - 전체 강사 수 -->
 	<select id="countTutors" resultType="int">
 	    select count(*)
@@ -247,5 +292,47 @@
 	
 	    where rownum <![CDATA[ <= ]]> 5
 	</select>
+	
+	<!-- 원장 - 본인 오늘 강좌 수 -->
+	<select id="countAdminDashboardTodayCourses" parameterType="int" resultType="int">
+	    SELECT COUNT(*)
+	    FROM schedule s
+	    JOIN course c ON s.course_no = c.course_no
+	    WHERE s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
+	      AND c.course_status IN ('모집중', '진행중')
+   </select>
+   <!-- 원장 - 오늘의 모든 강의 스케줄 조회  --> 
+   <select id="selectAdminDashboardTodayCourses" resultType="DashboardCourseVO">
+   	select * 
+   	from (
+   		select
+  		   c.course_no                         AS courseNo,
+           c.course_title                      AS courseTitle,
+           c.course_subject                    AS courseSubject,
+           g.grade_level                       AS gradeLevel,
+           NVL(act.account_name, '미지정')      AS tutorName,
+           s.schedule_start || ' ~ ' || s.schedule_end AS scheduleInfo,
+           NVL(cs.classroom_no, s.classroom_no) || '호' AS classroomInfo,
+           s.schedule_no                       AS scheduleNo,
+           s.schedule_start                    AS scheduleStart,
+           s.schedule_end                      AS scheduleEnd,
+           NVL(cs.classroom_no, s.classroom_no) AS classroomNo,
+           cs.session_no                       AS sessionNo,
+           cs.session_status                   AS sessionStatus,
+           c.course_current_count              AS courseCurrentCount,
+           c.course_limit                      AS courseLimit
+	   	from schedule s
+	   	join course c on s.course_no = c.course_no
+	   	LEFT JOIN grade g ON c.grade_no = g.grade_no
+	   	left join employee e on c.employee_no = e.employee_no
+	   	left join account act ON e.account_no = act.account_no
+	   	left join class_session cs
+	   			on s.schedule_no = cs.schedule_no
+	   			and TRUNC(CAST(cs.session_start AS DATE)) = TRUNC(SYSDATE)
+	   	WHERE s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
+	   		and c.course_status in ('모집중', '진행중')
+	   	order by s.schedule_start asc
+   	)	
+   </select>
 
 </mapper>
