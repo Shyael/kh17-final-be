@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.vo.schedule.ScheduleCreateRequestVO;
+import com.kh.khedu.vo.schedule.WeeklyScheduleVO;
 
 public interface ScheduleDao {
 	
@@ -32,5 +33,11 @@ public interface ScheduleDao {
 	
 	// 개강일(schedule_open)이 도달했거나 null이 아닌 오늘 스케줄 조회
 	List<ScheduleDto> selectTodayActiveSchedules(String todayKorean);
+	
+	// 강의 주간 시간표 조회
+	List<WeeklyScheduleVO> selectWeeklySchedules(
+	        LocalDate weekStart,
+	        LocalDate weekEnd
+	);
 
 }

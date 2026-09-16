@@ -13,6 +13,7 @@ import com.kh.khedu.dto.ClassSessionDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.vo.classSession.AdminClassSessionStatusVO;
 import com.kh.khedu.vo.classSession.CourseSessionVO;
+import com.kh.khedu.vo.classSession.WeeklyClassSessionVO;
 
 @Repository
 public class ClassSessionDaoMybatis implements ClassSessionDao {
@@ -109,5 +110,19 @@ public class ClassSessionDaoMybatis implements ClassSessionDao {
 	@Override
 	public int checkClassroomConflict(AdminClassSessionStatusVO request) {
 		return sqlSession.selectOne("mapper.classSession.checkClassroomConflict", request);
+	}
+
+	@Override
+	public List<WeeklyClassSessionVO> selectWeeklySessions(
+	        Timestamp weekStart,
+	        Timestamp weekEnd
+	) {
+
+	    Map<String, Object> param = new HashMap<>();
+
+	    param.put("weekStart", weekStart);
+	    param.put("weekEnd", weekEnd);
+
+	    return sqlSession.selectList("mapper.classSession.selectWeeklySessions", param);
 	}
 }

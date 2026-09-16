@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.vo.schedule.ScheduleCreateRequestVO;
+import com.kh.khedu.vo.schedule.WeeklyScheduleVO;
 
 @Repository
 public class ScheduleDaoMybatis implements ScheduleDao {
@@ -77,6 +78,17 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 	@Override
 	public List<ScheduleDto> selectTodayActiveSchedules(String todayKorean) {
 		return sqlSession.selectList("mapper.schedule.selectTodayActiveSchedules", todayKorean);
+	}
+	
+	//주간 강의 시간표 조회
+	@Override
+	public List<WeeklyScheduleVO> selectWeeklySchedules(LocalDate weekStart, LocalDate weekEnd) {
+	    Map<String, Object> param = new HashMap<>();
+
+	    param.put("weekStart", weekStart);
+	    param.put("weekEnd", weekEnd);
+
+	    return sqlSession.selectList("mapper.schedule.selectWeeklySchedules", param);
 	}
 
 }

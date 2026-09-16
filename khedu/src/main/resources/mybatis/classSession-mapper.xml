@@ -195,5 +195,29 @@
             AND TRUNC(cs.session_start) = TRUNC(SYSDATE)
       )
 	</select>
+	
+	<!-- 주간 시간표용 실제 수업 조회 -->
+	<select id="selectWeeklySessions" resultType="WeeklyClassSessionVO">
+	    select
+	        cs.session_no,
+	        cs.schedule_no,
+	
+	        cs.classroom_no,
+	        cr.classroom_name,
+	
+	        cs.session_start,
+	        cs.session_end,
+	        cs.session_status
+	
+	    from class_session cs
+	
+	    left join classroom cr
+	        on cs.classroom_no = cr.classroom_no
+	
+	    where cs.session_start <![CDATA[ >= ]]> #{weekStart}
+	      and cs.session_start <![CDATA[ < ]]> #{weekEnd}
+	
+	    order by cs.session_start asc
+	</select>
 
 </mapper>
