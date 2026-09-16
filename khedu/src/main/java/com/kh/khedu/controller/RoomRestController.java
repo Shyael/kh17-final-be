@@ -190,7 +190,7 @@ public class RoomRestController {
 				|| parseVO.getAccountType().equals("학부모")) {
 			roomDao.readRoomUser(roomNo, parseVO.getAccountNo());
 		}
-	}
+	} 
 	
 	
 	//방 참여 관련
