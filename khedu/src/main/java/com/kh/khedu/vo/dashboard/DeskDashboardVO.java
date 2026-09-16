@@ -2,6 +2,8 @@ package com.kh.khedu.vo.dashboard;
 
 import java.util.List;
 
+import com.kh.khedu.vo.payroll.response.DashboardPayrollDueVO;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,4 +19,9 @@ public class DeskDashboardVO implements EmployeeDashboardVO {
     private int availableExamCount;
     private int upcomingExamCount;
     private List<DashboardExamVO> exams;
+    
+    //급여
+    private List<DashboardPayrollDueVO> payrollDueList;
+    private int payrollDueCount;
+    
 }

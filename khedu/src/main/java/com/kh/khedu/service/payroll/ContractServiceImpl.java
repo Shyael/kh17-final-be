@@ -61,34 +61,85 @@ public class ContractServiceImpl implements ContractService {
 	   @Autowired
 	   private EmployeeDao employeeDao;
 
-	    private void validateWrittenBreakTimes(
-	            double dailyWorkHours,
-	            double weeklyWorkHours,
-	            double writtenBreakTimes) {
+    // 일반 성인·일 8시간/주 40시간제, 매주 동일한 소정근로시간 기준.
+    private static final double MINIMUM_HOURLY_WAGE_2026 = 10320;
 
-	       if (dailyWorkHours>8) {
-	    	   throw new GetOutException();
-	       }
-	       
-	       if(weeklyWorkHours > 40) {
-	    	   throw new GetOutException();
-	       }
-	        if (writtenBreakTimes < 0) {
-	            throw new GetOutException();
-	        }
+    private void validateWrittenBreakTimes(
+            double dailyWorkHours, double weeklyWorkHours, double writtenBreakTimes) {
+        if (!Double.isFinite(dailyWorkHours) || !Double.isFinite(weeklyWorkHours)
+                || dailyWorkHours <= 0 || weeklyWorkHours <= 0
+                || dailyWorkHours > 8 || weeklyWorkHours > 40
+                || dailyWorkHours > weeklyWorkHours
+                || !Double.isFinite(writtenBreakTimes) || writtenBreakTimes < 0
+                || writtenBreakTimes != Math.floor(writtenBreakTimes)) {
+            throw new GetOutException();
+        }
+        double minimumBreakMinutes = dailyWorkHours >= 8 ? 60 : dailyWorkHours >= 4 ? 30 : 0;
+        if (writtenBreakTimes < minimumBreakMinutes) {
+            throw new GetOutException();
+        }
+    }
 
-	        if (dailyWorkHours >= 8 && writtenBreakTimes < 60) {
-	            throw new GetOutException();
-	        }
+    private void validateContractTerms(ContractDto contractDto) {
+        // Number 변수로 받아 primitive/wrapper 숫자 타입 모두 처리하고 null을 먼저 확인한다.
+        Number daily = contractDto.getDailyWorkHours();
+        Number weekly = contractDto.getWeeklyWorkHours();
+        Number breakMinutes = contractDto.getWrittenBreakMinutes();
+        Number wage = contractDto.getBaseWage();
+        Number payday = contractDto.getPayday();
+        if (daily == null || weekly == null || breakMinutes == null || wage == null
+                || payday == null || contractDto.getContractStart() == null) {
+            throw new GetOutException();
+        }
+        double dailyWorkHours = daily.doubleValue();
+        double weeklyWorkHours = weekly.doubleValue();
+        double baseWage = wage.doubleValue();
+        validateWrittenBreakTimes(dailyWorkHours, weeklyWorkHours, breakMinutes.doubleValue());
+        String wageType = contractDto.getWageType();
+        if ((!"hourly".equals(wageType) && !"daily".equals(wageType) && !"monthly".equals(wageType))
+                || !Double.isFinite(baseWage) || baseWage <= 0) {
+            throw new GetOutException();
+        }
+        if (!Double.isFinite(payday.doubleValue()) || payday.doubleValue() < 1
+                || payday.doubleValue() > 31 || payday.doubleValue() != Math.floor(payday.doubleValue())) {
+            throw new GetOutException();
+        }
+        if (contractDto.getContractEnd() != null
+                && contractDto.getContractEnd().before(contractDto.getContractStart())) {
+            throw new GetOutException();
+        }
+        if (weeklyWorkHours < 15) {
+            // 프로젝트 정책: 법정 주휴일 비대상은 null로 저장.
+            contractDto.setWeeklyHolidayDay(null);
+        } else {
+            String holiday = contractDto.getWeeklyHolidayDay();
+            if (holiday == null || !List.of("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY",
+                    "FRIDAY", "SATURDAY", "SUNDAY").contains(holiday)) {
+                throw new GetOutException();
+            }
+        }
+        LocalDate start = contractDto.getContractStart().toLocalDateTime().toLocalDate();
+        LocalDate end = contractDto.getContractEnd() == null ? null
+                : contractDto.getContractEnd().toLocalDateTime().toLocalDate();
+        boolean covers2026 = !start.isAfter(LocalDate.of(2026, 12, 31))
+                && (end == null || !end.isBefore(LocalDate.of(2026, 1, 1)));
+        if (covers2026) {
+            // 기본임금만으로 충족시키는 정책. 가산수당/별도 수당을 합산하지 않는다.
+            // 통상근로자 주 5일, 추가 약정 유급시간 없음. 주 40시간은 월 209시간.
+            // 단시간 근로자의 월 환산시간은 중간 반올림 없이 계산한다.
+            double weeklyPaidHolidayHours = weeklyWorkHours >= 15 ? weeklyWorkHours / 5 : 0;
+            double monthlyHours = weeklyWorkHours == 40 ? 209
+                    : (weeklyWorkHours + weeklyPaidHolidayHours) * 365 / 7 / 12;
+            double wageHours = "hourly".equals(wageType) ? 1
+                    : "daily".equals(wageType) ? dailyWorkHours : monthlyHours;
+            double minimumWage = Math.ceil(MINIMUM_HOURLY_WAGE_2026 * wageHours);
+            if (baseWage < minimumWage) {
+                throw new GetOutException();
+            }
+        }
+        // 다른 연도의 최저임금은 해당 연도 기준을 별도로 추가해야 한다.
+    }
 
-	        if (dailyWorkHours >= 4
-	                && dailyWorkHours < 8
-	                && writtenBreakTimes < 30) {
-	            throw new GetOutException();
-	        }
-	    }
-	    
-	    
 	    // 계약 대상 데스크 직원 인적사항 조회
 	    @Override
 	    public ContractEmployeeDeskResponseVO findDeskPersonInfo(
@@ -210,27 +261,8 @@ public class ContractServiceImpl implements ContractService {
 		ContractDto contractDto = new ContractDto();
 		BeanUtils.copyProperties(request, contractDto);
 
-		// [4] 계약기간 확인
-		if (contractDto.getContractEnd() != null
-				&& contractDto.getContractEnd().before(contractDto.getContractStart())) {
-			throw new GetOutException();
-		}
+        validateContractTerms(contractDto);
 
-		// [5] 소정근로시간 확인
-		if (contractDto.getDailyWorkHours() > contractDto.getWeeklyWorkHours()) {
-			throw new GetOutException();
-		}
-		
-		if (contractDto.getWeeklyWorkHours() < 15) {
-		    contractDto.setWeeklyHolidayDay(null);
-		}
-
-		
-		validateWrittenBreakTimes(
-		        contractDto.getDailyWorkHours(),
-		        contractDto.getWeeklyWorkHours(),
-		        contractDto.getWrittenBreakMinutes()
-		);
 		// [6] 신규 등록 상태는 서명대기
 		contractDto.setContractStatus("pending");
 
@@ -298,27 +330,11 @@ public class ContractServiceImpl implements ContractService {
 		// [4] 요청정보 적용
 		BeanUtils.copyProperties(request, currentContract);
 
-		// [5] 계약기간 확인
-		if (currentContract.getContractEnd() != null
-				&& currentContract.getContractEnd().before(currentContract.getContractStart())) {
-			throw new GetOutException();
-		}
-		// [7] 새 소정근로시간 확인
-		if (currentContract.getDailyWorkHours() > currentContract.getWeeklyWorkHours()) {
-			throw new GetOutException();
-		}
-		
-		if (currentContract.getWeeklyWorkHours() < 15) {
-		    currentContract.setWeeklyHolidayDay(null);
-		}
-		
-		validateWrittenBreakTimes(
-		        currentContract.getDailyWorkHours(),
-		        currentContract.getWeeklyWorkHours(),
-		        currentContract.getWrittenBreakMinutes()
-		);
-		
-		request.setContractNo(contractNo);
+        validateContractTerms(currentContract);
+
+        // 검증에서 정규화한 주휴일 null을 실제 DAO 저장 요청에도 반영한다.
+        BeanUtils.copyProperties(currentContract, request);
+        request.setContractNo(contractNo);
 		
 		// [6] 계약내용 수정
 		contractDao.updateDraft(request);
@@ -862,6 +878,8 @@ public class ContractServiceImpl implements ContractService {
     );
 
 
+    validateContractTerms(newContractDto);
+
     // [14] 새 계약 등록
     contractDao.contractAdd(
             newContractDto
@@ -973,42 +991,7 @@ public class ContractServiceImpl implements ContractService {
 
 
 
-	    // [6] 새 계약기간 확인
-	    if (
-	        newContractDto.getContractEnd() != null
-	        &&
-	        newContractDto
-	                .getContractEnd()
-	                .before(
-	                    newContractDto.getContractStart()
-	                )
-	    ) {
-
-	        throw new GetOutException();
-	    }
-
-
-
-	    // [7] 소정근로시간 확인
-	    if (
-	        newContractDto.getDailyWorkHours()
-	        >
-	        newContractDto.getWeeklyWorkHours()
-	    ) {
-
-	        throw new GetOutException();
-	    }
-
-
-	    validateWrittenBreakTimes(
-	            newContractDto.getDailyWorkHours(),
-	            newContractDto.getWeeklyWorkHours(),
-	            newContractDto.getWrittenBreakMinutes()
-	    );
-
-	    if (newContractDto.getWeeklyWorkHours() < 15) {
-	        newContractDto.setWeeklyHolidayDay(null);
-	    }
+        validateContractTerms(newContractDto);
 
 	    // [8] 근로조건 변경은 미래부터 적용
 	    Timestamp current =
