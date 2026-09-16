@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.ParentDto;
 import com.kh.khedu.vo.parent.ParentDetailVO;
+import com.kh.khedu.vo.parent.ParentSearchVO;
+import com.kh.khedu.vo.parent.ParentUpdateRequestVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 
 @Repository
@@ -44,6 +46,37 @@ public class ParentDaoMybatis implements ParentDao {
 	@Override
 	public List<ParentDetailVO> searchParents(String keyword) {
 	    return sqlSession.selectList("mapper.parent.searchParents", keyword);
+	}
+
+	
+	// 관리자 
+	
+	// 학부모 수
+	@Override
+	public int count(ParentSearchVO searchVO) {
+		return sqlSession.selectOne("mapper.parent.count", searchVO);
+	}
+
+	// 학부모 검색
+	@Override
+	public List<ParentDetailVO> list(ParentSearchVO searchVO) {
+		return sqlSession.selectList("mapper.parent.list", searchVO);
+	}
+	
+	// 학부모 승인
+	@Override
+	public boolean approveParent(int parentNo) {
+		return sqlSession.update("mapper.parent.approveParent", parentNo) > 0;
+	}
+	
+	@Override
+	public ParentDetailVO detail(int parentNo) {
+	    return sqlSession.selectOne("mapper.parent.detail", parentNo);
+	}
+
+	@Override
+	public boolean updateAccountInfo(ParentUpdateRequestVO requestVO) {
+	    return sqlSession.update("mapper.parent.updateAccountInfo", requestVO) > 0;
 	}
 
 }

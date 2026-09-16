@@ -255,7 +255,7 @@ public class AdminContractController {
 	@DeleteMapping("/{contractNo}")
 	public void cancelContract(
 			@PathVariable long contractNo,
-			TokenParseResponseVO parseVO) {
+			@CurrentUser TokenParseResponseVO parseVO) {
 
 		contractService.cancelContract(
 				contractNo,

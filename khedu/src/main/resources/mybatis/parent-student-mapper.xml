@@ -89,6 +89,14 @@
 		and student_no = #{studentNo}
 	</update>
 	
+	<!-- 학부모-자녀 연결 관계 검증 -->
+	<select id="isChildOfParent" resultType="boolean">
+		select case when count(*) > 0 then 1 else 0 end
+		from parent_student
+		where parent_no = #{parentNo}
+		and student_no = #{studentNo}
+	</select>
+	
 	<!-- 특정 학부모-학생 연동 관계 해제(삭제) -->
 	<!-- <update id="deleteRelationship">
 		update parent_student

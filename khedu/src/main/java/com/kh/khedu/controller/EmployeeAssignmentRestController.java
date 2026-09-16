@@ -40,7 +40,7 @@ public class EmployeeAssignmentRestController {
 	// 과제 등록
     @Operation(summary = "과제 등록")
     @ApiResponse(responseCode = "200", description = "과제 등록 성공")
-    @PostMapping(value = "/" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public int insert(
             @RequestPart("assignment") AssignmentDto assignmentDto,
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
@@ -68,7 +68,7 @@ public class EmployeeAssignmentRestController {
     
     //직원 페이지네이션 + 검색 + 과제목록
     @Operation(summary = "직원 페이지네이션 + 검색 + 과제목록 조회")
-    @GetMapping
+    @GetMapping("/")
     public PageResponseVO<AssignmentListVO> selectManageList(
     		 @ModelAttribute AssignmentSearchVO search,
     	     @CurrentUser TokenParseResponseVO parseVO){

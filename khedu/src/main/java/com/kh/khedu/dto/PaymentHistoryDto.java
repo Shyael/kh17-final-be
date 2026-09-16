@@ -13,4 +13,8 @@ public class PaymentHistoryDto {
 	private int paymentNo;
 	private int paymentHistoryAmount;
 	private Timestamp paymentHistoryAt;
+	private String paymentHistoryTid;
+	private String paymentHistoryStatus;
+	private String paymentHistoryCancelReason;
+//	private Timestamp paymentHistoryCanceledAt;
 }

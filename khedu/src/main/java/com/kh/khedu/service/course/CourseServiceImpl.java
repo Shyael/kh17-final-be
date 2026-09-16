@@ -22,6 +22,7 @@ import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.ScheduleDao;
 import com.kh.khedu.dao.TutorDao;
 import com.kh.khedu.dto.ClassSessionDto;
+import com.kh.khedu.dto.ClassroomDto;
 import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.enums.AccountType;
@@ -133,6 +134,24 @@ public class CourseServiceImpl implements CourseService {
 		
 		//[2] 요청 내부 일정 검증
 		validateRequestSchedules(request);
+		
+		//[2-1] 비관적 락(FOR UPDATE) 획득 - 줄 세우기 진입점
+		//동시 요청이 들어오면 여기서 뒤 요청이 대기(wait) 시키기
+		
+		// 1) 강사
+		tutorDao.selectTutorForUpdate(request.getEmployeeNo());
+		
+		// 2) 강의실
+		// 1)) 요청배열에서 중복을 제거하고 정렬
+		List<Integer> classroomNos = request.getSchedules().stream()
+							.map(ScheduleCreateRequestVO::getClassroomNo) // 객체에서 강의실 번호 추출
+							.distinct() // 중복제거
+							.sorted() // 순서대로 정렬
+							.toList();
+		// 2)) 가공된 번호들을 하나씩 돌면서 강사와 동일하게 락을 건다.
+		for(int classroomNo : classroomNos) {
+			classroomDao.selectClassroomForUpdate(classroomNo);
+		}
 		
 		//[3] 기존 DB 일정 검증
 		for (ScheduleCreateRequestVO schedule : request.getSchedules()) {

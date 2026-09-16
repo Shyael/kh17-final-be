@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.academyDashboard">
+
+    <!-- 학생 - 미제출 과제 전체 개수 -->
+    <select id="countPendingAssignments" resultType="int">
+        select count(*)
+        from assignment ass
+
+        join student_course sc
+            on ass.course_no = sc.course_no
+
+        left join assignment_submit s
+            on ass.assignment_no = s.assignment_no
+            and s.student_no = #{studentNo}
+
+        where sc.student_no = #{studentNo}
+          and sc.student_course_status = '수강중'
+          and ass.assignment_status = '게시'
+          and (
+                ass.assignment_due_date is null
+                or ass.assignment_due_date <![CDATA[ > ]]> systimestamp
+          )
+          and s.submit_no is null
+    </select>
+
+    <!-- 학생 - 마감 가까운 미제출 과제 최대 5개 -->
+    <select id="selectPendingAssignments" resultType="DashboardAssignmentVO">
+        select *
+        from (
+            select
+                ass.assignment_no,
+                ass.course_no,
+                c.course_title,
+                ass.assignment_title,
+
+                case
+                    when ass.assignment_status = '마감'
+                         or (
+                            ass.assignment_due_date is not null
+                            and systimestamp >= ass.assignment_due_date
+                         )
+                    then '마감'
+                    else '제출가능'
+                end as assignment_phase,
+
+                ass.assignment_due_date
+
+            from assignment ass
+
+            join course c
+                on ass.course_no = c.course_no
+
+            join student_course sc
+                on ass.course_no = sc.course_no
+
+            left join assignment_submit s
+                on ass.assignment_no = s.assignment_no
+                and s.student_no = #{studentNo}
+
+            where sc.student_no = #{studentNo}
+              and sc.student_course_status = '수강중'
+              and ass.assignment_status = '게시'
+              and (
+                    ass.assignment_due_date is null
+                    or ass.assignment_due_date <![CDATA[ > ]]> systimestamp
+              )
+              and s.submit_no is null
+
+            order by
+                ass.assignment_due_date asc nulls last,
+                ass.assignment_no desc
+        )
+
+        where rownum <![CDATA[ <= ]]> 5
+    </select>
+
+
+    <!-- 학생 - 현재 응시 가능한 시험 개수 -->
+    <select id="countAvailableExams" resultType="int">
+        select count(*)
+        from exam e
+
+        join student_course sc
+            on e.course_no = sc.course_no
+
+        where sc.student_no = #{studentNo}
+          and sc.student_course_status = '수강중'
+          and e.exam_status = '공개'
+          and systimestamp <![CDATA[ >= ]]> e.exam_start
+          and systimestamp <![CDATA[ < ]]> e.exam_end
+    </select>
+
+
+    <!-- 학생 - 예정 시험 개수 -->
+    <select id="countUpcomingExams" resultType="int">
+        select count(*)
+        from exam e
+
+        join student_course sc
+            on e.course_no = sc.course_no
+
+        where sc.student_no = #{studentNo}
+          and sc.student_course_status = '수강중'
+          and e.exam_status = '공개'
+          and systimestamp <![CDATA[ < ]]> e.exam_start
+    </select>
+
+
+    <!-- 학생 - 응시가능 + 예정 시험 최대 5개 -->
+    <select id="selectDashboardExams" resultType="DashboardExamVO">
+        select *
+        from (
+            select
+                e.exam_no,
+                e.course_no,
+                c.course_title,
+                e.exam_title,
+
+                case
+                    when e.exam_status = '마감'
+                         or systimestamp >= e.exam_end
+                    then '종료'
+
+                    when systimestamp <![CDATA[ < ]]> e.exam_start
+                    then '예정'
+
+                    else '응시가능'
+                end as exam_phase,
+
+                e.exam_start,
+                e.exam_end
+
+            from exam e
+
+            join course c
+                on e.course_no = c.course_no
+
+            join student_course sc
+                on e.course_no = sc.course_no
+
+            where sc.student_no = #{studentNo}
+              and sc.student_course_status = '수강중'
+              and e.exam_status = '공개'
+              and e.exam_end <![CDATA[ > ]]> systimestamp
+
+            order by
+                case
+                    when systimestamp >= e.exam_start
+                         and systimestamp<![CDATA[ < ]]>e.exam_end
+                    then 1
+                    else 2
+                end,
+                e.exam_start asc,
+                e.exam_no asc
+        )
+
+        where rownum <![CDATA[ <= ]]> 5
+    </select>
+    
+    <!-- 학생  - 금일 수업 개수(본인) -->
+    <select id="countStudentDashboardTodayCourses" resultType="int">
+    SELECT COUNT(*)
+    FROM student_course sc
+	    JOIN course c ON sc.course_no = c.course_no
+	    JOIN schedule s ON c.course_no = s.course_no
+    WHERE sc.student_no = #{studentNo}
+      AND sc.student_course_status = '수강중'
+      AND s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
+      AND c.course_status = '진행중'
+	</select>
+    <!-- 학생  - 금일 수업 목록(본인) -->
+    <select id="selectStudentDashboardTodayCourses" resultType="DashboardCourseVO">
+    SELECT 
+        c.course_no                         AS courseNo,
+        c.course_title                      AS courseTitle,
+        c.course_subject                    AS courseSubject,
+        g.grade_level                       AS gradeLevel,
+        NVL(act.account_name, '미지정')      AS tutorName,
+        s.schedule_start || ' ~ ' || s.schedule_end AS scheduleInfo,
+        NVL(cs.classroom_no, s.classroom_no) || '호' AS classroomInfo,
+        s.schedule_no                       AS scheduleNo,
+        s.schedule_start                    AS scheduleStart,
+        s.schedule_end                      AS scheduleEnd,
+        NVL(cs.classroom_no, s.classroom_no) AS classroomNo,
+        cs.session_no                       AS sessionNo,
+        cs.session_status                   AS sessionStatus,
+        c.course_current_count              AS courseCurrentCount,
+        c.course_limit                      AS courseLimit
+    FROM student_course sc
+    JOIN course c ON sc.course_no = c.course_no
+    JOIN schedule s ON c.course_no = s.course_no
+    LEFT JOIN grade g ON c.grade_no = g.grade_no
+    LEFT JOIN employee e ON c.employee_no = e.employee_no
+    LEFT JOIN account act ON e.account_no = act.account_no
+    LEFT JOIN class_session cs 
+           ON s.schedule_no = cs.schedule_no
+          AND TRUNC(CAST(cs.session_start AS DATE)) = TRUNC(SYSDATE)
+    WHERE sc.student_no = #{studentNo}
+      AND sc.student_course_status = '수강중'
+      AND s.schedule_week = TO_CHAR(SYSDATE, 'DY', 'NLS_DATE_LANGUAGE=KOREAN')
+      AND c.course_status = '진행중'
+    ORDER BY s.schedule_start ASC
+	</select>
+    
+    <!-- 학부모 - 연결된 자녀 목록 -->
+	<select id="selectChildren" resultType="DashboardChildVO">
+	    select
+	        s.student_no,
+	        a.account_name as student_name
+	
+	    from parent_student ps
+	
+	    join student s
+	        on ps.student_no = s.student_no
+	
+	    join account a
+	        on s.account_no = a.account_no
+	
+	    where ps.parent_no = #{parentNo}
+	
+	    order by s.student_no asc
+	</select>
+
+</mapper>

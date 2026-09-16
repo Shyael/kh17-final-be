@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class PaginationVO {
 	private int page = 1;
-	private int size = 20;
+	private int size = 10;
 	private int maxSize = 100;
 	
 	//페이지 번호 세팅 (음수나 0 방어)

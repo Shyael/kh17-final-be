@@ -13,8 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
+import com.kh.khedu.error.AdminChecker;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.error.YouAreNotAdminException;
 import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.util.SignatureEncryptor;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
@@ -52,38 +54,92 @@ public class ContractServiceImpl implements ContractService {
 
 	    @Autowired
 	    private ContractPersonInfoService contractPersonInfoService;
+	    
+	    @Autowired
+		private AdminChecker adminChecker;
 
 	   @Autowired
 	   private EmployeeDao employeeDao;
 
-	    private void validateWrittenBreakTimes(
-	            double dailyWorkHours,
-	            double weeklyWorkHours,
-	            double writtenBreakTimes) {
+    // 일반 성인·일 8시간/주 40시간제, 매주 동일한 소정근로시간 기준.
+    private static final double MINIMUM_HOURLY_WAGE_2026 = 10320;
 
-	       if (dailyWorkHours>8) {
-	    	   throw new GetOutException();
-	       }
-	       
-	       if(weeklyWorkHours > 40) {
-	    	   throw new GetOutException();
-	       }
-	        if (writtenBreakTimes < 0) {
-	            throw new GetOutException();
-	        }
+    private void validateWrittenBreakTimes(
+            double dailyWorkHours, double weeklyWorkHours, double writtenBreakTimes) {
+        if (!Double.isFinite(dailyWorkHours) || !Double.isFinite(weeklyWorkHours)
+                || dailyWorkHours <= 0 || weeklyWorkHours <= 0
+                || dailyWorkHours > 8 || weeklyWorkHours > 40
+                || dailyWorkHours > weeklyWorkHours
+                || !Double.isFinite(writtenBreakTimes) || writtenBreakTimes < 0
+                || writtenBreakTimes != Math.floor(writtenBreakTimes)) {
+            throw new GetOutException();
+        }
+        double minimumBreakMinutes = dailyWorkHours >= 8 ? 60 : dailyWorkHours >= 4 ? 30 : 0;
+        if (writtenBreakTimes < minimumBreakMinutes) {
+            throw new GetOutException();
+        }
+    }
 
-	        if (dailyWorkHours >= 8 && writtenBreakTimes < 60) {
-	            throw new GetOutException();
-	        }
+    private void validateContractTerms(ContractDto contractDto) {
+        // Number 변수로 받아 primitive/wrapper 숫자 타입 모두 처리하고 null을 먼저 확인한다.
+        Number daily = contractDto.getDailyWorkHours();
+        Number weekly = contractDto.getWeeklyWorkHours();
+        Number breakMinutes = contractDto.getWrittenBreakMinutes();
+        Number wage = contractDto.getBaseWage();
+        Number payday = contractDto.getPayday();
+        if (daily == null || weekly == null || breakMinutes == null || wage == null
+                || payday == null || contractDto.getContractStart() == null) {
+            throw new GetOutException();
+        }
+        double dailyWorkHours = daily.doubleValue();
+        double weeklyWorkHours = weekly.doubleValue();
+        double baseWage = wage.doubleValue();
+        validateWrittenBreakTimes(dailyWorkHours, weeklyWorkHours, breakMinutes.doubleValue());
+        String wageType = contractDto.getWageType();
+        if ((!"hourly".equals(wageType) && !"daily".equals(wageType) && !"monthly".equals(wageType))
+                || !Double.isFinite(baseWage) || baseWage <= 0) {
+            throw new GetOutException();
+        }
+        if (!Double.isFinite(payday.doubleValue()) || payday.doubleValue() < 1
+                || payday.doubleValue() > 31 || payday.doubleValue() != Math.floor(payday.doubleValue())) {
+            throw new GetOutException();
+        }
+        if (contractDto.getContractEnd() != null
+                && contractDto.getContractEnd().before(contractDto.getContractStart())) {
+            throw new GetOutException();
+        }
+        if (weeklyWorkHours < 15) {
+            // 프로젝트 정책: 법정 주휴일 비대상은 null로 저장.
+            contractDto.setWeeklyHolidayDay(null);
+        } else {
+            String holiday = contractDto.getWeeklyHolidayDay();
+            if (holiday == null || !List.of("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY",
+                    "FRIDAY", "SATURDAY", "SUNDAY").contains(holiday)) {
+                throw new GetOutException();
+            }
+        }
+        LocalDate start = contractDto.getContractStart().toLocalDateTime().toLocalDate();
+        LocalDate end = contractDto.getContractEnd() == null ? null
+                : contractDto.getContractEnd().toLocalDateTime().toLocalDate();
+        boolean covers2026 = !start.isAfter(LocalDate.of(2026, 12, 31))
+                && (end == null || !end.isBefore(LocalDate.of(2026, 1, 1)));
+        if (covers2026) {
+            // 기본임금만으로 충족시키는 정책. 가산수당/별도 수당을 합산하지 않는다.
+            // 통상근로자 주 5일, 추가 약정 유급시간 없음. 주 40시간은 월 209시간.
+            // 단시간 근로자의 월 환산시간은 중간 반올림 없이 계산한다.
+            double weeklyPaidHolidayHours = weeklyWorkHours >= 15 ? weeklyWorkHours / 5 : 0;
+            double monthlyHours = weeklyWorkHours == 40 ? 209
+                    : (weeklyWorkHours + weeklyPaidHolidayHours) * 365 / 7 / 12;
+            double wageHours = "hourly".equals(wageType) ? 1
+                    : "daily".equals(wageType) ? dailyWorkHours : monthlyHours;
+            double minimumWage = Math.ceil(MINIMUM_HOURLY_WAGE_2026 * wageHours);
+            if (baseWage < minimumWage) {
+                throw new GetOutException();
+            }
+        }
+        // 다른 연도의 최저임금은 해당 연도 기준을 별도로 추가해야 한다.
+    }
 
-	        if (dailyWorkHours >= 4
-	                && dailyWorkHours < 8
-	                && writtenBreakTimes < 30) {
-	            throw new GetOutException();
-	        }
-	    }
-	    
-	    
 	    // 계약 대상 데스크 직원 인적사항 조회
 	    @Override
 	    public ContractEmployeeDeskResponseVO findDeskPersonInfo(
@@ -176,8 +232,8 @@ public class ContractServiceImpl implements ContractService {
 	        throw new TargetNotfoundException();
 
 
-	    // 최초 계약 대상은 대기 직원
-	    if (!"대기".equals(employeeStatus))
+	    //계약 대상은 대기 혹은 종료 직원
+	    if (!"대기".equals(employeeStatus) && !"종료".equals(employeeStatus))
 	        throw new GetOutException();
 
 
@@ -205,28 +261,9 @@ public class ContractServiceImpl implements ContractService {
 		ContractDto contractDto = new ContractDto();
 		BeanUtils.copyProperties(request, contractDto);
 
-		// [4] 계약기간 확인
-		if (contractDto.getContractEnd() != null
-				&& contractDto.getContractEnd().before(contractDto.getContractStart())) {
-			throw new GetOutException();
-		}
+        validateContractTerms(contractDto);
 
-		// [5] 소정근로시간 확인
-		if (contractDto.getDailyWorkHours() > contractDto.getWeeklyWorkHours()) {
-			throw new GetOutException();
-		}
-		
-		if (contractDto.getWeeklyWorkHours() < 15) {
-		    contractDto.setWeeklyHolidayDay(null);
-		}
-
-		
-		validateWrittenBreakTimes(
-		        contractDto.getDailyWorkHours(),
-		        contractDto.getWeeklyWorkHours(),
-		        contractDto.getWrittenBreakMinutes()
-		);
-		// [6] 최초 등록 상태는 서명대기
+		// [6] 신규 등록 상태는 서명대기
 		contractDto.setContractStatus("pending");
 
 		// [7] 근로계약 번호 생성
@@ -293,27 +330,11 @@ public class ContractServiceImpl implements ContractService {
 		// [4] 요청정보 적용
 		BeanUtils.copyProperties(request, currentContract);
 
-		// [5] 계약기간 확인
-		if (currentContract.getContractEnd() != null
-				&& currentContract.getContractEnd().before(currentContract.getContractStart())) {
-			throw new GetOutException();
-		}
-		// [7] 새 소정근로시간 확인
-		if (currentContract.getDailyWorkHours() > currentContract.getWeeklyWorkHours()) {
-			throw new GetOutException();
-		}
-		
-		if (currentContract.getWeeklyWorkHours() < 15) {
-		    currentContract.setWeeklyHolidayDay(null);
-		}
-		
-		validateWrittenBreakTimes(
-		        currentContract.getDailyWorkHours(),
-		        currentContract.getWeeklyWorkHours(),
-		        currentContract.getWrittenBreakMinutes()
-		);
-		
-		request.setContractNo(contractNo);
+        validateContractTerms(currentContract);
+
+        // 검증에서 정규화한 주휴일 null을 실제 DAO 저장 요청에도 반영한다.
+        BeanUtils.copyProperties(currentContract, request);
+        request.setContractNo(contractNo);
 		
 		// [6] 계약내용 수정
 		contractDao.updateDraft(request);
@@ -486,7 +507,7 @@ public class ContractServiceImpl implements ContractService {
 		if (currentContract == null)
 			throw new TargetNotfoundException();
 
-		if (currentContract.getEmployeeSignature() != null)
+		if (currentContract.getEmployerSignature() != null)
 			throw new GetOutException();
 
 
@@ -644,58 +665,77 @@ public class ContractServiceImpl implements ContractService {
 	}
 
 	// 직원의 전체 근로계약 조회
+	// 직원의 전체 근로계약 조회
 	@Override
-	public List<ContractHistoryResponseVO> findAllByEmployee(int employeeNo, TokenParseResponseVO parseVO) {
+	public List<ContractHistoryResponseVO> findAllByEmployee(
+	        int employeeNo,
+	        TokenParseResponseVO parseVO) {
 
-		boolean hasPermission =
-		        contractAuthorizationService
-		                .checkAdminOrPartyBOrDeskByEmployee(
-		                        parseVO,
-		                        employeeNo
-		                );
-		if(!hasPermission) throw new GetOutException();
-		
-		List<ContractDto> history =
-		        contractDao.findAllByEmployee(employeeNo);
+	    boolean hasPermission =
+	            contractAuthorizationService
+	                    .checkAdminOrPartyBOrDeskByEmployee(
+	                            parseVO,
+	                            employeeNo
+	                    );
 
-		if (history.size() == 0)
-			throw new TargetNotfoundException();
-		
-		 List<ContractHistoryResponseVO> response =
-		            history.stream()
-		                    .map(contractDto ->
-		                            ContractHistoryResponseVO.builder()
-		                                    .contractNo(
-		                                            contractDto.getContractNo()
-		                                    )
-		                                    .employeeNo(
-		                                            contractDto.getEmployeeNo()
-		                                    )
-		                                    .wageType(
-		                                            contractDto.getWageType()
-		                                    )
-		                                    .baseWage(
-		                                            contractDto.getBaseWage()
-		                                    )
-		                                    .contractStart(
-		                                            contractDto.getContractStart()
-		                                    )
-		                                    .contractEnd(
-		                                            contractDto.getContractEnd()
-		                                    )
-		                                    .contractStatus(
-		                                            contractDto.getContractStatus()
-		                                    )
-		                                    .signedTime(
-		                                            contractDto.getSignedTime()
-		                                    )
-		                                    .weeklyHolidayDay(contractDto.getWeeklyHolidayDay())
-		                                    .build()
-		                    )
-		                    .toList();
+	    if (!hasPermission)
+	        throw new GetOutException();
 
 
-		    return response;
+	    List<ContractDto> history =
+	            contractDao.findAllByEmployee(
+	                    employeeNo
+	            );
+
+
+	    List<ContractHistoryResponseVO> response =
+	            history.stream()
+	                    .map(contractDto ->
+	                            ContractHistoryResponseVO
+	                                    .builder()
+
+	                                    .contractNo(
+	                                            contractDto.getContractNo()
+	                                    )
+
+	                                    .employeeNo(
+	                                            contractDto.getEmployeeNo()
+	                                    )
+
+	                                    .wageType(
+	                                            contractDto.getWageType()
+	                                    )
+
+	                                    .baseWage(
+	                                            contractDto.getBaseWage()
+	                                    )
+
+	                                    .contractStart(
+	                                            contractDto.getContractStart()
+	                                    )
+
+	                                    .contractEnd(
+	                                            contractDto.getContractEnd()
+	                                    )
+
+	                                    .contractStatus(
+	                                            contractDto.getContractStatus()
+	                                    )
+
+	                                    .signedTime(
+	                                            contractDto.getSignedTime()
+	                                    )
+
+	                                    .weeklyHolidayDay(
+	                                            contractDto.getWeeklyHolidayDay()
+	                                    )
+
+	                                    .build()
+	                    )
+	                    .toList();
+
+
+	    return response;
 	}
 
 				
@@ -838,6 +878,8 @@ public class ContractServiceImpl implements ContractService {
     );
 
 
+    validateContractTerms(newContractDto);
+
     // [14] 새 계약 등록
     contractDao.contractAdd(
             newContractDto
@@ -949,42 +991,7 @@ public class ContractServiceImpl implements ContractService {
 
 
 
-	    // [6] 새 계약기간 확인
-	    if (
-	        newContractDto.getContractEnd() != null
-	        &&
-	        newContractDto
-	                .getContractEnd()
-	                .before(
-	                    newContractDto.getContractStart()
-	                )
-	    ) {
-
-	        throw new GetOutException();
-	    }
-
-
-
-	    // [7] 소정근로시간 확인
-	    if (
-	        newContractDto.getDailyWorkHours()
-	        >
-	        newContractDto.getWeeklyWorkHours()
-	    ) {
-
-	        throw new GetOutException();
-	    }
-
-
-	    validateWrittenBreakTimes(
-	            newContractDto.getDailyWorkHours(),
-	            newContractDto.getWeeklyWorkHours(),
-	            newContractDto.getWrittenBreakMinutes()
-	    );
-
-	    if (newContractDto.getWeeklyWorkHours() < 15) {
-	        newContractDto.setWeeklyHolidayDay(null);
-	    }
+        validateContractTerms(newContractDto);
 
 	    // [8] 근로조건 변경은 미래부터 적용
 	    Timestamp current =
@@ -1122,24 +1129,33 @@ public class ContractServiceImpl implements ContractService {
 		ContractDto find = contractDao.findSignature(contractNo);
 
 		if (find == null)
-			throw new TargetNotfoundException();
+		    throw new TargetNotfoundException();
 
 		// 권한은 당사자, 데스크, 원장만
-		
-		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDeskByContract(parseVO, contractNo);
+		boolean hasPermission =
+		        contractAuthorizationService.checkAdminOrPartyBOrDeskByContract(parseVO, contractNo);
 
-		if(!hasPermission) throw new GetOutException();
-		
-		
+		if (!hasPermission)
+		    throw new GetOutException();
+
 		ContractDto target = ContractDto.builder()
-				.employeeSignature(signatureEncryptor.decrypt(find.getEmployeeSignature()))
-				.employerSignature(signatureEncryptor.decrypt(find.getEmployerSignature()))
-				.build();
-				
+		        .employeeSignature(
+		                find.getEmployeeSignature() == null
+		                        ? null
+		                        : signatureEncryptor.decrypt(find.getEmployeeSignature())
+		        )
+		        .employerSignature(
+		                find.getEmployerSignature() == null
+		                        ? null
+		                        : signatureEncryptor.decrypt(find.getEmployerSignature())
+		        )
+		        .build();
+
 		ContractSignResponseVO response = ContractSignResponseVO.builder()
-				.employeeSignature(target.getEmployeeSignature())
-				.employerSignature(target.getEmployerSignature())
-				.build();
+		        .employeeSignature(target.getEmployeeSignature())
+		        .employerSignature(target.getEmployerSignature())
+		        .build();
+
 		return response;
 	}
 
@@ -1253,14 +1269,8 @@ public class ContractServiceImpl implements ContractService {
 		// 관리자 권한 확인
 		// =========================
 
-		boolean isAdmin =
-				contractAuthorizationService.checkAdmin(
-						parseVO
-				);
-
-		if (!isAdmin)
-			throw new GetOutException();
-
+		boolean isAdmin = adminChecker.AdminCheck(parseVO);
+		if(isAdmin == false) throw new YouAreNotAdminException();
 
 		// =========================
 		// 계약 조회
@@ -1286,29 +1296,13 @@ public class ContractServiceImpl implements ContractService {
 
 
 		// =========================
-		// 직원이 이미 서명한 계약은 취소 불가
-		// =========================
-
-		if (contractDto.getEmployeeSignature() != null)
-			throw new GetOutException();
-
-
-		// =========================
-		// 원장이 이미 서명한 계약은 취소 불가
-		// =========================
-
-		if (contractDto.getEmployerSignature() != null)
-			throw new GetOutException();
-
-
-		// =========================
 		// 서명 완료시간이 존재하면 취소 불가
 		// =========================
 
 		if (contractDto.getSignedTime() != null)
 			throw new GetOutException();
 
-
+		
 		// =========================
 		// 계약 삭제
 		// =========================
@@ -1317,6 +1311,8 @@ public class ContractServiceImpl implements ContractService {
 				contractDao.cancelContract(
 						contractNo
 				);
+		
+		System.out.println(result);
 
 		if (!result)
 			throw new GetOutException();

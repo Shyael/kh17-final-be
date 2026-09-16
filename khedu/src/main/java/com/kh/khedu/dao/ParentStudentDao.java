@@ -27,5 +27,8 @@ public interface ParentStudentDao {
 	ParentStudentVO selectOneRelationByAccountNo(int accountNo);
 	
 	boolean deleteRelationship(ParentStudentDto dto);
+	
+	//학부모 - 자녀 연결 관계 검증
+	boolean isChildOfParent(int parentNo, int studentNo);
 
 }

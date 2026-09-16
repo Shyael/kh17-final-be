@@ -207,7 +207,8 @@ public class SecurityConfiguration {
 		//[1] 허용되는 접근 대상을 지정 (allow origins or pattern)
 		config.setAllowedOrigins(List.of(
 			// 여기에 운영주소 넣어주면됨
-			"http://localhost:5173"
+			"http://localhost:5173",
+			"http://13.125.227.139:8080"
 		));
 		//[2] 허용할 HTTP 메소드 설정
 		config.setAllowedMethods(List.of(
@@ -254,21 +255,23 @@ public class SecurityConfiguration {
 		            return null;
 		        }
 		        
-				//request는 요청정보이며 이 내부에 쿠키가 들어있으므로 
-				//accessToken을 찾아서 반환(jwtDecoder가 등록되어있으므로)
-				//만약 accessToken이 만료되어도 상관이 없는 주소라면 통과시킨다
-				Set<String> allowPaths = Set.of(
-					"/service/auth/login",
-					"/service/auth/logout",
-					"/service/auth/refresh",
-					"/service/cert/send",
-					"/service/cert/check",
-					"/academy"
-				);
-				
-				if(allowPaths.contains(request.getServletPath())) {
-					return null;//아무것도 찾지말고 통과
-				}
+		        // 2. 비로그인/공개 API는 브라우저에 만료된 쿠키가 남아있어도 무시(null 반환)
+		        if (
+		            path.startsWith("/service/auth/") ||          // 인증 관련 하위 전체
+		            path.startsWith("/service/cert/") ||          // 이메일 인증 하위 전체
+		            path.equals("/academy") || path.startsWith("/academy/") ||
+		            
+		            // 학생/학부모 회원가입 및 공개 경로 (/api/student, /api/student/ 등)
+		            path.equals("/api/student") || path.startsWith("/api/student/") ||
+		            path.equals("/api/parent") || path.startsWith("/api/parent/") ||
+		            
+		            // 계정 찾기 및 중복체크
+		            path.startsWith("/api/account/check-id/") || path.equals("/api/account/check-id") ||
+		            path.equals("/api/account/find-id") ||
+		            path.equals("/api/account/find-password")
+		        ) {
+		            return null;
+		        }
 				
 				//accessToken이 필요한 주소만 남았으므로 검색을 통해 찾아서 반환
 				Cookie[] cookies = request.getCookies();//모든 쿠키를 긁어온다

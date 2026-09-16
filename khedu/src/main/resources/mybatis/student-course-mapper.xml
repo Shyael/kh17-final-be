@@ -85,7 +85,7 @@
         inner join 
             account A on E.account_no = A.account_no
         where 
-            C.course_status = '모집중' 
+            C.course_status in = '모집중'
         order by 
             C.course_subject desc
     </select>
@@ -107,7 +107,7 @@
         inner join 
             account a on e.account_no = a.account_no
         where 
-            c.course_status = '모집중'
+            c.course_status in ('모집중', '진행중')
             and not exists (
                 select 1
                 from schedule target_sch
@@ -129,4 +129,10 @@
         where student_no = #{studentNo} 
           and course_no = #{courseNo}
     </delete>
+    
+    <!-- 학생번호로 학생-수강 테이블 조회 -->
+    <select id="selectOneByStudentNo" resultType="StudentCourseDto">
+    	select * from student_course 
+    	where student_no = #{studentNo} and course_no = #{courseNo}
+    </select>
 </mapper>
