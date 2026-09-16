@@ -32,6 +32,11 @@ public class ConsultDaoMybatis implements ConsultDao {
 	}
 	
 	@Override
+	public int selectReservationListCount(ConsultReservationListRequestVO request) {
+		return sqlSession.selectOne("mapper.consult.reservationListCount", request);
+	}
+	
+	@Override
 	public List<ConsultReservationListItemVO> selectReservationList(ConsultReservationListRequestVO request) {
 		List<ReservationDto> dtoList = sqlSession.selectList("mapper.consult.reservationList", request);
 		List<ConsultReservationListItemVO> voList = new ArrayList<>();
@@ -64,6 +69,14 @@ public class ConsultDaoMybatis implements ConsultDao {
 	@Override
 	public int customerSequence() {
 		return sqlSession.selectOne("mapper.consult.customerSequence");
+	}
+	
+	@Override
+	public Integer selectConsultCustomerNo(String customerName, String customerMobile) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("customerName", customerName);
+		params.put("customerMobile", customerMobile);
+		return sqlSession.selectOne("mapper.consult.customerNo", params);
 	}
 	
 	@Override

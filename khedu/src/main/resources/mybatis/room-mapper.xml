@@ -55,7 +55,7 @@
 			          and msg.message_time > NVL(ru.last_read_time, to_date('1970-01-01', 'YYYY-MM-DD'))
 			    ) AS unread_cnt
 		  from	room r
-		  inner join room_user ru on ru.room_no = r.room_no
+		  inner join room_user ru on ru.room_no = r.room_no and ru.account_no = r.room_owner
 		 where	r.room_owner = #{roomOwner}
 		   and	r.room_type = '상담'
 	</select> 
@@ -77,7 +77,15 @@
 		          and mc.message_sender_no = r.room_owner
 		          and (r.last_employee_read_time is null or msg.message_time > r.last_employee_read_time)
 		    ) as unread_cnt, 
-		    'N' enter
+		    CASE 
+	            WHEN EXISTS (
+	                SELECT 1 
+	                FROM room_user RU 
+	                WHERE RU.room_no = R.room_no 
+	                  AND RU.account_no = #{accountNo}
+	            ) THEN 'Y' 
+	            ELSE 'N' 
+	        END as enter
 		from room R 
 		    left join (
 		        select room_no, count(*) cnt 
@@ -144,5 +152,18 @@
 		 where	room_no = #{roomNo}
 		   and	account_no = #{accountNo}
 	</update>
+	
+	<!-- 채팅 참여 처리 -->
+	<insert id="enter">
+		insert into room_user(room_user_no, room_no, account_no)
+		values(#{roomUserNo}, #{roomNo}, #{accountNo})
+	</insert>
+	
+	<!-- 채팅 퇴장 처리 -->
+	<delete id="leave">
+		delete	room_user
+		where	room_no = #{roomNo}
+		  and	account_no = #{accountNo}
+	</delete>
 	
 </mapper>
