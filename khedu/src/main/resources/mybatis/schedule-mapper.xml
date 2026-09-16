@@ -162,4 +162,63 @@
 	      AND (s.schedule_close IS NULL OR s.schedule_close &gt;= TRUNC(SYSDATE))
 	    ORDER BY s.schedule_start ASC
 	</select>
+	
+	<!-- 주간 시간표 기본 schedule 조회 -->
+	<select id="selectWeeklySchedules" resultType="WeeklyScheduleVO">
+	    select
+	        s.schedule_no,
+	        s.course_no,
+	        c.course_title,
+	
+	        c.employee_no,
+	        a.account_name as employee_name,
+	
+	        s.classroom_no,
+	        cr.classroom_name,
+	
+	        s.schedule_week,
+	        s.schedule_start,
+	        s.schedule_end,
+	
+	        s.schedule_open,
+	        s.schedule_close
+	
+	    from schedule s
+	
+	    join course c
+	        on s.course_no = c.course_no
+	
+	    join employee e
+	        on c.employee_no = e.employee_no
+	
+	    join account a
+	        on e.account_no = a.account_no
+	
+	    join classroom cr
+	        on s.classroom_no = cr.classroom_no
+	
+	    where c.course_status not in ('종료', '폐강')
+	
+	      and (
+	          s.schedule_open is null
+	          or s.schedule_open <![CDATA[ <= ]]> #{weekEnd}
+	      )
+	
+	      and (
+	          s.schedule_close is null
+	          or s.schedule_close <![CDATA[ >= ]]> #{weekStart}
+	      )
+	
+	    order by
+	        case s.schedule_week
+	            when '월' then 1
+	            when '화' then 2
+	            when '수' then 3
+	            when '목' then 4
+	            when '금' then 5
+	            when '토' then 6
+	            when '일' then 7
+	        end,
+	        s.schedule_start asc
+	</select>
 </mapper>

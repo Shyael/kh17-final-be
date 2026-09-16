@@ -7,6 +7,7 @@ import com.kh.khedu.dto.ClassSessionDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.vo.classSession.AdminClassSessionStatusVO;
 import com.kh.khedu.vo.classSession.CourseSessionVO;
+import com.kh.khedu.vo.classSession.WeeklyClassSessionVO;
 
 public interface ClassSessionDao {
 	
@@ -52,5 +53,11 @@ public interface ClassSessionDao {
   	
   	// 기존 강의 충돌하는 개수 조회
 	int checkClassroomConflict(AdminClassSessionStatusVO request);
+	
+	//실제로 생성된 이번주 수업 조회
+	List<WeeklyClassSessionVO> selectWeeklySessions(
+	        Timestamp weekStart,
+	        Timestamp weekEnd
+	);
 	
 }
