@@ -1040,6 +1040,20 @@ public class EmployeeWorkScheduleServiceImpl
         // =========================
 
         double targetScheduledWorkHours = 0;
+        
+        double dailyWorkHours =
+                targetContract.getDailyWorkHours();
+
+
+        double scheduledOvertimeHours =
+                targetScheduledWorkHours
+                - dailyWorkHours;
+
+
+        if (scheduledOvertimeHours < 0) {
+
+            scheduledOvertimeHours = 0;
+        }
 
 
         if (!"dayOff".equals(
@@ -1098,6 +1112,19 @@ public class EmployeeWorkScheduleServiceImpl
                 weeklyScheduledWorkHours
                 + targetScheduledWorkHours;
 
+        double contractWeeklyWorkHours =
+                targetContract.getWeeklyWorkHours();
+
+
+        double weeklyOvertimeHours =
+                expectedWeeklyWorkHours
+                - contractWeeklyWorkHours;
+
+
+        if (weeklyOvertimeHours < 0) {
+
+            weeklyOvertimeHours = 0;
+        }
 
         if (expectedWeeklyWorkHours
                 > WEEKLY_WORK_LIMIT) {

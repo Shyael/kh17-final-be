@@ -587,44 +587,44 @@
 
 <!-- 동종업무 통상근로자 후보 조회 -->
 <select id="findOrdinaryEmployeeNoList"
-        resultType="int">
+        resultType="ContractFindOrdinaryEmployeeVO">
 
-	select distinct
-		E.employee_no
-		C.weelkly_work_hours
+    select distinct
+        E.employee_no,
+        C.weekly_work_hours
 
-	from employee E
+    from employee E
 
-		inner join employment_contract C
-			on E.employee_no = C.employee_no
+        inner join employment_contract C
+            on E.employee_no = C.employee_no
 
-	where E.employee_type = #{employeeType}
+    where E.employee_type = #{employeeType}
 
-	and C.contract_start <![CDATA[ <= ]]> #{targetDate}
+    and C.contract_start <![CDATA[ <= ]]> #{targetDate}
 
-	and (
-		C.contract_end is null
-		or C.contract_end <![CDATA[ >= ]]> #{targetDate}
-	)
+    and (
+        C.contract_end is null
+        or C.contract_end <![CDATA[ >= ]]> #{targetDate}
+    )
 
-	and C.weekly_work_hours = (
+    and C.weekly_work_hours = (
 
-		select max(C2.weekly_work_hours)
+        select max(C2.weekly_work_hours)
 
-		from employee E2
+        from employee E2
 
-			inner join employment_contract C2
-				on E2.employee_no = C2.employee_no
+            inner join employment_contract C2
+                on E2.employee_no = C2.employee_no
 
-		where E2.employee_type = #{employeeType}
+        where E2.employee_type = #{employeeType}
 
-		and C2.contract_start <![CDATA[ <= ]]> #{targetDate}
+        and C2.contract_start <![CDATA[ <= ]]> #{targetDate}
 
-		and (
-			C2.contract_end is null
-			or C2.contract_end <![CDATA[ >= ]]> #{targetDate}
-		)
-	)
+        and (
+            C2.contract_end is null
+            or C2.contract_end <![CDATA[ >= ]]> #{targetDate}
+        )
+    )
 
 </select>
 
