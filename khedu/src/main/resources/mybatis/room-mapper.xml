@@ -70,6 +70,32 @@
 		   and	r.room_type = '상담'
 	</select> 
 	
+	<select id="tutorCheck" resultType="RoomVO">
+		select	r.*,
+				M.last_time,
+		   	 	M.last_content,
+				(
+			        select count(*) 
+			        from message msg 
+			        inner join message_chat mc on mc.message_no = msg.message_no
+			        where msg.message_room = r.room_no
+			          and mc.message_sender_no != #{roomOwner}
+			          and msg.message_time > NVL(ru.last_read_time, to_date('1970-01-01', 'YYYY-MM-DD'))
+			    ) AS unread_cnt
+		  from	room r
+		  inner join room_user ru on ru.room_no = r.room_no and ru.account_no = r.room_owner
+		  inner join (
+		        select
+		        	message_room,
+		        	max(message_time) as last_time,
+		        	max(message_content) keep (dense_rank last order by message_time) as last_content
+		        from message 
+		        group by message_room
+		    ) M on R.room_no = M.message_room
+		 where	r.room_owner = #{roomOwner}
+		   and	r.room_type = '개인'
+	</select> 
+	
 	<!-- 상담 채팅방 목록 -->
 	<select id="consultList" resultType="RoomListVO">
 		select 
