@@ -172,7 +172,7 @@ public class RoomRestController {
 		}
 	}
 	
-	//방 상세 정보
+	//방 상세 정보 
 	@GetMapping("/check/{tutorNo}")
 	public RoomDetailResponseVO checkTutorChat(@PathVariable(value = "tutorNo", required = false) Integer tutorNo,
 						@CurrentUser TokenParseResponseVO parseVO) {
