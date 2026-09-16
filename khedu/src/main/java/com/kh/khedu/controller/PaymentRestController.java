@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.khedu.service.KakaoPayService;
 import com.kh.khedu.service.PaymentService;
 import com.kh.khedu.vo.payment.DiscountVO;
 import com.kh.khedu.vo.payment.PaymentComprehensiveVO;
@@ -24,11 +25,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "수납 관리")
 @RestController
-@RequestMapping("/api/payment")
+@RequestMapping("/api/employee/payment")
 public class PaymentRestController {
 
     @Autowired
     private PaymentService paymentService;
+    @Autowired
+    private KakaoPayService kakaoPayService;
 
     @PostMapping("/process")
     public ResponseEntity<String> process(@RequestBody PaymentRequestVO request) {
@@ -105,5 +108,29 @@ public class PaymentRestController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("수납 처리 실패");
         }
+    }
+    
+    @PostMapping("/cancel")
+    public ResponseEntity<String> cancelPaymentHistory(
+            @RequestParam int paymentHistoryNo, 
+            @RequestParam int amount,           
+            @RequestParam int paymentNo,
+            @RequestParam(required = false) String tid,
+            @RequestParam(required = false) String cancelReason) { // 🌟 사유 추가
+
+        // 1. 카카오페이 결제건 환불 (tid가 있을 때)
+        if (tid != null && !tid.isEmpty() && !tid.equals("null")) {
+            boolean isCancelled = kakaoPayService.cancelPayment(tid, amount);
+            if (!isCancelled) {
+                return ResponseEntity.status(500).body("카카오페이 환불에 실패했습니다.");
+            }
+        }
+        
+        // 2. 카카오페이 환불 성공 OR 수기 결제인 경우 -> DB 상태를 '취소'로 변경!
+        // 사유가 안 넘어왔다면 기본 멘트 세팅
+        String reason = (cancelReason != null && !cancelReason.isEmpty()) ? cancelReason : "관리자 수기 취소";
+        paymentService.cancelHistoryAndUpdateStatus(paymentHistoryNo, paymentNo, reason);
+        
+        return ResponseEntity.ok("결제가 성공적으로 취소되었습니다.");
     }
 }

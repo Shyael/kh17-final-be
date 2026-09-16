@@ -50,4 +50,8 @@ public interface PaymentDao {
     int getTotalPaidAmount(int paymentNo);
     // 3. 영수증(마스터) 상태 업데이트 (상태값과 번호를 Map에 담아 받음)
     boolean updatePaymentStatus(Map<String, Object> params);
+    
+    List<PaymentListResponseVO> selectPaymentListByStudentNo(int studentNo);
+    
+    boolean updatePaymentHistoryCancel(Map<String, Object> cancelParams);
 }

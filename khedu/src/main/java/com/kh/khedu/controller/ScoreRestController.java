@@ -8,7 +8,7 @@ import com.kh.khedu.dto.ScoreDto;
 import com.kh.khedu.service.ScoreService;
 
 @RestController
-@RequestMapping("/api/score")
+@RequestMapping("/api/employee/score")
 public class ScoreRestController {
 
     @Autowired
