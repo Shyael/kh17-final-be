@@ -46,6 +46,8 @@
 	</select>
 	<select id="check" resultType="RoomVO">
 		select	r.*,
+				M.last_time,
+		   	 	M.last_content,
 				(
 			        select count(*) 
 			        from message msg 
@@ -56,6 +58,14 @@
 			    ) AS unread_cnt
 		  from	room r
 		  inner join room_user ru on ru.room_no = r.room_no and ru.account_no = r.room_owner
+		  inner join (
+		        select
+		        	message_room,
+		        	max(message_time) as last_time,
+		        	max(message_content) keep (dense_rank last order by message_time) as last_content
+		        from message 
+		        group by message_room
+		    ) M on R.room_no = M.message_room
 		 where	r.room_owner = #{roomOwner}
 		   and	r.room_type = '상담'
 	</select> 
