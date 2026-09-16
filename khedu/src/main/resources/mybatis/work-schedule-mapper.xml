@@ -51,34 +51,36 @@
 
 			<choose>
 
-				<!-- 휴무일로 변경 -->
-				<when
-					test='scheduledDayType != null and scheduledDayType == "dayOff"'>
+    <!-- 주휴일 / 휴무일 -->
+    <when test="
+        scheduledDayType == 'holiday'
+        or scheduledDayType == 'dayOff'
+    ">
 
-					scheduled_day_type = #{scheduledDayType},
-					scheduled_clock_in = null,
-					scheduled_clock_out = null,
+        scheduled_day_type = #{scheduledDayType},
+        scheduled_clock_in = null,
+        scheduled_clock_out = null,
 
-				</when>
+    </when>
 
-				<!-- 근무일 / 휴일 -->
-				<otherwise>
+    <!-- 근무일 -->
+    <otherwise>
 
-					<if test="scheduledClockIn != null">
-						scheduled_clock_in = #{scheduledClockIn},
-					</if>
+        <if test="scheduledClockIn != null">
+            scheduled_clock_in = #{scheduledClockIn},
+        </if>
 
-					<if test="scheduledClockOut != null">
-						scheduled_clock_out = #{scheduledClockOut},
-					</if>
+        <if test="scheduledClockOut != null">
+            scheduled_clock_out = #{scheduledClockOut},
+        </if>
 
-					<if test="scheduledDayType != null">
-						scheduled_day_type = #{scheduledDayType},
-					</if>
+        <if test="scheduledDayType != null">
+            scheduled_day_type = #{scheduledDayType},
+        </if>
 
-				</otherwise>
+    </otherwise>
 
-			</choose>
+</choose>
 
 			<if test="actualWorkHours != null">
 				actual_work_hours = #{actualWorkHours},

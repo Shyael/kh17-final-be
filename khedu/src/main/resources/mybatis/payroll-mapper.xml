@@ -570,15 +570,11 @@
 <!-- 양측 서명 전 근로계약 취소 -->
 <delete id="cancelContract">
 
-	delete from employment_contract
+	delete  from employment_contract
 
 	where contract_no = #{contractNo}
 
 	and contract_status = 'pending'
-
-	and employee_signature is null
-
-	and employer_signature is null
 
 	and signed_time is null
 

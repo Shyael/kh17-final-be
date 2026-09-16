@@ -45,14 +45,17 @@ public class EmployeeWorkScheduleServiceImpl
     private ContractDao contractDao;
 
 
+    // =====================================================
     // 근무 일정 등록
+    // =====================================================
+
     @Override
     public WorkScheduleAddResponseVO add(
             WorkScheduleAddRequestVO requestVO) {
 
 
         // =========================
-        // 기본 입력값 확인
+        // 기본 입력값
         // =========================
 
         if (requestVO.getScheduledWorkDate() == null
@@ -63,7 +66,7 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 해당 날짜 적용 계약 조회
+        // 해당 날짜 적용 계약
         // =========================
 
         Long contractNo =
@@ -97,7 +100,7 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 근무일 계약기간 확인
+        // 계약기간 확인
         // =========================
 
         LocalDate date =
@@ -123,9 +126,11 @@ public class EmployeeWorkScheduleServiceImpl
         boolean contractPeriod =
                 !date.isBefore(
                         contractStart)
-                && (
+                &&
+                (
                     contractEnd == null
-                    || !date.isAfter(
+                    ||
+                    !date.isAfter(
                             contractEnd)
                 );
 
@@ -137,65 +142,40 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 예정 근무일 유형 확인
+        // 근무일 유형 확인
         // =========================
+
+        String scheduledDayType =
+                requestVO.getScheduledDayType();
+
 
         if (!"workday".equals(
-                requestVO.getScheduledDayType())
+                scheduledDayType)
                 && !"holiday".equals(
-                        requestVO.getScheduledDayType())
+                        scheduledDayType)
                 && !"dayOff".equals(
-                        requestVO.getScheduledDayType())) {
+                        scheduledDayType)) {
 
             throw new GetOutException();
         }
 
 
         // =========================
-        // 근무 가능한 날짜인지 확인
+        // 일반 근무일
+        //
+        // 원장이 예정 출퇴근시간 입력
         // =========================
 
-        boolean canWork =
-                "workday".equals(
-                        requestVO.getScheduledDayType())
-                || "holiday".equals(
-                        requestVO.getScheduledDayType());
+        if ("workday".equals(
+                scheduledDayType)) {
 
 
-        boolean hasSchedule =
-                requestVO.getScheduledClockIn() != null
-                && requestVO.getScheduledClockOut() != null;
+            if (requestVO.getScheduledClockIn() == null
+                    || requestVO.getScheduledClockOut() == null) {
 
+                throw new GetOutException();
+            }
 
-        // workday / holiday는
-        // 예정 출퇴근시간 필수
-        if (canWork
-                && !hasSchedule) {
-
-            throw new GetOutException();
-        }
-
-
-        // =========================
-        // 휴무일
-        // =========================
-
-        if ("dayOff".equals(
-                requestVO.getScheduledDayType())) {
-
-            requestVO.setScheduledClockIn(
-                    null);
-
-            requestVO.setScheduledClockOut(
-                    null);
-        }
-
-
-        // =========================
-        // 예정 출퇴근시간 확인
-        // =========================
-
-        if (canWork) {
 
             LocalDateTime scheduledClockIn =
                     requestVO.getScheduledClockIn()
@@ -216,7 +196,28 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 같은 날짜 일정 중복 확인
+        // 주휴일 / 휴무일
+        //
+        // 예정 출퇴근시간 없음
+        //
+        // 주휴일 실제 출퇴근은
+        // 직원의 출근 / 퇴근으로 기록
+        // =========================
+
+        else {
+
+            requestVO.setScheduledClockIn(
+                    null
+            );
+
+            requestVO.setScheduledClockOut(
+                    null
+            );
+        }
+
+
+        // =========================
+        // 같은 날짜 일정 중복
         // =========================
 
         int employeeNo =
@@ -237,14 +238,17 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 주 52시간 예정근무 제한
+        // 주 52시간 예정근무 검증
+        //
+        // workday만 예정근무에 포함
+        // holiday/dayOff는 예정시간 없음
         // =========================
 
         validateWeeklyScheduledWorkLimit(
                 employeeNo,
                 date,
                 null,
-                requestVO.getScheduledDayType(),
+                scheduledDayType,
                 requestVO.getScheduledClockIn(),
                 requestVO.getScheduledClockOut(),
                 existContract
@@ -252,7 +256,7 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 일정번호 생성
+        // 일정번호
         // =========================
 
         long workScheduleNo =
@@ -265,7 +269,7 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 일정 등록
+        // 등록
         // =========================
 
         boolean success =
@@ -279,10 +283,6 @@ public class EmployeeWorkScheduleServiceImpl
             throw new GetOutException();
         }
 
-
-        // =========================
-        // 결과 반환
-        // =========================
 
         return WorkScheduleAddResponseVO.builder()
                 .scheduledClockIn(
@@ -299,7 +299,10 @@ public class EmployeeWorkScheduleServiceImpl
     }
 
 
+    // =====================================================
     // 근무 일정 수정
+    // =====================================================
+
     @Override
     @Transactional
     public void update(
@@ -307,7 +310,7 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 수정 대상 일정 조회
+        // 수정 대상
         // =========================
 
         EmployeeWorkScheduleDto currentSchedule =
@@ -322,10 +325,6 @@ public class EmployeeWorkScheduleServiceImpl
         }
 
 
-        // =========================
-        // 현재 일정의 계약 조회
-        // =========================
-
         ContractDto contract =
                 contractDao.find(
                         currentSchedule.getContractNo()
@@ -339,7 +338,7 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 예정 근무일 유형 검증
+        // 근무일 유형 검증
         // =========================
 
         if (requestVO.getScheduledDayType() != null) {
@@ -357,13 +356,15 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 근무 날짜 변경 여부
+        // 날짜 변경
         // =========================
 
-        boolean workDateChanged = false;
+        boolean workDateChanged =
+                false;
 
 
         if (requestVO.getScheduledWorkDate() != null) {
+
 
             LocalDate requestWorkDate =
                     requestVO.getScheduledWorkDate()
@@ -372,7 +373,8 @@ public class EmployeeWorkScheduleServiceImpl
 
 
             LocalDate currentWorkDate =
-                    currentSchedule.getScheduledWorkDate()
+                    currentSchedule
+                            .getScheduledWorkDate()
                             .toLocalDateTime()
                             .toLocalDate();
 
@@ -392,12 +394,13 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 근무일 유형 변경 여부
+        // 유형 변경 여부
         // =========================
 
         boolean dayTypeChanged =
                 requestVO.getScheduledDayType() != null
-                && !requestVO.getScheduledDayType()
+                &&
+                !requestVO.getScheduledDayType()
                         .equals(
                                 currentSchedule
                                         .getScheduledDayType()
@@ -405,7 +408,7 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 실제 근태 존재 여부
+        // 실제 근태 존재
         // =========================
 
         EmployeeAttendanceDto attendanceExist =
@@ -414,12 +417,14 @@ public class EmployeeWorkScheduleServiceImpl
                 );
 
 
-        // 실제 근태가 발생했다면
-        // 날짜 / 근무일 유형 변경 불가
+        // 실제 근태 발생 후
+        // 날짜 / 근무일 유형 변경 금지
         if (attendanceExist != null
-                && (
+                &&
+                (
                     workDateChanged
-                    || dayTypeChanged
+                    ||
+                    dayTypeChanged
                 )) {
 
             throw new GetOutException();
@@ -427,10 +432,11 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 날짜 변경 시 계약기간 확인
+        // 날짜 변경 시 계약기간
         // =========================
 
         if (workDateChanged) {
+
 
             LocalDate contractStart =
                     contract.getContractStart()
@@ -455,9 +461,11 @@ public class EmployeeWorkScheduleServiceImpl
             boolean contractPeriod =
                     !workDate.isBefore(
                             contractStart)
-                    && (
+                    &&
+                    (
                         contractEnd == null
-                        || !workDate.isAfter(
+                        ||
+                        !workDate.isAfter(
                                 contractEnd)
                     );
 
@@ -468,7 +476,6 @@ public class EmployeeWorkScheduleServiceImpl
             }
 
 
-            // 같은 직원의 해당 날짜 일정 중복 확인
             EmployeeWorkScheduleDto alreadyExist =
                     employeeWorkScheduleDao.isExist(
                             contract.getEmployeeNo(),
@@ -484,15 +491,17 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 수정 후 최종 날짜
+        // 수정 후 날짜
         // =========================
 
         LocalDate finalWorkDate =
                 requestVO.getScheduledWorkDate() != null
+
                         ? requestVO
                                 .getScheduledWorkDate()
                                 .toLocalDateTime()
                                 .toLocalDate()
+
                         : currentSchedule
                                 .getScheduledWorkDate()
                                 .toLocalDateTime()
@@ -500,73 +509,47 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 수정 후 최종 근무일 유형
+        // 수정 후 유형
         // =========================
 
         String scheduledDayType =
                 requestVO.getScheduledDayType() != null
+
                         ? requestVO.getScheduledDayType()
-                        : currentSchedule.getScheduledDayType();
+
+                        : currentSchedule
+                                .getScheduledDayType();
 
 
         // =========================
-        // 최종 예정시간
+        // 수정 후 예정시간
         // =========================
 
         Timestamp finalScheduledClockIn =
                 requestVO.getScheduledClockIn() != null
+
                         ? requestVO.getScheduledClockIn()
-                        : currentSchedule.getScheduledClockIn();
+
+                        : currentSchedule
+                                .getScheduledClockIn();
 
 
         Timestamp finalScheduledClockOut =
                 requestVO.getScheduledClockOut() != null
+
                         ? requestVO.getScheduledClockOut()
-                        : currentSchedule.getScheduledClockOut();
+
+                        : currentSchedule
+                                .getScheduledClockOut();
 
 
         // =========================
-        // 휴무일 처리
+        // workday
         // =========================
 
-        if ("dayOff".equals(
+        if ("workday".equals(
                 scheduledDayType)) {
 
-
-            // 이번 요청으로 dayOff가 된 경우
-            if ("dayOff".equals(
-                    requestVO.getScheduledDayType())) {
-
-                requestVO.setScheduledClockIn(
-                        null);
-
-                requestVO.setScheduledClockOut(
-                        null);
-
-
-                finalScheduledClockIn =
-                        null;
-
-                finalScheduledClockOut =
-                        null;
-            }
-
-
-            // 기존 dayOff 상태에서
-            // 근무시간만 억지로 집어넣는 요청 차단
-            else if (requestVO.getScheduledClockIn() != null
-                    || requestVO.getScheduledClockOut() != null) {
-
-                throw new GetOutException();
-            }
-        }
-
-
-        // =========================
-        // workday / holiday 예정시간 검증
-        // =========================
-
-        else {
 
             if (finalScheduledClockIn == null
                     || finalScheduledClockOut == null) {
@@ -594,7 +577,33 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // actual 값 음수 방지
+        // holiday / dayOff
+        //
+        // 원장이 예정시간을 가지지 않음
+        // =========================
+
+        else {
+
+
+            requestVO.setScheduledClockIn(
+                    null
+            );
+
+            requestVO.setScheduledClockOut(
+                    null
+            );
+
+
+            finalScheduledClockIn =
+                    null;
+
+            finalScheduledClockOut =
+                    null;
+        }
+
+
+        // =========================
+        // actual 음수 방지
         // =========================
 
         if (requestVO.getActualWorkHours() != null
@@ -626,18 +635,22 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 예정 일정 자체가 변경되는 경우만
-        // 주 52시간 재검증
+        // 예정 일정 변경 시
+        // 52시간 재검증
         // =========================
 
         boolean plannedScheduleChanged =
                 workDateChanged
-                || dayTypeChanged
-                || requestVO.getScheduledClockIn() != null
-                || requestVO.getScheduledClockOut() != null;
+                ||
+                dayTypeChanged
+                ||
+                requestVO.getScheduledClockIn() != null
+                ||
+                requestVO.getScheduledClockOut() != null;
 
 
         if (plannedScheduleChanged) {
+
 
             validateWeeklyScheduledWorkLimit(
                     contract.getEmployeeNo(),
@@ -650,10 +663,6 @@ public class EmployeeWorkScheduleServiceImpl
             );
         }
 
-
-        // =========================
-        // 일정 수정
-        // =========================
 
         boolean success =
                 employeeWorkScheduleDao.update(
@@ -668,7 +677,10 @@ public class EmployeeWorkScheduleServiceImpl
     }
 
 
-    // 직원 특정 날짜 근무 일정 조회
+    // =====================================================
+    // 특정 날짜 일정 조회
+    // =====================================================
+
     @Override
     @Transactional(readOnly = true)
     public WorkScheduleResponseVO find(
@@ -697,6 +709,10 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         return WorkScheduleResponseVO.builder()
+                .workScheduleNo(
+                        scheduleDto.getWorkScheduleNo())
+                .contractNo(
+                        scheduleDto.getContractNo())
                 .scheduledWorkDate(
                         scheduleDto.getScheduledWorkDate())
                 .scheduledClockIn(
@@ -716,6 +732,10 @@ public class EmployeeWorkScheduleServiceImpl
                 .build();
     }
 
+
+    // =====================================================
+    // 기간 조회
+    // =====================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -747,23 +767,34 @@ public class EmployeeWorkScheduleServiceImpl
                 );
 
 
-        double totalWorkHours = 0;
-        double totalOvertimeHours = 0;
-        double totalNightHours = 0;
-        double totalHolidayHours = 0;
+        double totalWorkHours =
+                0;
+
+        double totalOvertimeHours =
+                0;
+
+        double totalNightHours =
+                0;
+
+        double totalHolidayHours =
+                0;
 
 
         for (WorkScheduleResponseVO scheduleVO
                 : scheduleList) {
 
+
             totalWorkHours +=
                     scheduleVO.getActualWorkHours();
+
 
             totalOvertimeHours +=
                     scheduleVO.getActualOvertimeHours();
 
+
             totalNightHours +=
                     scheduleVO.getActualNightHours();
+
 
             totalHolidayHours +=
                     scheduleVO.getActualHolidayHours();
@@ -792,6 +823,10 @@ public class EmployeeWorkScheduleServiceImpl
     }
 
 
+    // =====================================================
+    // 자동 결근
+    // =====================================================
+
     @Override
     @Transactional
     public void autoAbsent() {
@@ -803,8 +838,6 @@ public class EmployeeWorkScheduleServiceImpl
                 );
 
 
-        // 예정 퇴근시간이 지났는데
-        // 근태가 없는 근무일 조회
         List<EmployeeWorkScheduleDto> scheduleList =
                 employeeWorkScheduleDao
                         .findAutoAbsentTarget(
@@ -814,6 +847,15 @@ public class EmployeeWorkScheduleServiceImpl
 
         for (EmployeeWorkScheduleDto scheduleDto
                 : scheduleList) {
+
+
+            // 방어
+            // 주휴일 / 휴무일은 자동결근 대상 아님
+            if (!"workday".equals(
+                    scheduleDto.getScheduledDayType())) {
+
+                continue;
+            }
 
 
             EmployeeAttendanceDto attendanceDto =
@@ -851,7 +893,6 @@ public class EmployeeWorkScheduleServiceImpl
             }
 
 
-            // 결근이므로 actual 4종 0
             WorkScheduleUpdateRequestVO scheduleUpdateVO =
                     new WorkScheduleUpdateRequestVO();
 
@@ -889,14 +930,19 @@ public class EmployeeWorkScheduleServiceImpl
     // =====================================================
     // 주 52시간 예정근무 검증
     //
-    // KH EDU 기준
-    // 월요일 00:00 ~ 다음 월요일 00:00 미만 = 1주
+    // 월요일 00:00
+    // ~ 다음 월요일 00:00 미만
     //
-    // 근무시간은 휴게시간 제외
+    // 예정근로시간은 workday만 계산
     //
-    // update의 경우 excludeWorkScheduleNo를 제외하고
-    // 수정 후 예정근무시간을 다시 더함
+    // holiday:
+    // 원장이 시간을 예정하지 않고
+    // 직원 실제 출퇴근으로만 기록
+    //
+    // dayOff:
+    // 근무 예정 없음
     // =====================================================
+
     private void validateWeeklyScheduledWorkLimit(
             int employeeNo,
             LocalDate targetDate,
@@ -907,10 +953,6 @@ public class EmployeeWorkScheduleServiceImpl
             ContractDto targetContract) {
 
 
-        // =========================
-        // 해당 날짜가 속한 주 시작
-        // =========================
-
         LocalDate weekStart =
                 targetDate.with(
                         TemporalAdjusters.previousOrSame(
@@ -919,8 +961,6 @@ public class EmployeeWorkScheduleServiceImpl
                 );
 
 
-        // 다음주 월요일
-        // end exclusive
         LocalDate weekEnd =
                 weekStart.plusDays(7);
 
@@ -937,10 +977,6 @@ public class EmployeeWorkScheduleServiceImpl
                 );
 
 
-        // =========================
-        // 해당 주 기존 스케줄 조회
-        // =========================
-
         List<EmployeeWorkScheduleDto> weeklyScheduleList =
                 employeeWorkScheduleDao.findByPeriod(
                         employeeNo,
@@ -949,28 +985,30 @@ public class EmployeeWorkScheduleServiceImpl
                 );
 
 
-        double weeklyScheduledWorkHours = 0;
+        double weeklyScheduledWorkHours =
+                0;
 
 
         // =========================
-        // 기존 예정근무시간 합계
+        // 기존 일정
         // =========================
 
         for (EmployeeWorkScheduleDto scheduleDto
                 : weeklyScheduleList) {
 
 
-            // update 중인 현재 일정은 제외
+            // update 대상 자기 자신 제외
             if (excludeWorkScheduleNo != null
-                    && scheduleDto.getWorkScheduleNo()
-                            == excludeWorkScheduleNo) {
+                    && excludeWorkScheduleNo.equals(
+                            scheduleDto.getWorkScheduleNo()
+                    )) {
 
                 continue;
             }
 
 
-            // 휴무일은 근무시간 없음
-            if ("dayOff".equals(
+            // 예정시간 계산은 workday만
+            if (!"workday".equals(
                     scheduleDto.getScheduledDayType())) {
 
                 continue;
@@ -984,8 +1022,6 @@ public class EmployeeWorkScheduleServiceImpl
             }
 
 
-            // 계약이 주중 변경될 수도 있으므로
-            // 각 스케줄 자신의 contractNo 기준으로 조회
             ContractDto scheduleContract =
                     contractDao.find(
                             scheduleDto.getContractNo()
@@ -1015,13 +1051,18 @@ public class EmployeeWorkScheduleServiceImpl
             }
 
 
+            double breakMinutes =
+                    scheduleContract.getWrittenBreakMinutes() == null
+                            ? 0
+                            : scheduleContract.getWrittenBreakMinutes();
+
+
             double scheduledMinutes =
                     Duration.between(
                             scheduledClockIn,
                             scheduledClockOut
                     ).toMinutes()
-                    - scheduleContract
-                            .getWrittenBreakMinutes();
+                    - breakMinutes;
 
 
             if (scheduledMinutes < 0) {
@@ -1036,27 +1077,14 @@ public class EmployeeWorkScheduleServiceImpl
 
 
         // =========================
-        // 추가 / 수정될 일정의 근무시간
+        // 새로 추가 / 수정할 일정
         // =========================
 
-        double targetScheduledWorkHours = 0;
-        
-        double dailyWorkHours =
-                targetContract.getDailyWorkHours();
+        double targetScheduledWorkHours =
+                0;
 
 
-        double scheduledOvertimeHours =
-                targetScheduledWorkHours
-                - dailyWorkHours;
-
-
-        if (scheduledOvertimeHours < 0) {
-
-            scheduledOvertimeHours = 0;
-        }
-
-
-        if (!"dayOff".equals(
+        if ("workday".equals(
                 targetDayType)) {
 
 
@@ -1084,13 +1112,18 @@ public class EmployeeWorkScheduleServiceImpl
             }
 
 
+            double breakMinutes =
+                    targetContract.getWrittenBreakMinutes() == null
+                            ? 0
+                            : targetContract.getWrittenBreakMinutes();
+
+
             double scheduledMinutes =
                     Duration.between(
                             scheduledClockIn,
                             scheduledClockOut
                     ).toMinutes()
-                    - targetContract
-                            .getWrittenBreakMinutes();
+                    - breakMinutes;
 
 
             if (scheduledMinutes < 0) {
@@ -1104,27 +1137,10 @@ public class EmployeeWorkScheduleServiceImpl
         }
 
 
-        // =========================
-        // 최종 주간 예정근로시간
-        // =========================
-
         double expectedWeeklyWorkHours =
                 weeklyScheduledWorkHours
                 + targetScheduledWorkHours;
 
-        double contractWeeklyWorkHours =
-                targetContract.getWeeklyWorkHours();
-
-
-        double weeklyOvertimeHours =
-                expectedWeeklyWorkHours
-                - contractWeeklyWorkHours;
-
-
-        if (weeklyOvertimeHours < 0) {
-
-            weeklyOvertimeHours = 0;
-        }
 
         if (expectedWeeklyWorkHours
                 > WEEKLY_WORK_LIMIT) {

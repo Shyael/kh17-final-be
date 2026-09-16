@@ -13,8 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
+import com.kh.khedu.error.AdminChecker;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.error.YouAreNotAdminException;
 import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.util.SignatureEncryptor;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
@@ -52,6 +54,9 @@ public class ContractServiceImpl implements ContractService {
 
 	    @Autowired
 	    private ContractPersonInfoService contractPersonInfoService;
+	    
+	    @Autowired
+		private AdminChecker adminChecker;
 
 	   @Autowired
 	   private EmployeeDao employeeDao;
@@ -1141,24 +1146,33 @@ public class ContractServiceImpl implements ContractService {
 		ContractDto find = contractDao.findSignature(contractNo);
 
 		if (find == null)
-			throw new TargetNotfoundException();
+		    throw new TargetNotfoundException();
 
 		// 권한은 당사자, 데스크, 원장만
-		
-		boolean hasPermission = contractAuthorizationService.checkAdminOrPartyBOrDeskByContract(parseVO, contractNo);
+		boolean hasPermission =
+		        contractAuthorizationService.checkAdminOrPartyBOrDeskByContract(parseVO, contractNo);
 
-		if(!hasPermission) throw new GetOutException();
-		
-		
+		if (!hasPermission)
+		    throw new GetOutException();
+
 		ContractDto target = ContractDto.builder()
-				.employeeSignature(signatureEncryptor.decrypt(find.getEmployeeSignature()))
-				.employerSignature(signatureEncryptor.decrypt(find.getEmployerSignature()))
-				.build();
-				
+		        .employeeSignature(
+		                find.getEmployeeSignature() == null
+		                        ? null
+		                        : signatureEncryptor.decrypt(find.getEmployeeSignature())
+		        )
+		        .employerSignature(
+		                find.getEmployerSignature() == null
+		                        ? null
+		                        : signatureEncryptor.decrypt(find.getEmployerSignature())
+		        )
+		        .build();
+
 		ContractSignResponseVO response = ContractSignResponseVO.builder()
-				.employeeSignature(target.getEmployeeSignature())
-				.employerSignature(target.getEmployerSignature())
-				.build();
+		        .employeeSignature(target.getEmployeeSignature())
+		        .employerSignature(target.getEmployerSignature())
+		        .build();
+
 		return response;
 	}
 
@@ -1272,14 +1286,8 @@ public class ContractServiceImpl implements ContractService {
 		// 관리자 권한 확인
 		// =========================
 
-		boolean isAdmin =
-				contractAuthorizationService.checkAdmin(
-						parseVO
-				);
-
-		if (!isAdmin)
-			throw new GetOutException();
-
+		boolean isAdmin = adminChecker.AdminCheck(parseVO);
+		if(isAdmin == false) throw new YouAreNotAdminException();
 
 		// =========================
 		// 계약 조회
@@ -1305,29 +1313,13 @@ public class ContractServiceImpl implements ContractService {
 
 
 		// =========================
-		// 직원이 이미 서명한 계약은 취소 불가
-		// =========================
-
-		if (contractDto.getEmployeeSignature() != null)
-			throw new GetOutException();
-
-
-		// =========================
-		// 원장이 이미 서명한 계약은 취소 불가
-		// =========================
-
-		if (contractDto.getEmployerSignature() != null)
-			throw new GetOutException();
-
-
-		// =========================
 		// 서명 완료시간이 존재하면 취소 불가
 		// =========================
 
 		if (contractDto.getSignedTime() != null)
 			throw new GetOutException();
 
-
+		
 		// =========================
 		// 계약 삭제
 		// =========================
@@ -1336,6 +1328,8 @@ public class ContractServiceImpl implements ContractService {
 				contractDao.cancelContract(
 						contractNo
 				);
+		
+		System.out.println(result);
 
 		if (!result)
 			throw new GetOutException();
