@@ -22,6 +22,9 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	 @Autowired
 	 private AdminDashboardService adminDashboardService;
 
+	 @Autowired
+	 private DeskDashboardService deskDashboardService;
+	 
 	@Override
     public EmployeeDashboardVO getDashboard(
             TokenParseResponseVO parseVO) {
@@ -54,6 +57,7 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	                    .exams( employeeDashboardDao.selectAllDashboardExams())
 	                    .courses(employeeDashboardDao.selectAdminDashboardTodayCourses())
 	                    .todayCourses(employeeDashboardDao.countAdminDashboardTodayCourses())
+	                    .payrollDueList(deskDashboardService.getPayrollDueList())
                     .build();
         }
 

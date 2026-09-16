@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CurrentUser;
-import com.kh.khedu.error.AdminChecker;
+import com.kh.khedu.error.TutorChecker;
 import com.kh.khedu.service.payroll.PayrollService;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.PayrollPayRequestVO;
@@ -31,7 +31,7 @@ public class AdminPayrollRestController {
 	private PayrollService payrollService;
 
 	@Autowired
-	private AdminChecker adminChecker;
+	private TutorChecker TutorChecker;
 	// =========================
 	// 급여 최초 계산
 	// =========================
@@ -41,7 +41,7 @@ public class AdminPayrollRestController {
 			@RequestBody PayrollPeriodRequestVO requestVO
 			,@CurrentUser TokenParseResponseVO parseVO) {
 
-		adminChecker.AdminCheck(parseVO);
+		TutorChecker.TutorCheck(parseVO);
 		payrollService.calculate(
 				requestVO.getEmployeeNo(),
 				requestVO.getPayrollYear(),
@@ -58,7 +58,7 @@ public class AdminPayrollRestController {
 	public void recalculate(
 			@RequestBody PayrollPeriodRequestVO requestVO
 			,@CurrentUser TokenParseResponseVO parseVO) {
-		adminChecker.AdminCheck(parseVO);
+		TutorChecker.TutorCheck(parseVO);
 		payrollService.recalculate(
 				requestVO.getEmployeeNo(),
 				requestVO.getPayrollYear(),
@@ -75,7 +75,7 @@ public class AdminPayrollRestController {
 	public void confirm(
 			@RequestBody PayrollPeriodRequestVO requestVO
 			,@CurrentUser TokenParseResponseVO parseVO) {
-		adminChecker.AdminCheck(parseVO);
+		TutorChecker.TutorCheck(parseVO);
 		payrollService.confirm(
 				requestVO.getEmployeeNo(),
 				requestVO.getPayrollYear(),
@@ -92,7 +92,7 @@ public class AdminPayrollRestController {
 	public void pay(
 			@RequestBody PayrollPayRequestVO requestVO
 			,@CurrentUser TokenParseResponseVO parseVO) {
-		adminChecker.AdminCheck(parseVO);
+		TutorChecker.TutorCheck(parseVO);
 		payrollService.pay(
 				requestVO.getEmployeeNo(),
 				requestVO.getPayrollYear(),
@@ -111,7 +111,7 @@ public class AdminPayrollRestController {
 	public void cancelPayment(
 			@RequestBody PayrollPaymentCancelRequestVO requestVO
 			,@CurrentUser TokenParseResponseVO parseVO) {
-		adminChecker.AdminCheck(parseVO);
+		TutorChecker.TutorCheck(parseVO);
 		payrollService.cancelPayment(
 				requestVO.getEmployeeNo(),
 				requestVO.getPayrollYear(),
@@ -132,7 +132,7 @@ public class AdminPayrollRestController {
 			@PathVariable int payrollYear,
 			@PathVariable int payrollMonth
 			,@CurrentUser TokenParseResponseVO parseVO) {
-		adminChecker.AdminCheck(parseVO);
+		TutorChecker.TutorCheck(parseVO);
 		return payrollService.findDetail(
 				employeeNo,
 				payrollYear,
@@ -149,7 +149,7 @@ public class AdminPayrollRestController {
 	public List<PayrollListResponseVO> findAllByEmployee(
 			@PathVariable int employeeNo
 			,@CurrentUser TokenParseResponseVO parseVO) {
-		adminChecker.AdminCheck(parseVO);
+		TutorChecker.TutorCheck(parseVO);
 		return payrollService.findAllByEmployee(
 				employeeNo
 		);
@@ -166,7 +166,7 @@ public class AdminPayrollRestController {
 			@PathVariable int payrollYear,
 			@PathVariable int payrollMonth
 			,@CurrentUser TokenParseResponseVO parseVO) {
-		adminChecker.AdminCheck(parseVO);
+		TutorChecker.TutorCheck(parseVO);
 		return payrollService.findPaymentHistory(
 				employeeNo,
 				payrollYear,
@@ -179,7 +179,7 @@ public class AdminPayrollRestController {
 			@PathVariable int payrollYear,
 			@PathVariable int payrollMonth
 			,@CurrentUser TokenParseResponseVO parseVO) {
-		adminChecker.AdminCheck(parseVO);
+		TutorChecker.TutorCheck(parseVO);
 		return payrollService.findAllByPeriod(
 				payrollYear,
 				payrollMonth

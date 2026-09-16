@@ -15,4 +15,7 @@ public class WorkScheduleMonthlySummaryVO {
     private double totalOvertimeHours;
     private double totalNightHours;
     private double totalHolidayHours;
+
+    // 월 전체 예정근로시간
+    private double totalScheduledWorkHours;
 }
