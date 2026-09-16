@@ -33,6 +33,47 @@ public class ClassSessionScheduler {
 	@Autowired
     private CourseDao courseDao;
 	
+	 /**
+     * 매일 새벽 00:10 당일 수업 세션 및 출석부 일괄 생성
+     */
+    @Scheduled(cron = "0 10 0 * * *")
+    @Transactional
+    public void autoCreateTodaySessions() {
+        String todayKorean = LocalDate.now().getDayOfWeek()
+                .getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.KOREAN);
+
+        // 개강일(schedule_open)이 도달했거나 null이 아닌 오늘 스케줄 조회
+        List<ScheduleDto> activeSchedules = scheduleDao.selectTodayActiveSchedules(todayKorean);
+        if (activeSchedules == null || activeSchedules.isEmpty()) return;
+
+        LocalDate today = LocalDate.now();
+
+        for (ScheduleDto schedule : activeSchedules) {
+            java.time.LocalTime startTime = java.time.LocalTime.parse(schedule.getScheduleStart());
+            java.time.LocalTime endTime = java.time.LocalTime.parse(schedule.getScheduleEnd());
+            java.sql.Timestamp sessionStart = java.sql.Timestamp.valueOf(today.atTime(startTime));
+            java.sql.Timestamp sessionEnd = java.sql.Timestamp.valueOf(today.atTime(endTime));
+
+            // 중복 체크
+            ClassSessionDto existing = classSessionDao.selectTodaySession(schedule.getScheduleNo(), sessionStart);
+            if (existing != null) continue;
+
+            // 세션 생성
+            int sessionNo = classSessionDao.sequence();
+            ClassSessionDto sessionDto = ClassSessionDto.builder()
+                    .sessionNo(sessionNo)
+                    .scheduleNo(schedule.getScheduleNo())
+                    .classroomNo(schedule.getClassroomNo())
+                    .sessionStart(sessionStart)
+                    .sessionEnd(sessionEnd)
+                    .build();
+            classSessionDao.insert(sessionDto);
+
+            // 출석부 초기화
+            attendanceDao.initAttendance(sessionNo, schedule.getCourseNo());
+            log.info("[스케줄러] 세션 No.{} 자동 생성 완료 (강좌 No.{})", sessionNo, schedule.getCourseNo());
+        }
+    }
 	
 	//매 10분마다 실행 (0분, 10분, 20분, 30분, 40분, 50분)
 	//시작 시각(schedule_start)에 도달한 수업을 자동으로 세션 생성 및 '진행중' 처리

@@ -125,8 +125,9 @@
 		SELECT cs.*
 		FROM class_session cs
 		JOIN schedule sc ON cs.schedule_no = sc.schedule_no
-		JOIN registration r ON sc.course_no = r.course_no
-		WHERE r.student_no = #{studentNo}
+		JOIN student_course sc_map ON sc.course_no = sc_map.course_no
+		WHERE sc_map.student_no = #{studentNo}
+		  AND sc_map.student_course_status = '수강중'
 		  AND cs.session_status = '진행중'
 		  AND SYSDATE BETWEEN cs.session_start AND cs.session_end
 		  AND ROWNUM = 1
@@ -156,7 +157,10 @@
 			cs.session_start AS sessionStart,
 			cs.session_end AS sessionEnd,
 			cs.session_status AS sessionStatus,
-			count(a.attendance_no)												   AS totalCount,
+			(SELECT COUNT(*) 
+			 FROM student_course sc_sub 
+			 WHERE sc_sub.course_no = s.course_no 
+			   AND sc_sub.student_course_status = '수강중') AS totalCount,
 			COUNT(CASE WHEN a.attendance_state = '출석' THEN 1 END)                 AS presentCount,
             COUNT(CASE WHEN a.attendance_state = '지각' THEN 1 END)                 AS lateCount,
             COUNT(CASE WHEN a.attendance_state = '결석' THEN 1 END)                 AS absentCount
@@ -164,13 +168,14 @@
 		join schedule s on cs.schedule_no = s.schedule_no
 		left join attendance a on cs.session_no = a.class_session_no
 		where s.course_no = #{courseNo}
-		Group by
+		group by
 			cs.session_no,
 			cs.schedule_no,
 			cs.classroom_no,
 			cs.session_start,
 			cs.session_end,
-			cs.session_status
+			cs.session_status,
+			s.course_no
 		order by cs.session_start asc
 	</select>
 	
