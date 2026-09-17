@@ -417,4 +417,11 @@
 
 </select>
 
+	<!-- 직원번호로 계정번호 조회 -->
+	<select id="selectAccountNoByEmployeeNo" resultType="Integer">
+	    select account_no
+	    from employee
+	    where employee_no = #{employeeNo}
+	</select>
+
 </mapper>

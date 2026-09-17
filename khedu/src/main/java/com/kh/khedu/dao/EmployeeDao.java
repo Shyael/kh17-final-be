@@ -59,4 +59,6 @@ public interface EmployeeDao {
 	 int adminEmployeeSearchCount(
 		        AdminEmployeeSearchRequestVO requestVO
 		);
+	 //직원 번호로 accountNo 불러오기
+	 Integer selectAccountNoByEmployeeNo(int employeeNo);
 }
