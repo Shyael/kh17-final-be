@@ -306,5 +306,12 @@
 	            </if>
 	        </where>
     </select>
+    
+    <!-- 학생번호로 계정번호 조회 -->
+	<select id="selectAccountNoByStudentNo" resultType="Integer">
+	    select account_no
+	    from student
+	    where student_no = #{studentNo}
+	</select>
 	
 </mapper>

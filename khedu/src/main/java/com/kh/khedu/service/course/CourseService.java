@@ -3,10 +3,10 @@ package com.kh.khedu.service.course;
 import java.util.List;
 
 import com.kh.khedu.util.PageResponseVO;
-import com.kh.khedu.vo.classSession.CourseSessionVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
+import com.kh.khedu.vo.course.CourseCreateResponseVO;
 import com.kh.khedu.vo.course.CourseDetailResponseVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
@@ -24,7 +24,7 @@ public interface CourseService {
 	List<ClassroomWhenRegisterVO> getAvailAbleClassrooms(AvailableClassroomRequestVO request);
 	
 	//강좌 등록
-	void createCourse(TokenParseResponseVO parseVO, CourseCreateRequestVO request);
+	CourseCreateResponseVO createCourse(TokenParseResponseVO parseVO, CourseCreateRequestVO request);
 	
 	//강좌 목록
 	List<CourseListVO> getCourseList();

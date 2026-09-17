@@ -22,7 +22,6 @@ import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.ScheduleDao;
 import com.kh.khedu.dao.TutorDao;
 import com.kh.khedu.dto.ClassSessionDto;
-import com.kh.khedu.dto.ClassroomDto;
 import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.enums.AccountType;
@@ -40,6 +39,7 @@ import com.kh.khedu.vo.classSession.CourseSessionVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
+import com.kh.khedu.vo.course.CourseCreateResponseVO;
 import com.kh.khedu.vo.course.CourseDetailResponseVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
@@ -117,7 +117,7 @@ public class CourseServiceImpl implements CourseService {
 	//강좌 등록
 	@Override
 	@Transactional
-	public void createCourse(
+	public CourseCreateResponseVO createCourse(
 			TokenParseResponseVO parseVO,
 			CourseCreateRequestVO request) {
 		
@@ -210,6 +210,10 @@ public class CourseServiceImpl implements CourseService {
 			
 			scheduleDao.insertSchedule(schedule);
 		}
+		
+		return CourseCreateResponseVO.builder()
+					.courseNo(courseNo)
+				.build();
 	}
 	
 	//등록 시 요청 내부 schedule  검증
@@ -304,7 +308,7 @@ public class CourseServiceImpl implements CourseService {
 		
 		// 검색 조건에 해당하는 전체 강좌 수
 		int totalCount = courseDao.selectCount(search);
-		
+
 		//페이지 정보까지 계산하여 반환
 		return new PageResponseVO<>(
 				list,
