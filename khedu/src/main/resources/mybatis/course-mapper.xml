@@ -103,9 +103,10 @@
     <select id="selectCourseStudentList" resultType="CourseStudentListVO">
 	    SELECT 
 	        s.student_no                                       AS studentNo,
+	    	ac.account_no									   AS accountNo,
 	        ac.account_name                                    AS studentName,
 	        ac.account_phone                                   AS studentPhone,
-	        NVL(sc.student_course_status, '수강중')             AS studentStatus
+	        NVL(sc.student_course_status, '수강중')              AS studentStatus
 	    FROM student_course sc
 	    JOIN student s   ON sc.student_no = s.student_no
 	    JOIN account ac  ON s.account_no = ac.account_no
@@ -199,6 +200,36 @@
 		from course c
 			<!-- 공통 검색 조건 include -->
 			<include refid="courseSearchCondition" />
+	</select>
+	
+	<!-- 출결/셀렉트박스용 경량 강좌 목록 (페이징 x, 스케줄 조인 x) -->
+	<select id="selectCourseOptions" resultType="CourseListVO">
+		select
+			c.course_no,
+			c.course_title,
+			cs.session_no,
+			cs.session_start,
+			cs.session_end
+		from course c
+		join schedule s ON c.course_no = s.course_no
+		join class_session cs ON s.schedule_no = cs.schedule_no
+		<where>
+	        TRUNC(cs.session_start) = TRUNC(TO_DATE(#{targetDate}, 'YYYY-MM-DD'))
+	        AND c.course_status = '진행중'
+	        <if test="employeeNo != null">
+	            AND c.employee_no = #{employeeNo}
+	        </if>        
+	        <if test="courseTitle != null and courseTitle != ''">
+	            AND c.course_title LIKE '%' || #{courseTitle} || '%'
+	        </if>
+	        <if test="courseSubject != null and courseSubject != ''">
+	            AND c.course_subject = #{courseSubject}
+	        </if>
+	        <if test="gradeNo != null">
+	            AND c.grade_no = #{gradeNo}
+	        </if>
+		</where>
+		order by cs.session_start asc, c.course_title asc
 	</select>
 	
 	<!-- 학생이 현재 수강 중인 강의 목록 -->

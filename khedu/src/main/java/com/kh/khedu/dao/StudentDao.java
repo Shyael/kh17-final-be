@@ -35,4 +35,6 @@ public interface StudentDao {
 	StudentDto selectOneByNoAndPhone(int studentNo, String studentPhone);
 	// 학년 조회 메서드 추가
     String selectStudentGrade(int studentNo);
+    //학생 번호로 학생의 accountno 조회
+    Integer selectAccountNoByStudentNo(int studentNo);
 }

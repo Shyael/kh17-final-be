@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.kh.khedu.controller.SseController;
 import com.kh.khedu.dao.AttachDao;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dao.ExamDao;
@@ -24,6 +25,7 @@ import com.kh.khedu.dto.QuestionOptionDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.util.PageResponseVO;
+import com.kh.khedu.vo.course.CourseStudentListVO;
 import com.kh.khedu.vo.exam.ExamAttemptListVO;
 import com.kh.khedu.vo.exam.ExamDetailVO;
 import com.kh.khedu.vo.exam.ExamDraftRequestVO;
@@ -39,6 +41,7 @@ import com.kh.khedu.vo.exam.StudentExamDetailVO;
 import com.kh.khedu.vo.exam.StudentExamListVO;
 import com.kh.khedu.vo.exam.StudentExamSearchVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
+import com.kh.khedu.vo.sse.SseAlarmVO;
 
 @Service
 @Transactional
@@ -359,11 +362,59 @@ public class ExamServiceImpl implements ExamService {
 		//상태 변경 검증
 		checkStatusChange(beforeExam.getExamStatus(), examDto.getExamStatus());
 		
+		// 이번 요청이 '작성중 → 공개'인지 저장
+	    boolean publishing =
+	            "작성중".equals(beforeExam.getExamStatus())
+	            && "공개".equals(examDto.getExamStatus());
+
+		
 		// 작성중 → 공개
 	    if ("작성중".equals(beforeExam.getExamStatus()) && "공개".equals(examDto.getExamStatus())) {
 	        validatePublish(examDto.getExamNo());
 	    }
-	    return examDao.update(examDto);
+	    
+	    boolean result = examDao.update(examDto);
+	    
+	    // 공개 성공 시 학생들에게 알림
+	    if (result && publishing) {
+	        // 수정 완료된 시험 다시 조회
+	        ExamDto publishedExam = examDao.selectOne(examDto.getExamNo());
+
+	        // 강의 조회
+	        CourseDto course = courseDao.selectOneByCourseNo(publishedExam.getCourseNo());
+
+	        // 해당 강의 학생 조회
+	        List<CourseStudentListVO> students =courseDao.selectCourseStudentList(publishedExam.getCourseNo());
+
+	        // 알림 생성
+	        SseAlarmVO alarm = SseAlarmVO
+	        		.builder()
+		                .type("EXAM")
+		                .message(
+		                        "[" + course.getCourseTitle() + "] "
+		                        + publishedExam.getExamTitle()
+		                        + " 시험이 공개되었습니다."
+		                )
+		                .targetNo(publishedExam.getExamNo())
+		                .targetUrl("/student/exam/"+ publishedExam.getExamNo())
+	                .build();
+	        
+	        // 수강중 학생에게만 전송
+	        for (CourseStudentListVO student : students) {
+
+	            if (!"수강중".equals(student.getStudentStatus())) {
+	                continue;
+	            }
+
+	            SseController.sendToUser(
+	                    "학생",
+	                    student.getAccountNo(),
+	                    alarm
+	            );
+	        }
+	    }
+
+	    return result;
 	}
 
 	@Override
