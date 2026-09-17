@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class CourseStudentListVO {
+	private int accountNo;
 	private int studentNo;
     private String studentName;
     private String studentPhone;
