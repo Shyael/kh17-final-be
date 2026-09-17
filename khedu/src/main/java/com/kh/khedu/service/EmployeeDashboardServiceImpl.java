@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.kh.khedu.dao.ConsultDao;
 import com.kh.khedu.dao.EmployeeDashboardDao;
 import com.kh.khedu.vo.dashboard.AdminDashboardVO;
 import com.kh.khedu.vo.dashboard.DeskDashboardVO;
@@ -19,11 +20,14 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	@Autowired
 	EmployeeDashboardDao employeeDashboardDao;
 	
-	 @Autowired
-	 private AdminDashboardService adminDashboardService;
-
-	 @Autowired
-	 private DeskDashboardService deskDashboardService;
+	@Autowired
+	private AdminDashboardService adminDashboardService;
+	
+	@Autowired
+	private DeskDashboardService deskDashboardService;
+	
+	@Autowired
+	private ConsultDao consultDao;
 	 
 	@Override
     public EmployeeDashboardVO getDashboard(
@@ -44,6 +48,9 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	                     .pendingContractList(adminDashboardService.getPendingContractList())
 	                     .contractExpiringList(adminDashboardService.getContractExpiringList())
 	                     .payrollDueList(adminDashboardService.getPayrollDueList())
+	                     .recentReservations(consultDao.selectRecentReservationList())
+	                     .todayReservations(consultDao.selectTodayReservationList())
+	                     .todayReservations(consultDao.selectTodayReservationList())
                      .build();
         }
         
@@ -58,6 +65,9 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	                    .courses(employeeDashboardDao.selectAdminDashboardTodayCourses())
 	                    .todayCourses(employeeDashboardDao.countAdminDashboardTodayCourses())
 	                    .payrollDueList(deskDashboardService.getPayrollDueList())
+	                    .recentReservations(consultDao.selectRecentReservationList())
+	                    .todayReservations(consultDao.selectTodayReservationList())
+	                    .todayReservations(consultDao.selectTodayReservationList())
                     .build();
         }
 
