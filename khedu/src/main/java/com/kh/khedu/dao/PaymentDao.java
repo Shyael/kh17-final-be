@@ -54,4 +54,7 @@ public interface PaymentDao {
     List<PaymentListResponseVO> selectPaymentListByStudentNo(int studentNo);
     
     boolean updatePaymentHistoryCancel(Map<String, Object> cancelParams);
+    
+    String selectStudentName(int studentNo); // 학생 이름 조회
+    Integer selectParentAccountNoByStudentNo(int studentNo); // 학부모 계정 번호 조회
 }

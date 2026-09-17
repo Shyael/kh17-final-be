@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kh.khedu.controller.SseController;
 import com.kh.khedu.dao.PaymentDao;
 import com.kh.khedu.dao.StudentDao;
 import com.kh.khedu.dto.PaymentDetailDto;
@@ -23,6 +24,7 @@ import com.kh.khedu.vo.payment.PaymentDiscountVO;
 import com.kh.khedu.vo.payment.PaymentListResponseVO;
 import com.kh.khedu.vo.payment.PaymentRequestVO;
 import com.kh.khedu.vo.payment.StudentDiscountVO;
+import com.kh.khedu.vo.sse.SseAlarmVO;
 
 @Service
 public class PaymentService {
@@ -195,7 +197,25 @@ public class PaymentService {
                     discountDto.setDiscountValue(actualDiscountAmount); 
                     
                     paymentDao.insertPaymentDiscount(discountDto);
+                    
+                    }
                 }
+            // 1. 학생 이름 조회
+            String studentName = paymentDao.selectStudentName(studentNo);
+            
+            // 2. 학부모에게 보낼 알람 객체 생성 (paymentMonth는 파라미터로 받은 currentMonth 사용)
+            SseAlarmVO billingAlarm = SseAlarmVO.builder()
+            		.type("PAYMENT")
+            		.message("[" + studentName + "] 학생의 " + currentMonth + "월 학원비가 청구되었습니다.")
+            		.targetNo(paymentNo)
+            		.targetUrl("/parent/payment/list") // 학부모용 수납 목록 페이지 이동
+            		.build();
+            
+            // 3. 학부모 개인에게 알람 발송
+            Integer parentAccountNo = paymentDao.selectParentAccountNoByStudentNo(studentNo); 
+            
+            if(parentAccountNo != null) {
+            	SseController.sendToUser("학부모", parentAccountNo, billingAlarm);
             }
         }
     }
@@ -235,7 +255,7 @@ public class PaymentService {
         int totalPaid = paymentDao.getTotalPaidAmount(paymentNo);
         PaymentDto master = paymentDao.selectPaymentMaster(paymentNo);
 
-        // 3. 상태 결정 (원금보다 같거나 많이 냈으면 완납, 조금이라도 냈으면 부분납)
+        // 3. 상태 결정
         String newStatus = "미납";
         if (totalPaid >= master.getPaymentAmount()) {
             newStatus = "완납";
@@ -243,11 +263,24 @@ public class PaymentService {
             newStatus = "부분납";
         }
 
-        // 4. 영수증 마스터 상태 업데이트 (부분납 or 완납)
+        // 4. 영수증 마스터 상태 업데이트 
         Map<String, Object> params = new HashMap<>();
         params.put("paymentNo", paymentNo);
         params.put("paymentStatus", newStatus);
-        paymentDao.updatePaymentStatus(params); // DAO에 Map 넘기기
+        paymentDao.updatePaymentStatus(params); 
+        
+        // 5. [알림 발송] 직원(원장, 데스크)에게 수기 수납 완료 알림 보내기!
+        String studentName = paymentDao.selectStudentName(master.getStudentNo());
+
+        SseAlarmVO paidAlarm = SseAlarmVO.builder()
+                .type("PAYMENT")
+                .message("[" + studentName + "] 학생의 학원비(" + payAmount + "원) 현장 수납이 완료되었습니다.")
+                .targetNo(paymentNo)
+                .targetUrl("/employee/payment/detail/" + paymentNo) 
+                .build();
+
+        SseController.sendToGroup("직원", "ADMIN", paidAlarm);
+        SseController.sendToGroup("직원", "DESK", paidAlarm);
     }
     
     public List<PaymentListResponseVO> getPaymentListByStudentNo(int studentNo) {
@@ -269,12 +302,26 @@ public class PaymentService {
 
         // 3. 낸 돈이 청구액보다 크거나 같으면 '완납', 아니면 '부분납' 처리!
         String status = (totalPaid >= master.getPaymentAmount()) ? "완납" : "부분납";
+        
         // 4. Map으로 파라미터 예쁘게 포장해서 DAO로 던지기!
         Map<String, Object> updateParams = new HashMap<>();
         updateParams.put("paymentNo", paymentNo);
         updateParams.put("paymentStatus", status);
-        
         paymentDao.updatePaymentStatus(updateParams);
+        
+        // 5. [알림 발송] 직원(원장, 데스크)에게 수납 완료 알림 보내기!
+        // 마스터 정보에서 학생 번호를 꺼내 이름을 조회해옵니다.
+        String studentName = paymentDao.selectStudentName(master.getStudentNo());
+
+        SseAlarmVO paidAlarm = SseAlarmVO.builder()
+                .type("PAYMENT")
+                .message("[" + studentName + "] 학생의 학원비(" + paidAmount + "원) 카카오페이 수납이 완료되었습니다.")
+                .targetNo(paymentNo)
+                .targetUrl("/employee/payment/detail/" + paymentNo) 
+                .build();
+
+        SseController.sendToGroup("직원", "ADMIN", paidAlarm);
+        SseController.sendToGroup("직원", "DESK", paidAlarm);
     }
     
     @Transactional
