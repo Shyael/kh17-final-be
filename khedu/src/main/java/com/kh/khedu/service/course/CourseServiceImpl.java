@@ -308,13 +308,13 @@ public class CourseServiceImpl implements CourseService {
 	//강좌 검색조회
 	@Override
 	public PageResponseVO<CourseListVO> selectList(CourseSearchVO search) {
-		
+		System.out.println("===== SELECT LIST START =====");
 		// 현재 페이지의 강좌 목록 조회
 		List<CourseListVO> list = courseDao.selectSearchList(search);
-		
+		System.out.println("===== SEARCH LIST END =====");
 		// 검색 조건에 해당하는 전체 강좌 수
 		int totalCount = courseDao.selectCount(search);
-
+		System.out.println("===== COUNT END =====");
 		//페이지 정보까지 계산하여 반환
 		return new PageResponseVO<>(
 				list,

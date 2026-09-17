@@ -79,7 +79,8 @@ public class SecurityConfiguration {
 							"/*.png",
 							"/*.ico",
 							"/error",
-							"/employee/**" // React의 employee 관련 모든 화면 경로 허용
+							"/employee/**"// React의 employee 관련 모든 화면 경로 허용
+							,"/api/sse/connect"
 						).permitAll()
 
 						// [기존] 무조건 허용 API
@@ -91,6 +92,7 @@ public class SecurityConfiguration {
 							"/api/account/check-id/**",
 							"/ws/**", 
 							"/ws-member/**"
+							
 						).permitAll()
 							
 						//직원(학원 정보 수정)
