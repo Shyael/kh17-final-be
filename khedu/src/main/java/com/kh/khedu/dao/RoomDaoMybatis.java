@@ -45,8 +45,15 @@ public class RoomDaoMybatis implements RoomDao {
 		return sqlSession.selectOne("mapper.room.check", accountNo);
 	}
 	@Override
+	public RoomVO selectOneForTutorCheck(int tutorNo, int accountNo) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("tutorNo", tutorNo);
+		params.put("accountNo", accountNo);
+		return sqlSession.selectOne("mapper.room.tutorCheck", params);
+	}
+	@Override
 	public List<RoomListVO> selectMyList(int accountNo) {
-		return sqlSession.selectList("mapper.room.myList");
+		return sqlSession.selectList("mapper.room.myList", accountNo);
 	}
 	@Override
 	public List<RoomListVO> selectConsultList(int accountNo) {

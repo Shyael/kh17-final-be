@@ -16,6 +16,7 @@ public interface RoomDao {
 	
 	RoomVO selectOne(int roomNo);
 	RoomVO selectOneForCheck(int accountNo);
+	RoomVO selectOneForTutorCheck(int tutorNo, int accountNo);
 	
 	List<RoomListVO> selectMyList(int accountNo);
 	List<RoomListVO> selectConsultList(int accountNo);

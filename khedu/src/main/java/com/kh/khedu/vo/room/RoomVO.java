@@ -13,5 +13,7 @@ public class RoomVO {
 	private int roomOwner;
 	private String roomType;
 	private Timestamp roomCtime;
+	private String lastContent;
+	private Timestamp lastTime;
 	private int unreadCnt;
 }

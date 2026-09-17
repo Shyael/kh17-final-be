@@ -1,11 +1,8 @@
 package com.kh.khedu.controller;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -14,33 +11,31 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.khedu.annotation.CurrentUser;
+import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.MessageDao;
 import com.kh.khedu.dao.RoomDao;
+import com.kh.khedu.dao.TutorDao;
 import com.kh.khedu.dto.RoomDto;
 import com.kh.khedu.dto.RoomUserDto;
+import com.kh.khedu.dto.TutorDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.message.MessageVO;
 import com.kh.khedu.vo.room.RoomDetailResponseVO;
-import com.kh.khedu.vo.room.RoomEnterRequestVO;
 import com.kh.khedu.vo.room.RoomEnterResponseVO;
-import com.kh.khedu.vo.room.RoomLeaveRequestVO;
 import com.kh.khedu.vo.room.RoomListResponseVO;
 import com.kh.khedu.vo.room.RoomListVO;
-import com.kh.khedu.vo.room.RoomSystemMessageVO;
 import com.kh.khedu.vo.room.RoomUserVO;
 import com.kh.khedu.vo.room.RoomVO;
 import com.kh.khedu.websocket.vo.WebSocketChatVO;
-import com.kh.khedu.websocket.vo.WebSocketV4SystemVO;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
 @Tag(name = "채팅방 API")
@@ -55,6 +50,10 @@ public class RoomRestController {
 	private RoomDao roomDao;
 	@Autowired
 	private MessageDao messageDao;
+	@Autowired
+	private TutorDao tutorDao;
+	@Autowired
+	private EmployeeDao employeeDao;
 	
 	@PostMapping("/")
 	public void createRoom(//@Valid @RequestBody RoomCreateRequestVO request,
@@ -78,6 +77,15 @@ public class RoomRestController {
 						|| parseVO.getAccountType().equals("학부모"))) ?
 					roomDao.selectMyList(parseVO.getAccountNo())
 					: roomDao.selectConsultList(parseVO.getAccountNo());
+		
+		return RoomListResponseVO.builder()
+					.count(rooms.size())
+					.rooms(rooms)
+				.build();
+	}
+	@GetMapping("/private")
+	public RoomListResponseVO privateList(@CurrentUser TokenParseResponseVO parseVO) {
+		List<RoomListVO> rooms = roomDao.selectMyList(parseVO.getAccountNo());
 		
 		return RoomListResponseVO.builder()
 					.count(rooms.size())
@@ -172,20 +180,96 @@ public class RoomRestController {
 		}
 	}
 	
+	//강사 채팅방 목록
+	@GetMapping("/tutor")
+	public RoomListResponseVO tutorRoomlist(
+			//security filter chain에서 permitAll()로 처리된 경우만 null이 가능
+			@CurrentUser TokenParseResponseVO parseVO) {
+		
+		List<RoomListVO> rooms = roomDao.selectMyList(parseVO.getAccountNo());
+		log.info("rooms = {}", rooms);
+		return RoomListResponseVO.builder()
+					.count(rooms.size())
+					.rooms(rooms)
+				.build();
+	}
+	
+	//강사 채팅방 상세 정보 
+	@GetMapping("/check/{employeeNo}")
+	public RoomDetailResponseVO checkTutorChat(@PathVariable(value = "employeeNo", required = false) Integer employeeNo,
+						@CurrentUser TokenParseResponseVO parseVO) {
+		int accountNo = parseVO.getAccountNo();
+		
+		AdminEmployeeDetailVO employeeVO = employeeDao.selectAdminEmployeeDetailByEmployeeNo(employeeNo);
+		int tutorAccountNo = employeeVO.getAccountNo();
+		log.info("employeeNo = {}", employeeNo);
+		log.info("tutorAccountNo = {}", tutorAccountNo);
+		
+		RoomVO checkVO = roomDao.selectOneForTutorCheck(tutorAccountNo, accountNo);
+		//생성된 방이 없다면 생성부터
+		if(checkVO == null) {
+			RoomDto insertDto = new RoomDto().builder()
+						.roomNo(roomDao.roomSequence())
+						.roomOwner(accountNo)
+						.roomType("개인")
+					.build();
+			roomDao.insertRoom(insertDto);
+			roomDao.insertRoomUser(new RoomUserDto().builder()
+						.roomUserNo(roomDao.roomUserSequence())
+						.roomNo(insertDto.getRoomNo())
+						.accountNo(accountNo)
+					.build());
+			roomDao.insertRoomUser(new RoomUserDto().builder()
+						.roomUserNo(roomDao.roomUserSequence())
+						.roomNo(insertDto.getRoomNo())
+						.accountNo(tutorAccountNo)
+					.build());
+			
+			List<RoomUserVO> users = roomDao.getMemberInfo(insertDto.getRoomNo());
+			//응답 생성 및 반환
+			return RoomDetailResponseVO.builder()
+						.room(new RoomVO().builder()
+									.roomNo(insertDto.getRoomNo())
+									.roomOwner(insertDto.getRoomOwner())
+									.roomType(insertDto.getRoomType())
+									.roomCtime(null)
+								.build())//방정보
+						.users(users)//유저목록
+						.history(new ArrayList<>())
+					.build();
+		} 
+		else {
+			List<RoomUserVO> users = roomDao.getMemberInfo(checkVO.getRoomNo());
+			List<MessageVO> history = messageDao.selectList(checkVO.getRoomNo());
+			//응답 생성 및 반환
+			return RoomDetailResponseVO.builder()
+						.room(checkVO)//방정보
+						.users(users)//유저목록
+						.history(history)
+					.build();
+		}
+	}
+	
 	//방 읽음 처리
 	@PutMapping("/{roomNo}/read")
 	public void read(@PathVariable(value = "roomNo", required = false) Integer roomNo,
 						@CurrentUser TokenParseResponseVO parseVO) {
 		if(parseVO.getAccountType().equals("직원")) {
-			roomDao.readRoomEmployee(roomNo);
-			WebSocketChatVO response = WebSocketChatVO.builder()
-					.senderNo(parseVO.getAccountNo())
-					.senderName(parseVO.getAccountName())
-					.senderType(parseVO.getAccountType())
-					.content("채팅 조회")
-					.time(LocalDateTime.now())
-				.build();
-			simpMessagingTemplate.convertAndSend("/public/"+roomNo+"/read", response);
+			RoomVO roomVO = roomDao.selectOne(roomNo);
+			String roomType = roomVO.getRoomType();
+			if(roomType.equals("상담") ) {
+				roomDao.readRoomEmployee(roomNo);
+				WebSocketChatVO response = WebSocketChatVO.builder()
+						.senderNo(parseVO.getAccountNo())
+						.senderName(parseVO.getAccountName())
+						.senderType(parseVO.getAccountType())
+						.content("채팅 조회")
+						.time(LocalDateTime.now())
+					.build();
+				simpMessagingTemplate.convertAndSend("/public/"+roomNo+"/read", response);
+			} else {
+				roomDao.readRoomUser(roomNo, parseVO.getAccountNo());
+			}
 		} else if(parseVO.getAccountType().equals("학생")
 				|| parseVO.getAccountType().equals("학부모")) {
 			roomDao.readRoomUser(roomNo, parseVO.getAccountNo());
