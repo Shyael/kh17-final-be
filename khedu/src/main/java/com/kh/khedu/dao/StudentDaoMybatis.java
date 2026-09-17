@@ -114,4 +114,9 @@ public class StudentDaoMybatis implements StudentDao {
     public String selectStudentGrade(int studentNo) {
         return sqlSession.selectOne("mapper.student.selectStudentGrade", studentNo);
     }
+
+	@Override
+	public Integer selectAccountNoByStudentNo(int studentNo) {
+	    return sqlSession.selectOne("mapper.student.selectAccountNoByStudentNo", studentNo);
+	}
 }

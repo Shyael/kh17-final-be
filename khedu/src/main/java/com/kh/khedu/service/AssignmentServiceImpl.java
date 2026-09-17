@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.kh.khedu.controller.SseController;
 import com.kh.khedu.dao.AssignmentDao;
 import com.kh.khedu.dao.AssignmentSubmitDao;
 import com.kh.khedu.dao.AttachDao;
@@ -28,7 +29,9 @@ import com.kh.khedu.vo.assignment.AssignmentListVO;
 import com.kh.khedu.vo.assignment.AssignmentSearchVO;
 import com.kh.khedu.vo.assignment.AssignmentStudentSearchVO;
 import com.kh.khedu.vo.assignment.StudentAssignmentListVO;
+import com.kh.khedu.vo.course.CourseStudentListVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
+import com.kh.khedu.vo.sse.SseAlarmVO;
 
 @Service
 @Transactional
@@ -51,6 +54,9 @@ public class AssignmentServiceImpl implements AssignmentService {
     
     @Autowired
     private CourseDao courseDao;
+    
+    @Autowired
+    private SseController sseController;
     
     //공통 메소드
     // 과제 수정/삭제 권한 확인
@@ -150,7 +156,35 @@ public class AssignmentServiceImpl implements AssignmentService {
                 }
             }
         }
-
+        
+        // 과제 등록 알림
+        
+        //학생 목록 불러오기
+        List<CourseStudentListVO> students = courseDao.selectCourseStudentList(assignmentDto.getCourseNo());
+        
+        //보낼 메세지 
+        SseAlarmVO alarm = SseAlarmVO
+        		.builder()
+	                .type("ASSIGNMENT")
+	                .message(
+	                        "[" + course.getCourseTitle() + "] "
+	                        + assignmentDto.getAssignmentTitle()
+	                        + " 과제가 등록되었습니다."
+	                )
+	                .targetNo(assignmentNo)
+	                .targetUrl("/academy/assignment/" + assignmentNo+"/submit")
+                .build();
+        
+        //보내기
+        for(CourseStudentListVO student : students) {
+        	//현재 수강 중인 학생에게만 알림
+        	if(!"수강중".equals(student.getStudentStatus())) {
+        		continue;
+        	}
+        	
+        	sseController.sendToUser("학생", student.getAccountNo(), alarm);
+        }
+        
         return assignmentNo;
     }
 
