@@ -48,5 +48,7 @@ public interface CourseService {
 	        int employeeNo,
 	        boolean tutor
 	);
+
+	List<CourseSimpleListVO> getActiveCourseList();
 	
 }

@@ -4,6 +4,9 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import com.kh.khedu.dto.AttendanceDto;
+import com.kh.khedu.vo.attendance.AttendanceListResponseVO;
+import com.kh.khedu.vo.attendance.AttendanceStudentSearchResponseVO;
+import com.kh.khedu.vo.attendance.AttendanceSearchVO;
 import com.kh.khedu.vo.attendance.AttendanceStudentResponseVO;
 import com.kh.khedu.vo.attendance.KioskStudentCandidateVO;
 import com.kh.khedu.vo.attendance.KioskTargetSessionVO;
@@ -29,6 +32,10 @@ public interface AttendanceDao {
 	boolean updateAttendanceStateByAdmin(int attendanceNo, String attendanceState);
 	//세션의 출석 학생들 목록
     List<AttendanceStudentResponseVO> selectAttendanceListBySessionNo(int sessionNo);
+    
+    //출석 강의 목록 조회(검색)
+    List<AttendanceListResponseVO> selectAttendanceList(AttendanceSearchVO searchVO);
+    
     
     /*
      * 키오스크 관련

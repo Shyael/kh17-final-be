@@ -21,6 +21,8 @@ import com.kh.khedu.dto.StudentCourseDto;
 import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
+import com.kh.khedu.vo.attendance.AttendanceListResponseVO;
+import com.kh.khedu.vo.attendance.AttendanceSearchVO;
 import com.kh.khedu.vo.attendance.AttendanceStudentResponseVO;
 import com.kh.khedu.vo.attendance.AttendanceUpdateByAdminVO;
 import com.kh.khedu.vo.attendance.KioskAttendanceRequestVO;
@@ -56,7 +58,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     // 수업 시작 후 10분 이내: 출석, 10분 초과: 지각
     private static final int LATE_THRESHOLD_MINUTES = 10;
     
-    
+    // 직원 - 강의 - 출결수정
 	@Override
 	public void updateAttendanceByAdmin(AttendanceUpdateByAdminVO request, TokenParseResponseVO parseVO) {
 		// [1] 직원 계정인지 1차 검증
@@ -92,6 +94,8 @@ public class AttendanceServiceImpl implements AttendanceService {
         attendanceDao.updateAttendanceStateByAdmin(request.getAttendanceNo(), request.getAttendanceState());
 	}
 
+	
+	// 직원 - 강의 - 출결조회
 	@Override
 	public SessionAttendanceDetailVO getSessionAttendanceDetail(int sessionNo, TokenParseResponseVO parseVO) {
 		// [1] 직원 권한 1차 검증
@@ -150,7 +154,13 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .studentList(studentList)
                 .build();
 	}
-
+	
+	// 관리자 - 출석 - 출석 목록
+	@Override
+	public List<AttendanceListResponseVO> getAttendanceList(AttendanceSearchVO searchVO) {
+		return attendanceDao.selectAttendanceList(searchVO);
+	}
+	
 	/*================================================
 	 * 키오스크 학생 출결 관련 서비스
 	 * ==================================================*/

@@ -430,5 +430,12 @@ public class CourseServiceImpl implements CourseService {
 	    }
 	    return courseDao.selectManageCourseList();
 	}
+	
+	
+	// 진행중 상태의 강좌 목록
+	@Override
+	public List<CourseSimpleListVO> getActiveCourseList() {
+		return courseDao.selectActiveCourses();
+	}
 
 }

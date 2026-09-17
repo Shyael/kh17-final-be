@@ -2,6 +2,8 @@ package com.kh.khedu.controller;
 
 
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +18,18 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.khedu.annotation.CommonsApiResponse;
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.payroll.EmployeeAttendanceDao;
+import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.error.AdminChecker;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.service.attendance.AttendanceService;
 import com.kh.khedu.service.attendance.EmployeeAttendanceService;
+import com.kh.khedu.service.course.CourseService;
 import com.kh.khedu.service.workschedule.EmployeeWorkScheduleService;
+import com.kh.khedu.vo.attendance.AttendanceListResponseVO;
+import com.kh.khedu.vo.attendance.AttendanceSearchVO;
 import com.kh.khedu.vo.attendance.AttendanceUpdateByAdminVO;
 import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
+import com.kh.khedu.vo.course.CourseSimpleListVO;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 import com.kh.khedu.vo.payroll.request.AdminAttendanceSearchRequestVO;
@@ -62,7 +69,8 @@ public class EmployeeAttendanceRestController {
 	// 학생출결
 	@Autowired
 	private AttendanceService attendanceService;
-
+	@Autowired
+	private CourseService courseService;
 
 
     @ApiResponse(
@@ -274,10 +282,10 @@ public class EmployeeAttendanceRestController {
      }
     
      
+     
+     
      /*
-      * ========================================
-      * 학생 출결쪽
-      * ==============================================
+      * 학생 - 출결
       * */
      
      @ApiResponse(responseCode = "200", description = "수강생 출결 상태 수동 정정 (강사/관리자)")
@@ -300,5 +308,23 @@ public class EmployeeAttendanceRestController {
          SessionAttendanceDetailVO response = attendanceService.getSessionAttendanceDetail(sessionNo, parseVO);
          return ResponseEntity.ok(response);
      }
+     
+     @ApiResponse(responseCode = "200", description = "수강생 출결 상태 조회 (강사/관리자)")
+     @PostMapping("/list")
+     public ResponseEntity<List<AttendanceListResponseVO>> getAttendanceList(
+    		 	@RequestBody AttendanceSearchVO searVO
+    		 ){
+    	 List<AttendanceListResponseVO> list =attendanceService.getAttendanceList(searVO);
+    	 return ResponseEntity.ok(list);
+     }
+     
+     // 진행중 - 강좌 조회
+     // 진행 중인 강좌 목록 간단 조회 (셀렉트 박스 바인딩용)
+     @GetMapping("/active-courses")
+     public ResponseEntity<List<CourseSimpleListVO>> getActiveCourses() {
+         List<CourseSimpleListVO> list = courseService.getActiveCourseList();
+         return ResponseEntity.ok(list);
+     }
+     
 
 }

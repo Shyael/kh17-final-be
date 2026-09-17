@@ -118,4 +118,9 @@ public class CourseDaoMybatis implements CourseDao {
 		return sqlSession.selectList("mapper.course.selectCourseStudentList", courseNo);
 	}
 
+	@Override
+	public List<CourseSimpleListVO> selectActiveCourses() {
+		return sqlSession.selectList("mapper.course.selectActiveCourses");
+	}
+
 }

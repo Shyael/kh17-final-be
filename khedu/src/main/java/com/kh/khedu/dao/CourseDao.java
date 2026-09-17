@@ -60,4 +60,7 @@ public interface CourseDao {
 	//courseNo로 학생 번호와 계정 번호
 	List<CourseStudentListVO> selectCourseStudentList(int courseNo);
 	
+	// 출결 - 강의 목록 조회(진행중)
+	List<CourseSimpleListVO> selectActiveCourses();
+	
 }
