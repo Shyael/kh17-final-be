@@ -28,4 +28,7 @@ public class DeskDashboardVO implements EmployeeDashboardVO {
     private List<DashboardPayrollDueVO> payrollDueList;
     private int payrollDueCount;
     
+    // 수납
+    private List<DashboardPaymentVO> payments;
+    
 }

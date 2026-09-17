@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.kh.khedu.vo.dashboard.DashboardAssignmentVO;
 import com.kh.khedu.vo.dashboard.DashboardCourseVO;
 import com.kh.khedu.vo.dashboard.DashboardExamVO;
+import com.kh.khedu.vo.dashboard.DashboardPaymentVO;
 
 @Repository
 public class EmployeeDashboardDaoMybatis implements EmployeeDashboardDao {
@@ -91,6 +92,11 @@ public class EmployeeDashboardDaoMybatis implements EmployeeDashboardDao {
 	@Override
 	public int countAdminDashboardTodayCourses() {
 		return sqlSession.selectOne("mapper.employeeDashboard.countAdminDashboardTodayCourses");
+	}
+	
+	@Override
+	public List<DashboardPaymentVO> selectLongTermUnpaidPayments(){
+		return sqlSession.selectList("mapper.employeeDashboard.selectLongTermUnpaidPayments");
 	}
 	
 }

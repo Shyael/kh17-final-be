@@ -44,6 +44,7 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	                     .pendingContractList(adminDashboardService.getPendingContractList())
 	                     .contractExpiringList(adminDashboardService.getContractExpiringList())
 	                     .payrollDueList(adminDashboardService.getPayrollDueList())
+	                     .payments(employeeDashboardDao.selectLongTermUnpaidPayments())
                      .build();
         }
         
@@ -58,6 +59,7 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	                    .courses(employeeDashboardDao.selectAdminDashboardTodayCourses())
 	                    .todayCourses(employeeDashboardDao.countAdminDashboardTodayCourses())
 	                    .payrollDueList(deskDashboardService.getPayrollDueList())
+	                    .payments(employeeDashboardDao.selectLongTermUnpaidPayments())
                     .build();
         }
 

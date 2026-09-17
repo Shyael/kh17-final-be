@@ -34,4 +34,6 @@ public class AdminDashboardVO implements EmployeeDashboardVO {
     private int pendingContractCount;
     private int contractExpiringCount;
     private int payrollDueCount;
+    
+    private List<DashboardPaymentVO> payments;
 }

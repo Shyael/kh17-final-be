@@ -334,5 +334,33 @@
 	   	order by s.schedule_start asc
    	)	
    </select>
+   
+   <!-- 장기 미납 내역 조회 (이번달 제외, 과거순) -->
+    <select id="selectLongTermUnpaidPayments" resultType="com.kh.khedu.vo.dashboard.DashboardPaymentVO">
+        select 
+            P.payment_no as paymentNo,
+            S.student_no as studentNo,
+            A.account_name as studentName,
+            P.payment_month as paymentMonth,
+            
+            -- 총 청구액 - 결제완료된 금액 = 실제 미납액
+            (P.payment_amount - NVL((
+                select sum(payment_history_amount) 
+                from payment_history 
+                where payment_no = P.payment_no 
+                  and payment_history_status = '결제완료'
+            ), 0)) as remainingAmount
+            
+        from payment P
+        inner join student S on P.student_no = S.student_no
+        inner join account A on S.account_no = A.account_no
+        where P.payment_status in ('미납', '부분납')
+          
+          -- 이번 달(현재 DB 시간 기준 YYYY-MM) 데이터는 제외
+          and P.payment_month != to_char(sysdate, 'YYYY-MM')
+          
+        -- 월 기준 오름차순(오래된 것부터) 정렬
+        order by P.payment_month asc, P.payment_no asc
+    </select>
 
 </mapper>
