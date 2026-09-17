@@ -112,4 +112,16 @@ public class SseController {
             }
         }
     }
+    
+    //테스트
+    @GetMapping("/test")
+    public void testAlarm(
+            @CurrentUser TokenParseResponseVO parseVO) {
+
+        SseController.sendToUser(
+            parseVO.getAccountType(),
+            parseVO.getAccountNo(),
+            "SSE 알림 테스트 성공!"
+        );
+    }
 }
