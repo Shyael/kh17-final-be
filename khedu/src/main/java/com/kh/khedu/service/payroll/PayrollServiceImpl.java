@@ -18,6 +18,7 @@ import com.kh.khedu.dto.payroll.PayrollDeductionDto;
 import com.kh.khedu.dto.payroll.PayrollDto;
 import com.kh.khedu.dto.payroll.PayrollPaymentDto;
 import com.kh.khedu.error.GetOutException;
+import com.kh.khedu.error.PayrollCalculationException;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
 import com.kh.khedu.vo.payroll.response.PayrollDeductionResponseVO;
@@ -52,10 +53,40 @@ public class PayrollServiceImpl implements PayrollService {
 	public void calculate(int employeeNo, int payrollYear, int payrollMonth) {
 
 		// 이미 해당 월 급여가 존재하는지 확인
-		PayrollDto findDto = payrollDao.findByEmployeeAndPeriod(employeeNo, payrollYear, payrollMonth);
+		// 해당 직원·연월의 기존 급여 조회
+		PayrollDto findDto =
+		        payrollDao.findByEmployeeAndPeriod(
+		                employeeNo,
+		                payrollYear,
+		                payrollMonth
+		        );
 
 		if (findDto != null) {
-			throw new GetOutException();
+
+		    // 취소되지 않은 지급 내역 조회
+		    List<PayrollPaymentDto> paymentList =
+		            payrollPaymentDao.findNotCancelledByPayroll(
+		                    findDto.getPayrollNo()
+		            );
+
+		    // 실제 지급된 내역이 있는지 확인
+		    boolean alreadyPaid = paymentList.stream()
+		            .anyMatch(payment ->
+		                    "paid".equals(payment.getPaymentStatus())
+		            );
+
+		    if (alreadyPaid) {
+		        throw new PayrollCalculationException(
+		                "PAYROLL_ALREADY_PAID",
+		                "이미 지급된 급여입니다"
+		        );
+		    }
+
+		    // 급여는 존재하지만 지급되지 않은 경우
+		    throw new PayrollCalculationException(
+		            "PAYROLL_ALREADY_CALCULATED",
+		            "이미 계산된 급여입니다. 급여 재계산 기능을 이용해주세요"
+		    );
 		}
 		long payrollNo =
 				payrollDao.sequence();

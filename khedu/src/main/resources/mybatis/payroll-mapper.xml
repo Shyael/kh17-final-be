@@ -240,16 +240,11 @@
         contract_start = #{contractStart},
         contract_end = #{contractEnd},
         payday = #{payday},
-        contract_content = #{contractContent}
+        contract_content = #{contractContent},
         weekly_holiday_day=#{weeklyHolidayDay}
 
-    where contract_no = #{contractNo}
+   where contract_no = #{contractNo}
       and signed_time is null
-      and (
-            employee_signature is null
-            or employer_signature is null
-          )
-
 </update>
 
 

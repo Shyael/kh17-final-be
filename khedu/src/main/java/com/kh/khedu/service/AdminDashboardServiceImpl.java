@@ -13,11 +13,13 @@ import com.kh.khedu.vo.payroll.request.DashboardPayrollDueQueryVO;
 import com.kh.khedu.vo.payroll.request.DashboardPendingContractVO;
 import com.kh.khedu.vo.payroll.response.DashboardPayrollDueVO;
 
+
 @Service
 public class AdminDashboardServiceImpl implements AdminDashboardService{
 	
 	@Autowired
 	private AdminDashboardDao adminDashboardDao;
+	
 	public List<DashboardPayrollDueVO> getPayrollDueList() {
 
 	    List<DashboardPayrollDueQueryVO> list =
