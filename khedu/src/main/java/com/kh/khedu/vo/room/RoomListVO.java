@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class RoomListVO {
 	private int roomNo;
 	private int roomOwner;
+	private int accountNo;//상대방 정보
 	private String accountName;
 	private String accountType;
 	private String lastContent;

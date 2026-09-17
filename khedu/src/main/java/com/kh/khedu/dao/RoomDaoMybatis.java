@@ -53,7 +53,7 @@ public class RoomDaoMybatis implements RoomDao {
 	}
 	@Override
 	public List<RoomListVO> selectMyList(int accountNo) {
-		return sqlSession.selectList("mapper.room.myList");
+		return sqlSession.selectList("mapper.room.myList", accountNo);
 	}
 	@Override
 	public List<RoomListVO> selectConsultList(int accountNo) {
