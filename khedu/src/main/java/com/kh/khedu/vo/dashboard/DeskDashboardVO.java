@@ -33,4 +33,7 @@ public class DeskDashboardVO implements EmployeeDashboardVO {
     private List<DashboardReservationVO> todayReservations;
     private int todayReservationCount;
     
+    // 수납
+    private List<DashboardPaymentVO> payments;
+    
 }

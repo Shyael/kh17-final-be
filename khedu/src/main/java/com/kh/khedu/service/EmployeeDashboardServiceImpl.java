@@ -50,7 +50,7 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	                     .payrollDueList(adminDashboardService.getPayrollDueList())
 	                     .recentReservations(consultDao.selectRecentReservationList())
 	                     .todayReservations(consultDao.selectTodayReservationList())
-	                     .todayReservations(consultDao.selectTodayReservationList())
+	                     .payments(employeeDashboardDao.selectLongTermUnpaidPayments())
                      .build();
         }
         
@@ -67,7 +67,7 @@ public class EmployeeDashboardServiceImpl implements EmployeeDashboardService {
 	                    .payrollDueList(deskDashboardService.getPayrollDueList())
 	                    .recentReservations(consultDao.selectRecentReservationList())
 	                    .todayReservations(consultDao.selectTodayReservationList())
-	                    .todayReservations(consultDao.selectTodayReservationList())
+	                    .payments(employeeDashboardDao.selectLongTermUnpaidPayments())
                     .build();
         }
 

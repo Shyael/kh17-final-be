@@ -69,7 +69,7 @@
 	            -- 미납액 계산 로직 (기존 totalUnpaidAmount와 dummy를 합쳐서 unpaidAmount로 통일)
 	            nvl((
 	                select sum(p.payment_amount - nvl(
-	                    (select sum(h.payment_history_amount) from payment_history h where h.payment_no = p.payment_no)
+	                    (select sum(h.payment_history_amount) from payment_history h where h.payment_no = p.payment_no and payment_history_status = '결제완료')
 	                , 0))
 	                from payment p
 	                where p.student_no = s.student_no

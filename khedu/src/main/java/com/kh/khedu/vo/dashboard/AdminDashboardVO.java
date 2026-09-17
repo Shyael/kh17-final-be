@@ -39,4 +39,5 @@ public class AdminDashboardVO implements EmployeeDashboardVO {
     private List<DashboardReservationVO> recentReservations;
     private List<DashboardReservationVO> todayReservations;
     private int todayReservationCount;
+    private List<DashboardPaymentVO> payments;
 }
