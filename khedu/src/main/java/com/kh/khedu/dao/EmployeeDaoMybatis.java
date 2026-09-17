@@ -129,4 +129,9 @@ public class EmployeeDaoMybatis implements EmployeeDao {
 	            requestVO
 	    );
 	}
+	
+	@Override
+	public Integer selectAccountNoByEmployeeNo(int employeeNo) {
+	    return sqlSession.selectOne("mapper.employee.selectAccountNoByEmployeeNo", employeeNo);
+	}
 }

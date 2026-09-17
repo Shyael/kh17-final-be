@@ -15,6 +15,7 @@ import com.kh.khedu.controller.SseController;
 import com.kh.khedu.dao.AssignmentDao;
 import com.kh.khedu.dao.AssignmentSubmitDao;
 import com.kh.khedu.dao.AttachDao;
+import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.StudentDao;
 import com.kh.khedu.dto.AssignmentSubmitDto;
@@ -27,6 +28,7 @@ import com.kh.khedu.vo.assignment.AssignmentSubmitListVO;
 import com.kh.khedu.vo.assignment.AssignmentSubmitStudentListVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
 import com.kh.khedu.vo.sse.SseAlarmVO;
+import com.kh.khedu.vo.student.StudentDetailResponseVO;
 
 @Service
 @Transactional
@@ -44,6 +46,8 @@ public class AssignmentSubmitServiceImpl implements AssignmentSubmitService {
     private ParentStudentDao parentStudentDao;
     @Autowired
     private StudentDao studentDao;
+    @Autowired
+    private EmployeeDao employeeDao;
     
     //공통 메소드
     // 과제 제출 가능 여부 검사
@@ -151,7 +155,43 @@ public class AssignmentSubmitServiceImpl implements AssignmentSubmitService {
         		}
         	}
         }
+        
+        //담당 강사에게 제출 알림
 
+        // 학생 정보 조회
+        StudentDetailResponseVO student = studentDao.selectDetail(assignmentSubmitDto.getStudentNo());
+
+        // 과제 정보 조회
+        AssignmentDetailVO assignment = assignmentDao.selectOne(assignmentSubmitDto.getAssignmentNo());
+
+        // 담당 강사의 accountNo 조회
+        Integer employeeAccountNo = employeeDao.selectAccountNoByEmployeeNo(assignment.getEmployeeNo());
+        
+        // 알림 생성
+        SseAlarmVO alarm = SseAlarmVO
+        		.builder()
+	                .type("ASSIGNMENT_SUBMIT")
+	                .message(
+	                        student.getStudentName()
+	                        + "님이 "
+	                        + assignment.getAssignmentTitle()
+	                        + " 과제를 제출했습니다."
+	                )
+	                .targetNo(submitNo)
+	                .targetUrl(
+	                        "/employee/assignment/"
+	                        + assignmentSubmitDto.getAssignmentNo()
+	                        + "/submit/"
+	                        + submitNo
+	                )
+                .build();
+        //담당 강사에게만 알림
+        SseController.sendToUser(
+        		"직원",
+        		employeeAccountNo,
+        		alarm
+        );
+        
         return submitNo;
     }
 
