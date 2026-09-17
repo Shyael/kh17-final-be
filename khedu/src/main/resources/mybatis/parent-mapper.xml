@@ -34,7 +34,7 @@
 	</select>
 	
 	<!-- 학생 번호로 학부모 상세 정보(Account 정보 포함) 조회 -->
-	<select id="findParentDetailByStudentNo" resultType="com.kh.khedu.vo.parent.ParentDetailVO">
+	<select id="findParentDetailByStudentNo" resultType="ParentDetailVO">
 		select 
 			p.parent_no as parentNo,
 			ps.student_no as studentNo,
@@ -51,7 +51,7 @@
 	</select>
 	
 	<!-- 관리자용: 학부모 이름이나 전화번호로 검색 -->
-	<select id="searchParents" resultType="com.kh.khedu.vo.parent.ParentDetailVO">
+	<select id="searchParents" resultType="ParentDetailVO">
 		select 
 			p.parent_no as parentNo,
 			a.account_no as accountNo,

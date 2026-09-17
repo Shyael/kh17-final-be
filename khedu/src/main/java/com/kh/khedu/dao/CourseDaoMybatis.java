@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.CourseDto;
+import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.course.CourseSimpleListVO;
@@ -121,6 +122,11 @@ public class CourseDaoMybatis implements CourseDao {
 	@Override
 	public List<CourseSimpleListVO> selectActiveCourses() {
 		return sqlSession.selectList("mapper.course.selectActiveCourses");
+	}
+
+	@Override
+	public CourseSimpleListVO selectCourseBySessionNo(int sessionNo) {
+		return sqlSession.selectOne("mapper.course.selectCourseBySessionNo", sessionNo);
 	}
 
 }

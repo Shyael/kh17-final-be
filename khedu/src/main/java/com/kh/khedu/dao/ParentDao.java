@@ -31,4 +31,5 @@ public interface ParentDao {
 	// 학부모 상세 수정
 	ParentDetailVO detail(int parentNo);
 	boolean updateAccountInfo(ParentUpdateRequestVO requestVO);
+	
 }

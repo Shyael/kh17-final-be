@@ -2,6 +2,7 @@ package com.kh.khedu.dao;
 
 import java.util.List;
 
+import com.kh.khedu.dto.ClassroomDto;
 import com.kh.khedu.vo.classSession.CourseSessionVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
@@ -22,4 +23,6 @@ public interface ClassroomDao {
 	//동시성 제어를 위한 비관적 락(pessimistic Lock) 설정
 	Integer selectClassroomForUpdate(int classroomNo);
 	
+	// 강의실 번호로 강의실 조회
+	ClassroomDto selectClassroomByClassroomNo(int classroomNo);
 }

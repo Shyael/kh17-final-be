@@ -78,6 +78,14 @@
 		where e.employee_no = #{employeeNo}
 	</select>
 	
+	<!-- 세션번호(session_no)로 강좌 조회 -->
+	<select id="selectCourseBySessionNo" resultType="CourseSimpleListVO">
+		select * from course c
+		join schedule s on c.course_no = s.course_no
+		join class_session cs on s.schedule_no = cs.schedule_no
+		where session_no = #{sessionNo}
+	</select>
+	
 	<!-- courseStatus를 모집중 -> 진행중으로 수정 -->
 	<update id="updateStatus">
 		update course

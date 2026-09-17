@@ -57,7 +57,7 @@ public class AuthRestController {
 	@Autowired
 	private AccountRefreshDao accountRefreshDao;
 	
-	
+	//로그인
 	@ApiResponse(responseCode = "200", description = "로그인 성공")
 	@ApiResponse(responseCode = "400", description = "정보 불일치")
 	@PostMapping(value ="/login", produces = "application/json")
@@ -217,6 +217,7 @@ public class AuthRestController {
 		if(refreshToken == null)
 			throw new WhoAreYouException();
 		
+		log.debug("refreshToken = {}", refreshToken);
 		//토큰 해석 및 DB검증(현재 DB 생략되어 있음)
 		// - 토큰이 문제가 되면 JwtValidationException이 발생하며 자동으로 401 발송
 		String accountId = jwtService.parseRefreshToken(refreshToken);

@@ -114,6 +114,12 @@ public class CourseServiceImpl implements CourseService {
 		return classroomDao.selectAvailableClassroomList(request);
 	}
 	
+	// 필터링된 강사이용시간 조회
+	@Override
+	public List<ScheduleDto> getTutorschedules(Integer employeeNo) {
+		return scheduleDao.selectTutorSchedules(employeeNo);
+	}
+	
 	//강좌 등록
 	@Override
 	@Transactional
