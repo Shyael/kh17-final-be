@@ -1002,7 +1002,8 @@ public class PayrollServiceImpl implements PayrollService {
 						.findNotCancelledByPayroll(
 								payrollNo
 						);
-
+		
+		System.out.println(paymentList);
 		
 
 		if (paymentList.isEmpty()) {

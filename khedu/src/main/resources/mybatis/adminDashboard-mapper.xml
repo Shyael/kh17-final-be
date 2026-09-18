@@ -74,11 +74,29 @@
         X.payroll_year as payrollYear,
         X.payroll_month as payrollMonth,
         X.payday as payday,
-        X.net_pay as netPay,
-        PP.payment_status as paymentStatus
+
+       
+        greatest(
+            X.net_pay
+            - nvl(PP.paid_amount, 0)
+            + nvl(PP.cancelled_amount, 0),
+            0
+        ) as netPay,
+
+       
+        case
+            when (
+                X.net_pay
+                - nvl(PP.paid_amount, 0)
+                + nvl(PP.cancelled_amount, 0)
+            ) > 0
+            then 'unpaid'
+            else 'paid'
+        end as paymentStatus
 
     from (
 
+        
         select
             P.payroll_no,
             P.employee_no,
@@ -90,8 +108,9 @@
 
             row_number() over (
                 partition by P.payroll_no
-                order by max(S.scheduled_work_date) desc,
-                         C.contract_no desc
+                order by
+                    max(S.scheduled_work_date) desc,
+                    C.contract_no desc
             ) as rn
 
         from payroll P
@@ -102,8 +121,11 @@
         join employee_work_schedule S
             on C.contract_no = S.contract_no
 
-        where extract(year from S.scheduled_work_date) = P.payroll_year
-          and extract(month from S.scheduled_work_date) = P.payroll_month
+        where extract(year from S.scheduled_work_date)
+                = P.payroll_year
+
+          and extract(month from S.scheduled_work_date)
+                = P.payroll_month
 
         group by
             P.payroll_no,
@@ -116,16 +138,53 @@
 
     ) X
 
+    
     join employee E
         on X.employee_no = E.employee_no
+
 
     join account A
         on E.account_no = A.account_no
 
-    left join payroll_payment PP
+   
+    left join (
+
+        select
+            payroll_no,
+
+         
+            sum(
+                case
+                    when payment_status = 'paid'
+                    then payment_amount
+                    else 0
+                end
+            ) as paid_amount,
+
+           
+            sum(
+                case
+                    when payment_status = 'cancelled'
+                    then payment_amount
+                    else 0
+                end
+            ) as cancelled_amount
+
+        from payroll_payment
+
+        group by payroll_no
+
+    ) PP
         on X.payroll_no = PP.payroll_no
 
     where X.rn = 1
+
+      
+      and (
+          X.net_pay
+          - nvl(PP.paid_amount, 0)
+          + nvl(PP.cancelled_amount, 0)
+      ) > 0
 
 </select>
 
