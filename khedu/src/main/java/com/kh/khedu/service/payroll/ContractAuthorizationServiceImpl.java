@@ -98,7 +98,7 @@ public class ContractAuthorizationServiceImpl implements ContractAuthorizationSe
 	    boolean isPartyB =
 	            employee.getEmployeeNo() == contract.getEmployeeNo();
 
-	    return isPartyB;
+	    return isPartyB; 
 	}
 
 	@Override
