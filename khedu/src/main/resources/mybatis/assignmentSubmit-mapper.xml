@@ -244,10 +244,10 @@
 	
 	<!-- 특정 과제의 모든 제출 첨부파일 번호 조회 -->
 	<select id="selectFilesByAssignment" resultType="Integer">
-	    select distinct asf.attach_no
-	    from assignment_submit_file asf
+	    select distinct sf.attach_no
+	    from submit_file sf
 	    join assignment_submit s
-	        on asf.submit_no = s.submit_no
+	        on sf.submit_no = s.submit_no
 	    where s.assignment_no = #{assignmentNo}
 	</select>
 </mapper>
