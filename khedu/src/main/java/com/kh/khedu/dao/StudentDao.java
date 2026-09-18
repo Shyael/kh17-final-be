@@ -32,6 +32,7 @@ public interface StudentDao {
 	StudentDto selectOne(int accountNo);
 	boolean updateAll(StudentDto studentDto);
 	boolean approveStudent(int studentNo);
+	boolean approveAccount(int studentNo);
 	StudentDto selectOneByNoAndPhone(int studentNo, String studentPhone);
 	// 학년 조회 메서드 추가
     String selectStudentGrade(int studentNo);
