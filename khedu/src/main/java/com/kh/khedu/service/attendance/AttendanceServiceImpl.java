@@ -308,73 +308,109 @@ public class AttendanceServiceImpl implements AttendanceService {
 	//	학생 본인 강좌 목록
 	@Override
 	public StudentAttendanceResponseVO getStudentAttendanceDetail(int studentNo, int courseNo) {
-		// [1] 강좌 기본명 조회
-		CourseDto course = courseDao.selectOneByCourseNo(courseNo);
-		String courseTitle = course.getCourseTitle();
-		
-		// [1-1] 강좌의 강사 조회
-		CourseTutorVO tutor = courseDao.selectTutorByEmployeeNo(course.getEmployeeNo());
-		// [2] 최신순 이력 조회
-		List<StudentAttendanceItemVO> list = attendanceDao.selectStudentAttendanceList(studentNo, courseNo);
-		if(list == null) list = Collections.emptyList();
-		
-		// [3] 통계 집계
-		int total = list.size();
-		int present = 0;
-		int late = 0;
-		int earlyLeave = 0;
-		int absent = 0;
-		int unchecked = 0;
-		
-		for(StudentAttendanceItemVO item : list) {
-			String state = item.getAttendanceState();
-			switch (state) {
-            case "출석":
-                present++;
-                break;
-            case "지각":
-                late++;
-                break;
-            case "조퇴":
-                earlyLeave++;
-                break;
-            case "결석":
-                absent++;
-                break;
-            default:
-                unchecked++;
-                break;
-			}
-		}
-		
-		//4. 출석률 산출(소수점 첫째자리 반올림)
-		double rate = 0.0;
-		if (total > 0) {
-			rate = Math.round(((double) present / total * 100.0) * 10.0) / 10.0;
-		}
-		
-		StudentAttendanceSummaryVO summary = StudentAttendanceSummaryVO.builder()
-                .totalSessionCount(total)
-                .presentCount(present)
-                .lateCount(late)
-                .earlyLeaveCount(earlyLeave)
-                .absentCount(absent)
-                .uncheckedCount(unchecked)
-                .attendanceRate(rate)
-                .build();
-		
-        // 5. 통합 응답 반환
-		StudentCourseDto studentCourseDto = studentCourseDao.selectOneByStudentNo(studentNo, courseNo);
-		String studentCourseStatus = (studentCourseDto != null) ? studentCourseDto.getStudentCourseStatus() : "수강중";
-        return StudentAttendanceResponseVO.builder()
-                .courseNo(courseNo)
-                .courseTitle(courseTitle)
-                .tutorNo(tutor.getTutorNo())
-                .tutorName(tutor.getAccountName())
-                .summary(summary)
-                .attendanceList(list)
-                .studentCourseStatus(studentCourseStatus)
-                .build();
+	
+	    // [1] 현재 학생이 해당 강좌를 수강 중인지 확인
+	    StudentCourseDto studentCourseDto =
+	            studentCourseDao.selectOneByStudentNo(studentNo, courseNo);
+	
+	    if (studentCourseDto == null) {
+	        throw new WhoAreYouException("수강 중인 강좌의 출결만 조회할 수 있습니다.");
+	    }
+	
+	    // [2] 강좌 기본 정보 조회
+	    CourseDto course = courseDao.selectOneByCourseNo(courseNo);
+	    
+	    System.out.println("course = " + course);
+	    
+	    if (course == null) {
+	        throw new TargetNotfoundException("해당 강좌를 찾을 수 없습니다.");
+	    }
+	    
+	    System.out.println("employeeNo = " + course.getEmployeeNo());
+
+	
+	    String courseTitle = course.getCourseTitle();
+	
+	    
+	    // [3] 강좌의 강사 조회
+	    CourseTutorVO tutor =
+	            courseDao.selectTutorByEmployeeNo(course.getEmployeeNo());
+	    System.out.println("tutor = " + tutor);
+	
+	    if (tutor == null) {
+	        throw new TargetNotfoundException("해당 강사 정보를 찾을 수 없습니다.");
+	    }
+	
+	    // [4] 출결 이력 조회
+	    List<StudentAttendanceItemVO> list =
+	            attendanceDao.selectStudentAttendanceList(studentNo, courseNo);
+	
+	    if (list == null) {
+	        list = Collections.emptyList();
+	    }
+	
+	    // [5] 통계 집계
+	    int total = list.size();
+	    int present = 0;
+	    int late = 0;
+	    int earlyLeave = 0;
+	    int absent = 0;
+	    int unchecked = 0;
+	
+	    for (StudentAttendanceItemVO item : list) {
+	        String state = item.getAttendanceState();
+	
+	        switch (state) {
+	            case "출석":
+	                present++;
+	                break;
+	            case "지각":
+	                late++;
+	                break;
+	            case "조퇴":
+	                earlyLeave++;
+	                break;
+	            case "결석":
+	                absent++;
+	                break;
+	            default:
+	                unchecked++;
+	                break;
+	        }
+	    }
+	
+	    // [6] 출석률 산출
+	    double rate = 0.0;
+	
+	    if (total > 0) {
+	        rate = Math.round(
+	                ((double) present / total * 100.0) * 10.0
+	        ) / 10.0;
+	    }
+	
+	    StudentAttendanceSummaryVO summary =
+	            StudentAttendanceSummaryVO.builder()
+	                    .totalSessionCount(total)
+	                    .presentCount(present)
+	                    .lateCount(late)
+	                    .earlyLeaveCount(earlyLeave)
+	                    .absentCount(absent)
+	                    .uncheckedCount(unchecked)
+	                    .attendanceRate(rate)
+	                    .build();
+	
+	    // [7] 최종 응답
+	    return StudentAttendanceResponseVO.builder()
+	            .courseNo(courseNo)
+	            .courseTitle(courseTitle)
+	            .tutorNo(tutor.getTutorNo())
+	            .tutorName(tutor.getAccountName())
+	            .summary(summary)
+	            .attendanceList(list)
+	            .studentCourseStatus(
+	                    studentCourseDto.getStudentCourseStatus()
+	            )
+	            .build();
 	}
 	
 }

@@ -137,6 +137,7 @@ public class StudentAcademyRestController {
             @CurrentUser TokenParseResponseVO parseVO) {
         int studentNo = parseVO.getNoType();
         StudentAttendanceResponseVO response = attendanceService.getStudentAttendanceDetail(studentNo, courseNo);
+        System.out.println("출결" + response);
         return ResponseEntity.ok(response);
     }
 	
