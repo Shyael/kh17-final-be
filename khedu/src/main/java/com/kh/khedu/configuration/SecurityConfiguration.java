@@ -4,10 +4,10 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -86,6 +86,7 @@ public class SecurityConfiguration {
 			            "/employee/**",
 			            "/academy/**"
 			            ,"/api/sse/connect"
+			            ,"/vs"
 			        ).permitAll()
 
 
@@ -138,7 +139,8 @@ public class SecurityConfiguration {
 			        // =========================================================
 			        .requestMatchers(
 			            "/api/account/**",
-			            "/api/attach/**"
+			            "/api/attach/**",
+			            "/api/academy/**"
 			        ).hasAnyAuthority(
 			            RoleType.STUDENT.getCode(),
 			            RoleType.PARENT.getCode(),
@@ -152,13 +154,24 @@ public class SecurityConfiguration {
 			        // [4] 학생 + 학부모
 			        // =========================================================
 			        .requestMatchers(
-			            "/api/academy/question/**"
+			            "/api/academy/question/**",
+			            "/api/academy/student/**",
+			            "/api/academy/exam/**",
+			            "/api/academy/assignment/**",
+			            "/api/academy/parent/attendance/child/**"
+			        		
 			        ).hasAnyAuthority(
 			            RoleType.STUDENT.getCode(),
 			            RoleType.PARENT.getCode()
 			        )
 
-
+			        
+			        // 상세 조회는 모두 허용
+			        .requestMatchers(
+			            HttpMethod.GET,
+			            "/api/academy/assignment/*"
+			        ).permitAll()
+			        
 			        // =========================================================
 			        // [5] 학생
 			        // =========================================================
