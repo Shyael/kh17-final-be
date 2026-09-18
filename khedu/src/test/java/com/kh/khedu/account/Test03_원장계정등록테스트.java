@@ -2,6 +2,8 @@ package com.kh.khedu.account;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.Test;
@@ -18,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootTest
-public class Test02_직원100명대량등록테스트 {
+public class Test03_원장계정등록테스트 {
 
     @Autowired
     private SqlSession sqlSession;
@@ -33,22 +35,21 @@ public class Test02_직원100명대량등록테스트 {
     private PasswordEncoder passwordEncoder;
 
     @Test
-    public void register100Employees() {
-        int totalCount = 100;
-        String rawPassword = "Testuser123!";
-        String encodedPassword = passwordEncoder.encode(rawPassword);
+    public void register2Directors() {
+        String[][] directors = {
+            {"khedu1@naver.com", "Khedu1!", "원장1", "01077770001"},
+            {"khedu2@naver.com", "Khedu2!", "원장2", "01077770002"}
+        };
 
-        for (int i = 1; i <= totalCount; i++) {
-            // 데스크 50명, 강사 50명 번갈아 등록
-            String employeeType = (i % 2 == 0) ? "데스크" : "강사";
+        final int ADMIN_ROLE_NO = 5; // 원장 (ADMIN)
 
-            String formattedIndex = String.format("%03d", i);
-            String accountId = "emp" + formattedIndex + "@khedu.com";
-            
-            // CHECK (regexp_like(account_phone, '^010[1-9][0-9]{7}$')) 준수
-            // 010 다음에 '1'부터 시작하도록 1000 + i (예: 01010010001, 01010020002 ...)
-            String accountPhone = "010" + (1000 + i) + String.format("%04d", i);
-            String accountName = employeeType + formattedIndex;
+        for (int i = 0; i < directors.length; i++) {
+            String accountId = directors[i][0];
+            String rawPassword = directors[i][1];
+            String accountName = directors[i][2];
+            String accountPhone = directors[i][3];
+
+            String encodedPassword = passwordEncoder.encode(rawPassword);
 
             try {
                 // ==========================================
@@ -62,9 +63,9 @@ public class Test02_직원100명대량등록테스트 {
                         .accountPassword(encodedPassword)
                         .accountName(accountName)
                         .accountPhone(accountPhone)
-                        .accountBirth("1995-01-01") // YYYY-MM-DD 정규식 통과
-                        .accountStatus("N")         // 'Y' 또는 'N' 통과 (기본값 'N')
-                        .accountType("직원")         // ACCOUNT_TYPE_CK ('학생', '학부모', '직원') 통과
+                        .accountBirth("1980-01-01")
+                        .accountStatus("N")
+                        .accountType("직원")
                         .build();
 
                 sqlSession.insert("mapper.account.register", accountVO);
@@ -77,17 +78,28 @@ public class Test02_직원100명대량등록테스트 {
                 EmployeeVO employeeVO = EmployeeVO.builder()
                         .employeeNo(employeeNo)
                         .accountNo(accountNo)
-                        .employeeType(employeeType)
-                        .employeeHtime(Timestamp.valueOf(LocalDate.of(2026, 8, 25).atStartOfDay()))
+                        .employeeType("원장")
+                        .employeeHtime(Timestamp.valueOf(LocalDate.now().atStartOfDay()))
                         .build();
 
                 sqlSession.insert("mapper.employee.register", employeeVO);
 
-                log.info("[{}/{}] 등록 성공: {} | 구분: {} | 전화번호: {} | AccountNo: {}", 
-                        i, totalCount, accountId, employeeType, accountPhone, accountNo);
+                // ==========================================
+                // [3] ACCOUNT_ROLES 권한 등록 (ROLE_NO: 5 / ADMIN)
+                // ==========================================
+                Map<String, Object> roleParams = new HashMap<>();
+                roleParams.put("accountNo", accountNo);
+                roleParams.put("roleNo", ADMIN_ROLE_NO);
+
+                // 기존 프로젝트에 정의된 매퍼 ID 사용 (예: mapper.account.insertRole 또는 mapper.accountRole.insert)
+                // 만약 매퍼가 없다면 아래 쿼리를 매퍼 XML에 등록하거나 해당 네임스페이스를 맞춰주세요.
+                sqlSession.insert("mapper.account.insertRole", roleParams);
+
+                log.info("[등록 성공] AccountNo: {} | EmployeeNo: {} | ID: {} | RoleNo: {} (ADMIN)", 
+                        accountNo, employeeNo, accountId, ADMIN_ROLE_NO);
 
             } catch (Exception e) {
-                log.error("[{}/{}] 등록 실패: {} - 사유: {}", i, totalCount, accountId, e.getMessage());
+                log.error("[등록 실패] ID: {} - 사유: {}", accountId, e.getMessage(), e);
             }
         }
     }

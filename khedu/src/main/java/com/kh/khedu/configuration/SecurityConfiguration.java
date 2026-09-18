@@ -123,6 +123,10 @@ public class SecurityConfiguration {
 			            "/api/account/check-id/**",
 
 			            // 학생 / 학부모 공개 가입 API
+			            "/api/academy/student",
+			            "/api/academy/student/",
+			            "/api/academy/parent",
+			            "/api/academy/parent/",
 			            "/api/student/**",
 			            "/api/parent/**"
 			        ).permitAll()
@@ -297,9 +301,10 @@ public class SecurityConfiguration {
 		            path.startsWith("/service/cert/") ||          // 이메일 인증 하위 전체
 		            path.equals("/academy") || path.startsWith("/academy/") ||
 		            
-		            // 학생/학부모 회원가입 및 공개 경로 (/api/student, /api/student/ 등)
-		            path.equals("/api/student") || path.startsWith("/api/student/") ||
-		            path.equals("/api/parent") || path.startsWith("/api/parent/") ||
+		            // 학생/학부모 회원가입 경로 추가
+		            path.equals("/api/academy/student") || path.equals("/api/academy/student/") ||
+		            path.equals("/api/academy/parent") || path.equals("/api/academy/parent/") ||
+		            path.startsWith("/api/student") || path.startsWith("/api/parent") ||
 		            
 		            // 계정 찾기 및 중복체크
 		            path.startsWith("/api/account/check-id/") || path.equals("/api/account/check-id") ||
