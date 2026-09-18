@@ -85,7 +85,6 @@ public class SecurityConfiguration {
 			            // React 화면 진입 자체는 공개
 			            "/employee/**",
 			            "/academy/**"
-			            
 			            ,"/api/sse/connect"
 			        ).permitAll()
 
@@ -98,7 +97,8 @@ public class SecurityConfiguration {
 
 			            // 학원 공개 영역
 			            "/api/academy/",
-			            "/api/academy/reservation/**",
+			            "/api/academy/reservation/**"
+			            ,"/api/attach/**",
 
 			            // 공개 강사 정보
 			            "/api/academy/tutor/**"
