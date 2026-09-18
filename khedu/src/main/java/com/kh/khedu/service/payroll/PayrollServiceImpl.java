@@ -20,12 +20,15 @@ import com.kh.khedu.dto.payroll.PayrollPaymentDto;
 import com.kh.khedu.error.GetOutException;
 import com.kh.khedu.error.PayrollCalculationException;
 import com.kh.khedu.error.TargetNotfoundException;
+import com.kh.khedu.service.AdminDashboardService;
 import com.kh.khedu.vo.admin.employee.AdminEmployeeDetailVO;
+import com.kh.khedu.vo.payroll.response.DashboardPayrollDueVO;
 import com.kh.khedu.vo.payroll.response.PayrollDeductionResponseVO;
 import com.kh.khedu.vo.payroll.response.PayrollDetailResponseVO;
 import com.kh.khedu.vo.payroll.response.PayrollListResponseVO;
 import com.kh.khedu.vo.payroll.response.PayrollMonthlyListResponseVO;
 import com.kh.khedu.vo.payroll.response.PayrollPaymentResponseVO;
+import com.kh.khedu.vo.sse.SseAlarmVO;
 @Service
 @Transactional
 public class PayrollServiceImpl implements PayrollService {
@@ -47,6 +50,9 @@ public class PayrollServiceImpl implements PayrollService {
 	
 	@Autowired
 	private Calculater calculater;
+	
+	@Autowired
+	private AdminDashboardService adminDashboardService;
 
 	@Override
 	@Transactional
@@ -980,6 +986,8 @@ public class PayrollServiceImpl implements PayrollService {
 			throw new TargetNotfoundException();
 		}
 
+		
+		
 
 		long payrollNo =
 				payrollDto.getPayrollNo();
@@ -995,11 +1003,13 @@ public class PayrollServiceImpl implements PayrollService {
 								payrollNo
 						);
 
+		
 
 		if (paymentList.isEmpty()) {
 			throw new TargetNotfoundException();
 		}
-
+		
+		
 
 		// 현재 정책상 동시에 살아있는 지급은
 		// 한 건만 허용

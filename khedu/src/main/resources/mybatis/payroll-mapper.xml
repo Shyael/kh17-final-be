@@ -1021,23 +1021,20 @@
 
 
 <select id="paymentFindNotCancelledByPayroll"
-		resultType="PayrollPaymentDto">
-	select P.*
-	from payroll_payment P
-	where P.payroll_no = #{payrollNo}
-	and P.payment_status = 'paid'
-	and P.payment_amount > nvl(
-		(
-			select sum(C.payment_amount)
-			from payroll_payment C
-			where C.payment_status = 'cancelled'
-			and C.cancel_target_payment_no = P.payroll_payment_no
-		),
-		0
-	)
+        resultType="PayrollPaymentDto">
+
+    select P.*
+    from payroll_payment P
+    where P.payroll_no = #{payrollNo}
+      and P.payment_status = 'paid'
+      and P.payment_amount > nvl((
+          select sum(C.payment_amount)
+          from payroll_payment C
+          where C.payment_status = 'cancelled'
+            and C.cancel_target_payment_no = P.payroll_payment_no
+      ), 0)
+
 </select>
-
-
 
 
 
