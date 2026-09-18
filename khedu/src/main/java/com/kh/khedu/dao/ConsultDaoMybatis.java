@@ -20,6 +20,7 @@ import com.kh.khedu.vo.consult.ConsultReservationListItemVO;
 import com.kh.khedu.vo.consult.ConsultReservationListRequestVO;
 import com.kh.khedu.vo.consult.ConsultReservationUpdateRequestVO;
 import com.kh.khedu.vo.consult.ConsultUpdateRequestVO;
+import com.kh.khedu.vo.dashboard.DashboardReservationVO;
 
 @Repository
 public class ConsultDaoMybatis implements ConsultDao {
@@ -127,6 +128,21 @@ public class ConsultDaoMybatis implements ConsultDao {
 	@Override
 	public boolean consultUpdate(ConsultUpdateRequestVO request) {
 		return sqlSession.update("mapper.consult.consultUpdate", request) > 0;
+	}
+
+	@Override
+	public List<DashboardReservationVO> selectRecentReservationList() {
+	    return sqlSession.selectList("mapper.consult.selectRecentReservationList");
+	}
+
+	@Override
+	public List<DashboardReservationVO> selectTodayReservationList() {
+	    return sqlSession.selectList("mapper.consult.selectTodayReservationList");
+	}
+	
+	@Override
+	public int countTodayReservations() {
+	    return sqlSession.selectOne("mapper.consult.countTodayReservations");
 	}
 	
 	

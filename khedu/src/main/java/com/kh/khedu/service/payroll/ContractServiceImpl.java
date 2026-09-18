@@ -185,7 +185,7 @@ public class ContractServiceImpl implements ContractService {
 		
 		 boolean valid =
 			        contractAuthorizationService
-			                .checkAdminOrPartyBOrDeskByContract(
+			                .checkAdminOrPartyB(
 			                        parseVO,
 			                        contractNo
 			                );
@@ -212,6 +212,7 @@ public class ContractServiceImpl implements ContractService {
 		            .signedTime(find.getSignedTime())
 		            .writtenBreakMinutes(find.getWrittenBreakMinutes())
 		            .weeklyWorkHours(find.getWeeklyWorkHours())
+		            .weeklyHolidayDay(find.getWeeklyHolidayDay())
 		            .build();
 			return response;}
 
@@ -944,7 +945,7 @@ public class ContractServiceImpl implements ContractService {
 
 	    // [3] 체결 완료 계약인지 확인
 	    if (originDto.getSignedTime() == null)
-	        throw new GetOutException();
+        throw new GetOutException();
 
 
 	    // [4] 이미 종료된 계약은 변경 불가
@@ -953,26 +954,10 @@ public class ContractServiceImpl implements ContractService {
 	    ))
 	        throw new GetOutException();
 
-	    
-	 // 이미 다른 진행중 계약이 있는지 확인
-	    ContractDto openContract =
-	            contractDao.findOpenContract(
-	                    originDto.getEmployeeNo()
-	            );
-
-
-	    // 현재 변경 대상 계약이 아닌
-	    // pending / scheduled / active 계약이 존재하면
-	    // 추가 근로조건 변경 불가
-	    if (
-	        openContract != null
-	        &&
-	        openContract.getContractNo()
-	            != originDto.getContractNo()
-	    ) {
+	    if ("pending".equals(
+	            originDto.getContractStatus()
+	    ))
 	        throw new GetOutException();
-	    }
-
 
 	    // [5] 새 계약 생성
 	    ContractDto newContractDto =
@@ -993,20 +978,21 @@ public class ContractServiceImpl implements ContractService {
 
         validateContractTerms(newContractDto);
 
-	    // [8] 근로조건 변경은 미래부터 적용
-	    Timestamp current =
-	            Timestamp.valueOf(
-	                    LocalDateTime.now()
-	            );
-
-	    if (
-	        !newContractDto
-	                .getContractStart()
-	                .after(current)
-	    ) {
-
-	        throw new GetOutException();
-	    }
+        //갑자기 당일 체결로 바뀌는 경우 생각해서 주석
+//	    // [8] 근로조건 변경은 미래부터 적용
+//	    Timestamp current =
+//	            Timestamp.valueOf(
+//	                    LocalDateTime.now()
+//	            );
+//
+//	    if (
+//	        !newContractDto
+//	                .getContractStart()
+//	                .after(current)
+//	    ) {
+//
+//	        throw new GetOutException();
+//	    }
 
 
 
@@ -1051,7 +1037,8 @@ public class ContractServiceImpl implements ContractService {
 	    newContractDto.setSignedTime(
 	            null
 	    );
-
+	    
+	    contractDao.exitContracts(originDto.getContractNo());
 
 	    // [13] 새 계약 등록
 	    contractDao.contractAdd(

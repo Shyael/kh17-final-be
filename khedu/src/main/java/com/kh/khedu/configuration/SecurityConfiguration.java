@@ -4,10 +4,10 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -69,100 +69,149 @@ public class SecurityConfiguration {
 		
 			.authorizeHttpRequests(
 					auth -> auth	
-						// [0] React SPA 정적 리소스 및 프론트엔드 화면 경로 무조건 허용 (최상단 배치 필수)
-						.requestMatchers(
-							"/",
-							"/index.html",
-							"/assets/**",
-							"/favicon.ico",
-							"/*.svg",
-							"/*.png",
-							"/*.ico",
-							"/error",
-							"/employee/**" // React의 employee 관련 모든 화면 경로 허용
-						).permitAll()
+					 // =========================================================
+			        // [0] React SPA 화면 / 정적 리소스
+			        // =========================================================
+			        .requestMatchers(
+			            "/",
+			            "/index.html",
+			            "/assets/**",
+			            "/favicon.ico",
+			            "/*.svg",
+			            "/*.png",
+			            "/*.ico",
+			            "/error",
 
-						// [기존] 무조건 허용 API
-						.requestMatchers(
-							"/active",  //체크용 페이지 허용
-							"/swagger-ui/**", //springdoc ui
-							"/v3/api-docs/**", //springdoc json
-							"/api/admin/employee/**",
-							"/api/account/check-id/**",
-							"/ws/**", 
-							"/ws-member/**"
-						).permitAll()
-							
-						//직원(학원 정보 수정)
-						.requestMatchers("/api/academy/**").permitAll()
-						.requestMatchers("/api/employe/**").permitAll()
-						//직원(강사 정보 수정)
-						.requestMatchers("/api/tutor/**").permitAll() 
-						
-						//auth service
-						.requestMatchers(
-							"/service/auth/login", //로그인 페이지
-							"/service/auth/logout", //로그아웃 페이지
-							"/service/auth/refresh", //로그인 갱신페이지
-							"/api/account/find-id", //아이디
-							"/api/account/find-password" //비밀번호 찾기
-						).permitAll()
-						
-						//임시 전부 공개화면 
-						.requestMatchers(
-							"/api/employee/**" // 원장, 데스크만 접근 가능하게
-						).permitAll()
+			            // React 화면 진입 자체는 공개
+			            "/employee/**",
+			            "/academy/**"
+			            ,"/api/sse/connect"
+			        ).permitAll()
 
-						//cert service
-						.requestMatchers("/service/cert/**").permitAll()
-						
-						//계약 관련(임시)
-						.requestMatchers("/api/contract/**").permitAll()
-						//공개 화면
-						.requestMatchers(
-							"/academy/**",
-							"/api/student/**",
-							"/api/parent/**"
-						).permitAll() 
-					
-						// 조건부 허용(내가 만든 요소들)
-						
-						// [1] 회원
-						.requestMatchers("/api/account/**")
-						.hasAnyAuthority(
-							RoleType.STUDENT.getCode(),
-							RoleType.PARENT.getCode(),
-							RoleType.TUTOR.getCode(), 
-							RoleType.DESK.getCode(),
-							RoleType.ADMIN.getCode()
-						)
-						
-						// [2] 학생
-						.requestMatchers("/api/academy/assignment/student/**")
-						.hasAnyAuthority(RoleType.STUDENT.getCode())
-						
-						// [3] 학부모
-						.requestMatchers("/api/academy/assignment/parent/student/**")
-						.hasAnyAuthority(RoleType.PARENT.getCode())
-						
-						// [4] 데스크 / 원장 / 직원
-						.requestMatchers(
-							"/api/employee/**",
-							"/api/attendance/**" //근태관련
-						)
-						.hasAnyAuthority(
-							RoleType.TUTOR.getCode(), 
-							RoleType.DESK.getCode(),
-							RoleType.ADMIN.getCode()
-						)
-						.requestMatchers("/api/admin/employee/**")
-						.hasAnyAuthority(
-							RoleType.DESK.getCode(),
-							RoleType.ADMIN.getCode()
-						)
 
-						//나머지 모두 허용
-						.anyRequest().permitAll()
+			        // =========================================================
+			        // [1] 비회원 공개 API
+			        // =========================================================
+			        .requestMatchers(
+			            "/active",
+
+			            // 학원 공개 영역
+			            "/api/academy/",
+			            "/api/academy/reservation/**"
+			            ,"/api/attach/**",
+
+			            // 공개 강사 정보
+			            "/api/academy/tutor/**"
+			        ).permitAll()
+
+
+			        // =========================================================
+			        // [2] 인증 / 회원가입 관련 공개 API
+			        // =========================================================
+			        .requestMatchers(
+			        		 // 로그인 / 로그아웃 / 토큰 갱신
+			        	    "/service/auth/login",
+			        	    "/service/auth/logout",
+			        	    "/service/auth/refresh",
+
+			        	    // 인증
+			        	    "/service/cert/**",
+
+			        	    // 계정 찾기
+			        	    "/api/account/find-id",
+			        	    "/api/account/find-password",
+			        	    "/api/account/check-id/**"
+			        ).permitAll()
+			        
+			        // 회원가입만 공개
+			        .requestMatchers(
+			            HttpMethod.POST,
+			            "/api/academy/parent/",
+			            "/api/academy/student/"
+			        ).permitAll()
+
+			        .requestMatchers(
+		        	    HttpMethod.PUT,
+		        	    "/api/academy/parent/"
+		        	).hasAuthority(
+		        	    RoleType.PARENT.getCode()
+		        	)
+			        
+			        // =========================================================
+			        // [3] 학부모
+			        // =========================================================
+			        .requestMatchers(
+				            "/api/academy/parent/**"
+			        ).hasAnyAuthority(
+				        RoleType.PARENT.getCode()
+			        )
+			        // =========================================================
+			        // [4] 학생
+			        // =========================================================
+			        .requestMatchers(
+				        "/api/academy/student/",
+			            "/api/academy/assignment/**",
+			            "/api/academy/assignment-submit/**",
+			            "/api/academy/attempt-answer/**",
+			            "/api/academy/attempt/**",
+			            "/api/academy/exam/student/**"
+			        ).hasAnyAuthority(
+			            RoleType.STUDENT.getCode()
+			        )
+			        
+			        // [5-1] 학생 학부모
+			        .requestMatchers(
+				            "/api/academy/question/**"
+			        ).hasAnyAuthority(
+				        RoleType.PARENT.getCode(),
+				        RoleType.STUDENT.getCode()
+			        )
+			        // =========================================================
+			        // [5] 회원 전체
+			        // 학생 / 학부모 / 강사 / 데스크 / 원장
+			        // =========================================================
+			        .requestMatchers(
+			            "/api/account/**",
+			            "/api/attach/**",
+			            "/api/academy/**"
+			        ).hasAnyAuthority(
+			            RoleType.STUDENT.getCode(),
+			            RoleType.PARENT.getCode(),
+			            RoleType.TUTOR.getCode(),
+			            RoleType.DESK.getCode(),
+			            RoleType.ADMIN.getCode()
+			        )
+
+
+			        // =========================================================
+			        // [6] 직원
+			        // 강사 / 데스크 / 원장
+			        // =========================================================
+			        .requestMatchers(
+			            "/api/employee/**",
+			            "/api/attendance/**"
+			        ).hasAnyAuthority(
+			            RoleType.TUTOR.getCode(),
+			            RoleType.DESK.getCode(),
+			            RoleType.ADMIN.getCode()
+			        )
+
+
+			        // =========================================================
+			        // [7] 데스크 / 원장
+			        // =========================================================
+			        .requestMatchers(
+			            "/api/admin/employee/**"
+			        ).hasAnyAuthority(
+			            RoleType.DESK.getCode(),
+			            RoleType.ADMIN.getCode()
+			        )
+
+
+			        // =========================================================
+			        // [8] 나머지
+			        // =========================================================
+			        .anyRequest().permitAll()
 				)
 			//JWT를 어떻게 검증할 것인지 설정 (JwtDecoder가 반드시 필요)
 			//→ BearerTokenResolver :AccessToken을 꺼내서 Jwt를 뽑아내는 도구
@@ -246,50 +295,80 @@ public class SecurityConfiguration {
 		// - 헤더 방식인 경우 "Authorization: Bearer [토큰값]" 과 같은 형태로 전달
 		// - 카카오는 KAKAOAK 라는 자체 이름을 만들어서 토큰에 적용하여 사용하고 있음 (즉, 자율적)
 		// - 인증용 토큰을 해석하는 도구(accessToken 쿠키)
-		@Bean
-		public BearerTokenResolver bearerTokenResolver() {
-			return request -> {
-				String path = request.getServletPath();
-				
-				// 1. API 요청(/api/**, /service/**)이 아니면 토큰을 추출하지 않음
-		        // 즉, /employee/** 화면 진입, 정적 리소스 등은 토큰 검사를 아예 건너뛰고 화면을 바로 띄움
-		        if (!path.startsWith("/api/") && !path.startsWith("/service/") && !path.startsWith("/ws")) {
-		            return null;
-		        }
-		        
-		        // 2. 비로그인/공개 API는 브라우저에 만료된 쿠키가 남아있어도 무시(null 반환)
-		        if (
-		            path.startsWith("/service/auth/") ||          // 인증 관련 하위 전체
-		            path.startsWith("/service/cert/") ||          // 이메일 인증 하위 전체
-		            path.equals("/academy") || path.startsWith("/academy/") ||
-		            
-		            // 학생/학부모 회원가입 및 공개 경로 (/api/student, /api/student/ 등)
-		            path.equals("/api/student") || path.startsWith("/api/student/") ||
-		            path.equals("/api/parent") || path.startsWith("/api/parent/") ||
-		            
-		            // 계정 찾기 및 중복체크
-		            path.startsWith("/api/account/check-id/") || path.equals("/api/account/check-id") ||
-		            path.equals("/api/account/find-id") ||
-		            path.equals("/api/account/find-password")
-		        ) {
-		            return null;
-		        }
-				
-				//accessToken이 필요한 주소만 남았으므로 검색을 통해 찾아서 반환
-				Cookie[] cookies = request.getCookies();//모든 쿠키를 긁어온다
-				if(cookies == null) { //options(불확실한 요청 : 남의 서버에 get이 아닌 요청) 같은 상황에서 null일 수 있다
-					return null; 
-				}
-				
-//				모던 자바(Stream API)버전으로 쿠키 찾기
-				return Arrays.stream(cookies)
-						.filter(cookie -> cookie.getName().equals("accessToken"))
-						.map(cookie -> cookie.getValue())
-						.filter(value -> value != null && !value.isBlank())
-						.findFirst()
-						.orElse(null);
-			};
-		}
+	@Bean
+	public BearerTokenResolver bearerTokenResolver() {
+	    return request -> {
+	        String path = request.getServletPath();
+	        String method = request.getMethod();
+
+	        // =========================================================
+	        // 1. API 요청(/api/**, /service/**, /ws)이 아니면
+	        //    토큰을 추출하지 않음
+	        // =========================================================
+	        if (!path.startsWith("/api/")
+	                && !path.startsWith("/service/")
+	                && !path.startsWith("/ws")) {
+	            return null;
+	        }
+
+	        // =========================================================
+	        // 2. 비로그인/공개 API
+	        //    브라우저에 만료된 쿠키가 남아있어도 토큰 검사를 하지 않음
+	        // =========================================================
+	        if (
+	            // 인증 관련
+	            path.startsWith("/service/auth/") ||
+
+	            // 이메일 인증
+	            path.startsWith("/service/cert/") ||
+
+	            // React 화면
+	            path.equals("/academy") ||
+	            path.startsWith("/academy/") ||
+
+	            // 학생/학부모 회원가입
+	            // ★ POST일 때만 토큰 추출 제외
+	            (
+	                "POST".equals(method) &&
+	                (
+	                    path.equals("/api/academy/student") ||
+	                    path.equals("/api/academy/student/") ||
+	                    path.equals("/api/academy/parent") ||
+	                    path.equals("/api/academy/parent/")
+	                )
+	            ) ||
+
+	            // 기존 공개 API
+	            path.startsWith("/api/student") ||
+	            path.startsWith("/api/parent") ||
+
+	            // 계정 찾기 및 중복체크
+	            path.startsWith("/api/account/check-id/") ||
+	            path.equals("/api/account/check-id") ||
+	            path.equals("/api/account/find-id") ||
+	            path.equals("/api/account/find-password")
+	        ) {
+	            return null;
+	        }
+
+	        // =========================================================
+	        // 3. 여기까지 왔다면 accessToken이 필요한 요청
+	        // =========================================================
+	        Cookie[] cookies = request.getCookies();
+
+	        if (cookies == null) {
+	            return null;
+	        }
+
+	        // accessToken 쿠키 찾기
+	        return Arrays.stream(cookies)
+	                .filter(cookie -> cookie.getName().equals("accessToken"))
+	                .map(cookie -> cookie.getValue())
+	                .filter(value -> value != null && !value.isBlank())
+	                .findFirst()
+	                .orElse(null);
+	    };
+	}
 		
 		//JwtAuthenticationConverter
 		// - JWT의 authorities 항목을 Spring Security Authority로 변환하는 역할

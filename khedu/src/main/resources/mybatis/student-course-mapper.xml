@@ -135,4 +135,5 @@
     	select * from student_course 
     	where student_no = #{studentNo} and course_no = #{courseNo}
     </select>
+    
 </mapper>

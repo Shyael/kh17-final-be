@@ -67,6 +67,55 @@
 		where	reservation_no = #{reservationNo}
 	</update>
 	
+	<!-- 원장/데스크 대시보드 - 최근 신규 상담 5개 -->
+	<select id="selectRecentReservationList" resultType="DashboardReservationVO">
+	    select *
+	    from (
+	        select
+	            reservation_no,
+	            reservation_name,
+	            reservation_phone,
+	            reservation_type,
+	            reservation_time,
+	            reservation_status,
+	            reservation_ctime
+	        from reservation
+	        order by reservation_ctime desc
+	    )
+	    where rownum <![CDATA[ <= ]]> 5
+	</select>
+	
+	
+	<!-- 원장 대시보드 - 오늘 상담 5개 -->
+	<select id="selectTodayReservationList" resultType="DashboardReservationVO">
+	    select *
+	    from (
+	        select
+	            reservation_no,
+	            reservation_name,
+	            reservation_phone,
+	            reservation_type,
+	            reservation_time,
+	            reservation_status,
+	            reservation_ctime
+	        from reservation
+	        where reservation_time >= trunc(sysdate)
+	          and reservation_time <![CDATA[ < ]]> trunc(sysdate) + 1
+	          and reservation_status != '9'
+	        order by reservation_time asc
+	    )
+	    where rownum <![CDATA[ <= ]]> 5
+	</select>
+	
+	<!-- 오늘 상담 전체 건수 -->
+	<select id="countTodayReservations" resultType="int">
+	    select count(*)
+	    from reservation
+	    where reservation_time >= trunc(sysdate)
+	      and reservation_time <![CDATA[ < ]]> trunc(sysdate) + 1
+	      and reservation_status != '9'
+	</select>
+	
 	<select id="customerSequence" resultType="int">
 		select consult_customer_seq.nextval from dual
 	</select>
@@ -74,8 +123,8 @@
 	<select id="customerNo" resultType="int">
 		select 	customer_no
 		from 	consult_customer
-		where	customer_name = #{customerName}
-		  and	customer_mobile = #{customerMobile}
+		where	student_name = #{customerName}
+		  and	student_phone = #{customerMobile}
 	</select>
 	
 	<select id="customerInfo" resultType="ConsultCustomerDto">

@@ -5,6 +5,7 @@ import java.util.List;
 import com.kh.khedu.vo.dashboard.DashboardAssignmentVO;
 import com.kh.khedu.vo.dashboard.DashboardCourseVO;
 import com.kh.khedu.vo.dashboard.DashboardExamVO;
+import com.kh.khedu.vo.dashboard.DashboardPaymentVO;
 
 public interface EmployeeDashboardDao {
 	
@@ -50,5 +51,8 @@ public interface EmployeeDashboardDao {
     
     //원장/데스크 - 금일 모든 강좌 개수
 	int countAdminDashboardTodayCourses();
+	
+	//원장 / 데스크 - 미납 정보(이번달 제외 가장 오래된 것 부터)
+	List<DashboardPaymentVO> selectLongTermUnpaidPayments();
     
 }

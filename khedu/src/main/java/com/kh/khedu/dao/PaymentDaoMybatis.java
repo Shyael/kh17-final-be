@@ -142,4 +142,14 @@ public class PaymentDaoMybatis implements PaymentDao {
     public boolean updatePaymentHistoryCancel(Map<String, Object>cancelParams) {
     	return sqlSession.update("mapper.payment.updatePaymentHistoryCancel", cancelParams) > 0;
     }
+    
+    @Override
+    public String selectStudentName(int studentNo) {
+    	return sqlSession.selectOne("mapper.payment.selectStudentName", studentNo);
+    }
+    
+    @Override
+    public Integer selectParentAccountNoByStudentNo(int studentNo) {
+    	return sqlSession.selectOne("mapper.payment.selectParentAccountNoByStudentNo", studentNo);
+    }
 }

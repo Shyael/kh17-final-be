@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.sse.SseClient;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.vo.sse.SseAlarmVO;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -98,6 +99,30 @@ public class SseController {
         });
     }
     
+    // [추가] 특정 그룹에게 상세 이동(SseAlarmVO) 알람을 보내는 메서드
+    public static void sendToGroup(String accountType, String roleName, SseAlarmVO alarm) {
+        Map<Integer, SseClient> map = typeClients.get(accountType);
+        if (map == null) return;
+
+        map.forEach((accountNo, client) -> {
+            boolean shouldSend = false;
+            
+            if (roleName == null || roleName.trim().isEmpty()) {
+                shouldSend = true;
+            } else if (client.roleNames() != null && client.roleNames().contains(roleName)) {
+                shouldSend = true;
+            }
+
+            if (shouldSend) {
+                try {
+                    client.getEmitter().send(SseEmitter.event().name("alarm").data(alarm));
+                } catch (IOException e) {
+                    map.remove(accountNo);
+                }
+            }
+        });
+    }
+    
     // 💡 2. [추가] 특정 유저(단일 대상)에게만 알람을 보내는 메서드
     public static void sendToUser(String accountType, Integer accountNo, String message) {
         Map<Integer, SseClient> map = typeClients.get(accountType);
@@ -111,5 +136,23 @@ public class SseController {
                 map.remove(accountNo); // 에러 발생 시 끊긴 연결로 판단하여 제거
             }
         }
+    }
+    
+
+    // 3.[추가] 특정 유저(단일 대상) 클릭하면 상세로 갈 수 있는 알람을 보내는 메서드
+    public static void sendToUser(String accountType, Integer accountNo, SseAlarmVO alarm) {
+        Map<Integer, SseClient> map = typeClients.get(accountType);
+        if (map == null) return;
+
+        SseClient client = map.get(accountNo);
+        if (client != null) {
+            try {
+                client.getEmitter().send(SseEmitter.event().name("alarm").data(alarm));
+            }
+            catch (IOException e) {
+                map.remove(accountNo);// 에러 발생 시 끊긴 연결로 판단하여 제거
+            }
+        }
+
     }
 }

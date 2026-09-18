@@ -28,4 +28,12 @@ public class DeskDashboardVO implements EmployeeDashboardVO {
     private List<DashboardPayrollDueVO> payrollDueList;
     private int payrollDueCount;
     
+    //오늘상담예약, 신규 상담예약 
+    private List<DashboardReservationVO> recentReservations;
+    private List<DashboardReservationVO> todayReservations;
+    private int todayReservationCount;
+    
+    // 수납
+    private List<DashboardPaymentVO> payments;
+    
 }

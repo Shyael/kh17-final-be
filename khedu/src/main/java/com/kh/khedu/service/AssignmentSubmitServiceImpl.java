@@ -11,10 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.kh.khedu.controller.SseController;
 import com.kh.khedu.dao.AssignmentDao;
 import com.kh.khedu.dao.AssignmentSubmitDao;
 import com.kh.khedu.dao.AttachDao;
+import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.ParentStudentDao;
+import com.kh.khedu.dao.StudentDao;
 import com.kh.khedu.dto.AssignmentSubmitDto;
 import com.kh.khedu.dto.AttachDto;
 import com.kh.khedu.error.GetOutException;
@@ -24,6 +27,8 @@ import com.kh.khedu.vo.assignment.AssignmentSubmitDetailVO;
 import com.kh.khedu.vo.assignment.AssignmentSubmitListVO;
 import com.kh.khedu.vo.assignment.AssignmentSubmitStudentListVO;
 import com.kh.khedu.vo.parentStudent.ParentStudentVO;
+import com.kh.khedu.vo.sse.SseAlarmVO;
+import com.kh.khedu.vo.student.StudentDetailResponseVO;
 
 @Service
 @Transactional
@@ -39,6 +44,10 @@ public class AssignmentSubmitServiceImpl implements AssignmentSubmitService {
     private AttachDao attachDao;
     @Autowired
     private ParentStudentDao parentStudentDao;
+    @Autowired
+    private StudentDao studentDao;
+    @Autowired
+    private EmployeeDao employeeDao;
     
     //공통 메소드
     // 과제 제출 가능 여부 검사
@@ -146,7 +155,43 @@ public class AssignmentSubmitServiceImpl implements AssignmentSubmitService {
         		}
         	}
         }
+        
+        //담당 강사에게 제출 알림
 
+        // 학생 정보 조회
+        StudentDetailResponseVO student = studentDao.selectDetail(assignmentSubmitDto.getStudentNo());
+
+        // 과제 정보 조회
+        AssignmentDetailVO assignment = assignmentDao.selectOne(assignmentSubmitDto.getAssignmentNo());
+
+        // 담당 강사의 accountNo 조회
+        Integer employeeAccountNo = employeeDao.selectAccountNoByEmployeeNo(assignment.getEmployeeNo());
+        
+        // 알림 생성
+        SseAlarmVO alarm = SseAlarmVO
+        		.builder()
+	                .type("ASSIGNMENT_SUBMIT")
+	                .message(
+	                        student.getStudentName()
+	                        + "님이 "
+	                        + assignment.getAssignmentTitle()
+	                        + " 과제를 제출했습니다."
+	                )
+	                .targetNo(submitNo)
+	                .targetUrl(
+	                        "/employee/assignment/"
+	                        + assignmentSubmitDto.getAssignmentNo()
+	                        + "/submit/"
+	                        + submitNo
+	                )
+                .build();
+        //담당 강사에게만 알림
+        SseController.sendToUser(
+        		"직원",
+        		employeeAccountNo,
+        		alarm
+        );
+        
         return submitNo;
     }
 
@@ -238,7 +283,39 @@ public class AssignmentSubmitServiceImpl implements AssignmentSubmitService {
     // 강사 피드백 등록 및 수정
     @Override
     public boolean updateComment(AssignmentSubmitDto assignmentSubmitDto) {
-        return assignmentSubmitDao.updateComment(assignmentSubmitDto);
+    	//1. 피드백 등록/수정
+    	boolean result = assignmentSubmitDao.updateComment(assignmentSubmitDto);
+    	
+    	 if (!result) {
+	        return false;
+	    }
+
+	    // 2. submitNo로 제출 정보 다시 조회
+	    AssignmentSubmitDetailVO submit = assignmentSubmitDao.selectOne(assignmentSubmitDto.getSubmitNo());
+	    
+	    //3. 학생 accountNo 조회
+	    Integer accountNo = studentDao.selectAccountNoByStudentNo(submit.getStudentNo());
+	    
+	    // 4. 알림 생성
+	    SseAlarmVO alarm = SseAlarmVO.builder()
+	            .type("ASSIGNMENT_FEEDBACK")
+	            .message("과제 피드백이 등록되었습니다.")
+	            .targetNo(submit.getSubmitNo())
+	            .targetUrl(
+	                    "/student/assignment/"
+	                    + submit.getAssignmentNo()
+	                    + "/submit/"
+	                    + submit.getSubmitNo()
+	            )
+	            .build();
+
+	    // 5. 해당 학생에게 알림
+	    SseController.sendToUser(
+	            "학생",
+	            accountNo,
+	            alarm
+	    );
+        return true;
     }
 
     // 과제 제출 삭제

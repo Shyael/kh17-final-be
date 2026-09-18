@@ -13,12 +13,22 @@ import com.kh.khedu.vo.consult.ConsultReservationListItemVO;
 import com.kh.khedu.vo.consult.ConsultReservationListRequestVO;
 import com.kh.khedu.vo.consult.ConsultReservationUpdateRequestVO;
 import com.kh.khedu.vo.consult.ConsultUpdateRequestVO;
+import com.kh.khedu.vo.dashboard.DashboardReservationVO;
 
 public interface ConsultDao {
 	//상담 예약
 	ReservationDto selectReservationOne(int reservationNo);
 	int selectReservationListCount(ConsultReservationListRequestVO request);
 	List<ConsultReservationListItemVO> selectReservationList(ConsultReservationListRequestVO request);
+	
+	// 원장/데스크 대시보드 - 최근 신규 상담 5개
+	List<DashboardReservationVO> selectRecentReservationList();
+
+	// 원장/데스크 대시보드 - 오늘 상담 5개
+	List<DashboardReservationVO> selectTodayReservationList();
+	
+	// 오늘 상담갯수
+	int countTodayReservations();
 	
 	boolean reservationUpdate(int reservationNo, ConsultReservationUpdateRequestVO request);
 	

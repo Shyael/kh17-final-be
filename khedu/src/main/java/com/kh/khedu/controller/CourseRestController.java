@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dto.CourseDto;
+import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.service.course.CourseService;
@@ -22,6 +23,7 @@ import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
 import com.kh.khedu.vo.course.CourseCreateRequestVO;
+import com.kh.khedu.vo.course.CourseCreateResponseVO;
 import com.kh.khedu.vo.course.CourseDetailResponseVO;
 import com.kh.khedu.vo.course.CourseFormDataVO;
 import com.kh.khedu.vo.course.CourseListVO;
@@ -54,11 +56,11 @@ public class CourseRestController {
 	// 강좌 등록
 	@ApiResponse(responseCode = "200", description = "등록 성공")
 	@PostMapping("/")
-	public ResponseEntity<Void> courseInsert(
+	public ResponseEntity<CourseCreateResponseVO> courseInsert(
 			@CurrentUser TokenParseResponseVO parseVO,
 			@Valid @RequestBody CourseCreateRequestVO request) {
-		courseService.createCourse(parseVO, request);
-		return ResponseEntity.ok().build();
+		CourseCreateResponseVO response = courseService.createCourse(parseVO, request);
+		return ResponseEntity.ok().body(response);
 	}
 	
 	//사용가능 강의실 판단
@@ -69,8 +71,16 @@ public class CourseRestController {
 		return courseService.getAvailAbleClassrooms(request);
 	}
 	
+	//강사의 사용가능 시간 조회
+	@ApiResponse(responseCode = "200", description = "사용 가능")
+	@GetMapping("/available-schedules/{employeeNo}")
+	public List<ScheduleDto> getAvailableTutor(
+			@PathVariable Integer employeeNo
+			){
+		return courseService.getTutorschedules(employeeNo);
+	}
 	
-	// 강좌 조회
+	// 강좌 검색조회
 	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping("/list")
 	public PageResponseVO<CourseListVO> courseList(

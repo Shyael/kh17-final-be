@@ -3,6 +3,7 @@ package com.kh.khedu.dao;
 import java.util.List;
 
 import com.kh.khedu.dto.CourseDto;
+import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.course.CourseSimpleListVO;
@@ -59,5 +60,11 @@ public interface CourseDao {
 
 	//courseNo로 학생 번호와 계정 번호
 	List<CourseStudentListVO> selectCourseStudentList(int courseNo);
+	
+	// 출결 - 강의 목록 조회(진행중)
+	List<CourseSimpleListVO> selectActiveCourses();
+	
+	// session_no로 강의 조회
+	CourseSimpleListVO selectCourseBySessionNo(int sessionNo);
 	
 }

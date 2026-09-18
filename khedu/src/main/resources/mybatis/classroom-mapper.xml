@@ -84,4 +84,9 @@
 		where classroom_no = #{classroomNo}
 		FOR UPDATE
 	</select>
+	
+	<!-- 강의실 번호로 강의실 조회 -->
+	<select id="selectClassroomByClassroomNo" resultType="ClassroomDto">
+		select * from classroom where classroom_no = #{classroomNo}
+	</select>
 </mapper>
