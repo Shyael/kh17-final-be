@@ -986,6 +986,8 @@ public class PayrollServiceImpl implements PayrollService {
 			throw new TargetNotfoundException();
 		}
 
+		
+		
 
 		long payrollNo =
 				payrollDto.getPayrollNo();
@@ -1001,11 +1003,13 @@ public class PayrollServiceImpl implements PayrollService {
 								payrollNo
 						);
 
+		
 
 		if (paymentList.isEmpty()) {
 			throw new TargetNotfoundException();
 		}
-
+		
+		
 
 		// 현재 정책상 동시에 살아있는 지급은
 		// 한 건만 허용
