@@ -39,5 +39,8 @@ public interface ScheduleDao {
 	        LocalDate weekStart,
 	        LocalDate weekEnd
 	);
+	
+	// 강의 등록시 강사 시간체크
+	List<ScheduleDto> selectTutorSchedules(Integer employeeNo);
 
 }

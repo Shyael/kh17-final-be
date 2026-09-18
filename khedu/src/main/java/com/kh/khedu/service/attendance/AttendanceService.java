@@ -1,11 +1,19 @@
 package com.kh.khedu.service.attendance;
 
+import java.util.List;
+
+import com.kh.khedu.vo.attendance.AttendanceListResponseVO;
+import com.kh.khedu.vo.attendance.AttendanceSearchVO;
 import com.kh.khedu.vo.attendance.AttendanceUpdateByAdminVO;
 import com.kh.khedu.vo.attendance.KioskAttendanceRequestVO;
 import com.kh.khedu.vo.attendance.KioskAttendanceResponseVO;
 import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
 import com.kh.khedu.vo.attendance.StudentAttendanceResponseVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+
+
+
+
 
 public interface AttendanceService {
 	//관리자의 출결 수정
@@ -19,4 +27,7 @@ public interface AttendanceService {
 	
 	// 학생 본인 강좌 출결 조회용
 	StudentAttendanceResponseVO getStudentAttendanceDetail(int studentNo, int courseNo);
+	
+	// 관리자 - 출결 목록
+	List<AttendanceListResponseVO> getAttendanceList(AttendanceSearchVO searchVO);
 }

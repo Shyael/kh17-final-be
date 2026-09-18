@@ -10,9 +10,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kh.khedu.controller.SseController;
 import com.kh.khedu.dao.AttendanceDao;
 import com.kh.khedu.dao.ClassSessionDao;
 import com.kh.khedu.dao.CourseDao;
+import com.kh.khedu.dao.EmployeeDao;
+import com.kh.khedu.dao.ParentDao;
+import com.kh.khedu.dao.ParentStudentDao;
 import com.kh.khedu.dao.StudentCourseDao;
 import com.kh.khedu.dto.AttendanceDto;
 import com.kh.khedu.dto.ClassSessionDto;
@@ -21,6 +25,8 @@ import com.kh.khedu.dto.StudentCourseDto;
 import com.kh.khedu.enums.AccountType;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.error.WhoAreYouException;
+import com.kh.khedu.vo.attendance.AttendanceListResponseVO;
+import com.kh.khedu.vo.attendance.AttendanceSearchVO;
 import com.kh.khedu.vo.attendance.AttendanceStudentResponseVO;
 import com.kh.khedu.vo.attendance.AttendanceUpdateByAdminVO;
 import com.kh.khedu.vo.attendance.KioskAttendanceRequestVO;
@@ -31,8 +37,11 @@ import com.kh.khedu.vo.attendance.SessionAttendanceDetailVO;
 import com.kh.khedu.vo.attendance.StudentAttendanceItemVO;
 import com.kh.khedu.vo.attendance.StudentAttendanceResponseVO;
 import com.kh.khedu.vo.attendance.StudentAttendanceSummaryVO;
+import com.kh.khedu.vo.course.CourseSimpleListVO;
 import com.kh.khedu.vo.course.CourseTutorVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.vo.parentStudent.StudentParentDetailVO;
+import com.kh.khedu.vo.sse.SseAlarmVO;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,6 +57,12 @@ public class AttendanceServiceImpl implements AttendanceService {
 	private ClassSessionDao classSessionDao;
 	@Autowired
 	private StudentCourseDao studentCourseDao;
+	@Autowired
+	private EmployeeDao employeeDao;
+	@Autowired
+	private ParentStudentDao parentStudentDao;
+	@Autowired
+	private ParentDao parentDao;
 	
 	// 허용되는 상태 제약조건 목록
     private static final List<String> VALID_ATTENDANCE_STATES = 
@@ -56,7 +71,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     // 수업 시작 후 10분 이내: 출석, 10분 초과: 지각
     private static final int LATE_THRESHOLD_MINUTES = 10;
     
-    
+    // 직원 - 강의 - 출결수정
 	@Override
 	public void updateAttendanceByAdmin(AttendanceUpdateByAdminVO request, TokenParseResponseVO parseVO) {
 		// [1] 직원 계정인지 1차 검증
@@ -92,6 +107,8 @@ public class AttendanceServiceImpl implements AttendanceService {
         attendanceDao.updateAttendanceStateByAdmin(request.getAttendanceNo(), request.getAttendanceState());
 	}
 
+	
+	// 직원 - 강의 - 출결조회
 	@Override
 	public SessionAttendanceDetailVO getSessionAttendanceDetail(int sessionNo, TokenParseResponseVO parseVO) {
 		// [1] 직원 권한 1차 검증
@@ -150,14 +167,20 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .studentList(studentList)
                 .build();
 	}
-
+	
+	// 관리자 - 출석 - 출석 목록
+	@Override
+	public List<AttendanceListResponseVO> getAttendanceList(AttendanceSearchVO searchVO) {
+		return attendanceDao.selectAttendanceList(searchVO);
+	}
+	
 	/*================================================
 	 * 키오스크 학생 출결 관련 서비스
 	 * ==================================================*/
 	@Override
 	@Transactional
 	public KioskAttendanceResponseVO processKioskAttendance(KioskAttendanceRequestVO request) {
-		int studentNo;
+		Integer studentNo;
 		String studentName;
 		
 		//[1] 학생 식별
@@ -211,7 +234,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                     .build();
         }
 		
-     // [4] 출석 / 지각 판정 (수업 시작 + 10분 기준)
+        // [4] 출석 / 지각 판정 (수업 시작 + 10분 기준)
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime classStartTime = target.getSessionStart();
         LocalDateTime lateThreshold = classStartTime.plusMinutes(LATE_THRESHOLD_MINUTES);
@@ -230,6 +253,48 @@ public class AttendanceServiceImpl implements AttendanceService {
         log.info("[키오스크 출결 완료] 학생: {}(#{}), 강좌: {}, 상태: {}, 태그시각: {}", 
                 studentName, studentNo, target.getCourseTitle(), determinedState, tagTime);
 
+        // [6] 실시간 SSE 알림 발송 (강사 및 학생)
+        CourseSimpleListVO courseSimpleListVO = courseDao.selectCourseBySessionNo(target.getSessionNo());
+        String courseTitle = target.getCourseTitle();
+        String targetUrl = "/course/detail/" + courseSimpleListVO.getCourseNo();
+        
+        // 1. 담당 강사에게 알림 (수업 중 입실/지각 확인 안내)
+        CourseDto courseDto = courseDao.selectOneByCourseNo(courseSimpleListVO.getCourseNo());
+	    Integer tutorAccountNo = employeeDao.selectAccountNoByEmployeeNo(courseDto.getEmployeeNo());
+        if(tutorAccountNo != null) {
+        	String tutorNotice = String.format("[%s] %s 학생이 %s 처리되었습니다. (%s)", 
+                    courseTitle, studentName, determinedState, tagTime);
+        	SseAlarmVO tutorAlarm = SseAlarmVO.builder()
+                    .type("ATTENDANCE")
+                    .message(tutorNotice)
+                    .targetNo(tutorAccountNo)
+                    .targetUrl(targetUrl)
+                    .build();
+        	
+        	SseController.sendToUser("직원", tutorAccountNo, tutorAlarm);
+        }
+        
+        // 2. 학부모에게 알림
+        
+        // 학생번호로 부모 찾기
+        List<StudentParentDetailVO> detailVO = parentStudentDao.selectParentListByStudentNo(studentNo);
+        for(StudentParentDetailVO parent : detailVO) {
+        	Integer parentNo = parent.getParentNo();
+        	Integer parentAccountNo = parentDao.detail(parentNo).getAccountNo();
+        	if(parentAccountNo != null) {
+        		String parentNotice = String.format("[%s] %s 학생이 %s 처리되었습니다. (%s)", 
+                        courseTitle, studentName, determinedState, tagTime);
+            	SseAlarmVO tutorAlarm = SseAlarmVO.builder()
+                        .type("ATTENDANCE")
+                        .message(parentNotice)
+                        .targetNo(parentAccountNo)
+                        .targetUrl(targetUrl)
+                        .build();
+            	
+            	SseController.sendToUser("직원", parentAccountNo, tutorAlarm);
+        	}
+        }
+	    
         return KioskAttendanceResponseVO.builder()
                 .actionType("SUCCESS")
                 .studentName(studentName)

@@ -13,11 +13,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kh.khedu.controller.ClassSessionRestController;
+import com.kh.khedu.controller.SseController;
 import com.kh.khedu.dao.AttendanceDao;
 import com.kh.khedu.dao.ClassSessionDao;
+import com.kh.khedu.dao.ClassroomDao;
 import com.kh.khedu.dao.CourseDao;
+import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.ScheduleDao;
+import com.kh.khedu.dao.StudentCourseDao;
 import com.kh.khedu.dto.ClassSessionDto;
+import com.kh.khedu.dto.ClassroomDto;
 import com.kh.khedu.dto.CourseDto;
 import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.enums.AccountType;
@@ -28,8 +34,14 @@ import com.kh.khedu.vo.classSession.AdminClassSessionInsertVO;
 import com.kh.khedu.vo.classSession.AdminClassSessionStatusVO;
 import com.kh.khedu.vo.classSession.ClassSessionEndRequestVO;
 import com.kh.khedu.vo.classSession.ClassSessionStartRequestVO;
+import com.kh.khedu.vo.course.CourseSimpleListVO;
+import com.kh.khedu.vo.course.CourseStudentListVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
+import com.kh.khedu.vo.sse.SseAlarmVO;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class ClassSessionServiceImple implements ClassSessionService {
 
@@ -41,6 +53,10 @@ public class ClassSessionServiceImple implements ClassSessionService {
 	private CourseDao courseDao;
 	@Autowired
 	private AttendanceDao attendanceDao;
+	@Autowired
+	private ClassroomDao classroomDao;
+	@Autowired
+	private EmployeeDao employeeDao;
 	
 	// classSession 시작
 	@Override
@@ -266,7 +282,7 @@ public class ClassSessionServiceImple implements ClassSessionService {
 		}
 	}
 	
-	// [관리자 2] 특정 세션 상태 수동 변경 ('진행중', '종료', '취소')
+	// [관리자 2] 특정 세션 수동 변경 ('진행중', '종료', '취소')
 	@Override
 	@Transactional
 	public void updateStatusByAdmin(AdminClassSessionStatusVO request, TokenParseResponseVO parseVO) {
@@ -315,6 +331,71 @@ public class ClassSessionServiceImple implements ClassSessionService {
 		// [5] '종료'로 변경 시 미출결자 자동 결석 처리
 	    if ("종료".equals(request.getSessionStatus())) {
 	        attendanceDao.updateAbsentForUncheckedStudents(request.getSessionNo());
+	    }
+	    
+	    // [6] 변경시 대상 강사, 학생들에게 알람 처리
+	    try {
+	    	ClassSessionDto newClassSessionDto = classSessionDao.selectOneBySessionNo(request.getSessionNo());
+		    if (newClassSessionDto == null) return;
+		    CourseSimpleListVO courseSimpleListVO = courseDao.selectCourseBySessionNo(request.getSessionNo());
+		    String courseTitle = courseSimpleListVO.getCourseTitle();
+		    String currentStatus = newClassSessionDto.getSessionStatus();
+		    
+		    // 강의실 변경여부 확인
+		    boolean isClassroomChanged = newClassSessionDto.getClassroomNo() != null 
+		    		&& !newClassSessionDto.getClassroomNo().equals(session.getClassroomNo());
+		    
+		    String noticeMessage;
+		    
+		    //1 조건에 따른 알람
+		    if("취소".equals(newClassSessionDto.getSessionStatus())) {
+		    	noticeMessage = String.format("[%s] 수업이 취소되었습니다.", courseTitle);
+		    } else if(isClassroomChanged) {
+		    	ClassroomDto classroomDto = classroomDao.selectClassroomByClassroomNo(newClassSessionDto.getClassroomNo());
+		    	String newRoomName = classroomDto.getClassroomName();
+		    	noticeMessage = String.format("[%s] 수업 강의실이 '%s'(으)로 변경되었습니다.", courseTitle, newRoomName);
+		    }  else if ("종료".equals(newClassSessionDto.getSessionStatus())) {
+		    	noticeMessage = String.format("[%s] 수업이 종료되었습니다.", courseTitle);
+		    } else {
+		    	noticeMessage = String.format("[%s] 수업 정보가 변경되었습니다. (상태: %s)", courseTitle, currentStatus);
+		    }
+		    
+		    // 2. 알람클릭시 이동할 경로
+		    String targetUrl = "/course/detail/" + courseSimpleListVO.getCourseNo();
+		    
+		    // 3. 대상 수강생에게 알람처리
+		    List<CourseStudentListVO> studentList = courseDao.selectCourseStudentList(courseSimpleListVO.getCourseNo());
+		    if(studentList != null) {
+		    	for(CourseStudentListVO student : studentList) {
+		    		SseAlarmVO studentAlarm = SseAlarmVO.builder()
+		    					.type("CLASS_SESSION")
+		    					.message(noticeMessage)
+		    					.targetNo(student.getAccountNo())
+		    					.targetUrl(targetUrl)
+		    				.build();
+		    		
+		    		SseController.sendToUser("학생", student.getAccountNo(), studentAlarm);
+		    	}
+		    }
+		    
+		    // 4. 담당 강사에게 발송 (수정자가 본인이 아닌 경우)
+		    CourseDto courseDto = courseDao.selectOneByCourseNo(courseSimpleListVO.getCourseNo());
+		    Integer tutorAccountNo = employeeDao.selectAccountNoByEmployeeNo(courseDto.getEmployeeNo());
+		    
+		    if(tutorAccountNo != null 
+		    		//&& !tutorAccountNo.equals(parseVO.getAccountNo())
+		    		){
+		    	SseAlarmVO tutorAlarm = SseAlarmVO.builder()
+			    			.type("CLASS_SESSION")
+							.message(noticeMessage)
+							.targetNo(tutorAccountNo)
+							.targetUrl(targetUrl)
+		    			.build();
+		    	log.info("[알람 디버깅] 강사에게 SSE 전송 시도 -> accountType=직원, accountAlram={}", noticeMessage);
+		    	SseController.sendToUser("직원", tutorAccountNo, tutorAlarm);
+		    }
+	    } catch (Exception e) {
+	    	log.error("수업 상태/강의실 변경 알림 전송 중 에러 발생: sessionNo={}", request.getSessionNo(), e);
 	    }
 	}
 }

@@ -132,7 +132,7 @@
 	</select>
 	
 	<!-- 학생 상세 정보 조회 -->
-    <select id="detail" resultType="com.kh.khedu.vo.student.StudentDetailResponseVO">
+    <select id="detail" resultType="StudentDetailResponseVO">
         select 
             S.student_no as studentNo,
             S.account_no as accountNo, 

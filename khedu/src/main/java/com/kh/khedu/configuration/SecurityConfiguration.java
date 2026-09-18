@@ -69,100 +69,136 @@ public class SecurityConfiguration {
 		
 			.authorizeHttpRequests(
 					auth -> auth	
-						// [0] React SPA 정적 리소스 및 프론트엔드 화면 경로 무조건 허용 (최상단 배치 필수)
-						.requestMatchers(
-							"/",
-							"/index.html",
-							"/assets/**",
-							"/favicon.ico",
-							"/*.svg",
-							"/*.png",
-							"/*.ico",
-							"/error",
-							"/employee/**" // React의 employee 관련 모든 화면 경로 허용
-						).permitAll()
+					 // =========================================================
+			        // [0] React SPA 화면 / 정적 리소스
+			        // =========================================================
+			        .requestMatchers(
+			            "/",
+			            "/index.html",
+			            "/assets/**",
+			            "/favicon.ico",
+			            "/*.svg",
+			            "/*.png",
+			            "/*.ico",
+			            "/error",
 
-						// [기존] 무조건 허용 API
-						.requestMatchers(
-							"/active",  //체크용 페이지 허용
-							"/swagger-ui/**", //springdoc ui
-							"/v3/api-docs/**", //springdoc json
-							"/api/admin/employee/**",
-							"/api/account/check-id/**",
-							"/ws/**", 
-							"/ws-member/**"
-						).permitAll()
-							
-						//직원(학원 정보 수정)
-						.requestMatchers("/api/academy/**").permitAll()
-						.requestMatchers("/api/employe/**").permitAll()
-						//직원(강사 정보 수정)
-						.requestMatchers("/api/tutor/**").permitAll() 
-						
-						//auth service
-						.requestMatchers(
-							"/service/auth/login", //로그인 페이지
-							"/service/auth/logout", //로그아웃 페이지
-							"/service/auth/refresh", //로그인 갱신페이지
-							"/api/account/find-id", //아이디
-							"/api/account/find-password" //비밀번호 찾기
-						).permitAll()
-						
-						//임시 전부 공개화면 
-						.requestMatchers(
-							"/api/employee/**" // 원장, 데스크만 접근 가능하게
-						).permitAll()
+			            // React 화면 진입 자체는 공개
+			            "/employee/**",
+			            "/academy/**"
+			            
+			            ,"/api/sse/connect"
+			        ).permitAll()
 
-						//cert service
-						.requestMatchers("/service/cert/**").permitAll()
-						
-						//계약 관련(임시)
-						.requestMatchers("/api/contract/**").permitAll()
-						//공개 화면
-						.requestMatchers(
-							"/academy/**",
-							"/api/student/**",
-							"/api/parent/**"
-						).permitAll() 
-					
-						// 조건부 허용(내가 만든 요소들)
-						
-						// [1] 회원
-						.requestMatchers("/api/account/**")
-						.hasAnyAuthority(
-							RoleType.STUDENT.getCode(),
-							RoleType.PARENT.getCode(),
-							RoleType.TUTOR.getCode(), 
-							RoleType.DESK.getCode(),
-							RoleType.ADMIN.getCode()
-						)
-						
-						// [2] 학생
-						.requestMatchers("/api/academy/assignment/student/**")
-						.hasAnyAuthority(RoleType.STUDENT.getCode())
-						
-						// [3] 학부모
-						.requestMatchers("/api/academy/assignment/parent/student/**")
-						.hasAnyAuthority(RoleType.PARENT.getCode())
-						
-						// [4] 데스크 / 원장 / 직원
-						.requestMatchers(
-							"/api/employee/**",
-							"/api/attendance/**" //근태관련
-						)
-						.hasAnyAuthority(
-							RoleType.TUTOR.getCode(), 
-							RoleType.DESK.getCode(),
-							RoleType.ADMIN.getCode()
-						)
-						.requestMatchers("/api/admin/employee/**")
-						.hasAnyAuthority(
-							RoleType.DESK.getCode(),
-							RoleType.ADMIN.getCode()
-						)
 
-						//나머지 모두 허용
-						.anyRequest().permitAll()
+			        // =========================================================
+			        // [1] 비회원 공개 API
+			        // =========================================================
+			        .requestMatchers(
+			            "/active",
+
+			            // 학원 공개 영역
+			            "/api/academy/",
+			            "/api/academy/reservation/**",
+
+			            // 공개 강사 정보
+			            "/api/academy/tutor/**"
+			        ).permitAll()
+
+
+			        // =========================================================
+			        // [2] 인증 / 회원가입 관련 공개 API
+			        // =========================================================
+			        .requestMatchers(
+			            // 로그인 / 로그아웃 / 토큰 갱신
+			            "/service/auth/login",
+			            "/service/auth/logout",
+			            "/service/auth/refresh",
+
+			            // 인증
+			            "/service/cert/**",
+
+			            // 계정 찾기
+			            "/api/account/find-id",
+			            "/api/account/find-password",
+			            "/api/account/check-id/**",
+
+			            // 학생 / 학부모 공개 가입 API
+			            "/api/student/**",
+			            "/api/parent/**"
+			        ).permitAll()
+
+
+			        // =========================================================
+			        // [3] 회원 전체
+			        // 학생 / 학부모 / 강사 / 데스크 / 원장
+			        // =========================================================
+			        .requestMatchers(
+			            "/api/account/**",
+			            "/api/attach/**"
+			        ).hasAnyAuthority(
+			            RoleType.STUDENT.getCode(),
+			            RoleType.PARENT.getCode(),
+			            RoleType.TUTOR.getCode(),
+			            RoleType.DESK.getCode(),
+			            RoleType.ADMIN.getCode()
+			        )
+
+
+			        // =========================================================
+			        // [4] 학생 + 학부모
+			        // =========================================================
+			        .requestMatchers(
+			            "/api/academy/question/**"
+			        ).hasAnyAuthority(
+			            RoleType.STUDENT.getCode(),
+			            RoleType.PARENT.getCode()
+			        )
+
+
+			        // =========================================================
+			        // [5] 학생
+			        // =========================================================
+			        .requestMatchers(
+			            "/api/academy/assignment/**",
+			            "/api/academy/assignment-submit/**",
+			            "/api/academy/attempt-answer/**",
+			            "/api/academy/attempt/**",
+			            "/api/academy/exam/student/**",
+			            "/api/academy/student/**"
+			        ).hasAnyAuthority(
+			            RoleType.STUDENT.getCode()
+			        )
+
+
+			        // =========================================================
+			        // [6] 직원
+			        // 강사 / 데스크 / 원장
+			        // =========================================================
+			        .requestMatchers(
+			            "/api/employee/**",
+			            "/api/attendance/**"
+			        ).hasAnyAuthority(
+			            RoleType.TUTOR.getCode(),
+			            RoleType.DESK.getCode(),
+			            RoleType.ADMIN.getCode()
+			        )
+
+
+			        // =========================================================
+			        // [7] 데스크 / 원장
+			        // =========================================================
+			        .requestMatchers(
+			            "/api/admin/employee/**"
+			        ).hasAnyAuthority(
+			            RoleType.DESK.getCode(),
+			            RoleType.ADMIN.getCode()
+			        )
+
+
+			        // =========================================================
+			        // [8] 나머지
+			        // =========================================================
+			        .anyRequest().permitAll()
 				)
 			//JWT를 어떻게 검증할 것인지 설정 (JwtDecoder가 반드시 필요)
 			//→ BearerTokenResolver :AccessToken을 꺼내서 Jwt를 뽑아내는 도구

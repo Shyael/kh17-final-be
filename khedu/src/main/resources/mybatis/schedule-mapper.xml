@@ -221,4 +221,20 @@
 	        end,
 	        s.schedule_start asc
 	</select>
+	
+	<!-- 강사 이용가능 시간 조회 -->
+	<select id="selectTutorSchedules" resultType="ScheduleDto">
+		SELECT
+	        s.schedule_no,
+	        s.schedule_week,
+	        s.schedule_start,
+	        s.schedule_end,
+	        s.schedule_open,
+	        s.schedule_close
+	    FROM schedule s
+	    JOIN course c
+	        ON s.course_no = c.course_no
+	    WHERE c.employee_no = #{employeeNo}
+	    and c.course_status in ('진행중', '모집중')
+	</select>
 </mapper>

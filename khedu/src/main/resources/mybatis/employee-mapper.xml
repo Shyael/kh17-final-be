@@ -117,8 +117,16 @@
     update employee
     set employee_status = '재직'
     where employee_no = #{employeeNo}
-      and employee_status = '대기','종료'
-
+      <choose>
+      <when test="employ_status='대기'">
+      and employee_status = '대기'
+      </when>
+      <otherwise>
+      
+      and employee_status = '종료'
+      </otherwise>
+      
+	</choose>
 	</update>
 	
 	<!--이름으로 직원 검색  -->
@@ -416,5 +424,12 @@
     </where>
 
 </select>
+
+	<!-- 직원번호로 계정번호 조회 -->
+	<select id="selectAccountNoByEmployeeNo" resultType="Integer">
+	    select account_no
+	    from employee
+	    where employee_no = #{employeeNo}
+	</select>
 
 </mapper>

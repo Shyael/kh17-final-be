@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.kh.khedu.dto.AttendanceDto;
+import com.kh.khedu.vo.attendance.AttendanceListResponseVO;
+import com.kh.khedu.vo.attendance.AttendanceSearchVO;
 import com.kh.khedu.vo.attendance.AttendanceStudentResponseVO;
 import com.kh.khedu.vo.attendance.KioskStudentCandidateVO;
 import com.kh.khedu.vo.attendance.KioskTargetSessionVO;
@@ -73,6 +75,11 @@ public class AttendanceDaoMyBatis implements AttendanceDao {
 	@Override
 	public List<AttendanceStudentResponseVO> selectAttendanceListBySessionNo(int sessionNo) {
 		return sqlSession.selectList("mapper.attendance.selectAttendanceListBySessionNo", sessionNo);
+	}
+	
+	@Override
+	public List<AttendanceListResponseVO> selectAttendanceList(AttendanceSearchVO searchVO) {
+		return sqlSession.selectList("mapper.attendance.selectAttendanceList", searchVO);
 	}
 	
 	 /*

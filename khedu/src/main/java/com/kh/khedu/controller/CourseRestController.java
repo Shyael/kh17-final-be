@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.khedu.annotation.CurrentUser;
 import com.kh.khedu.dao.CourseDao;
 import com.kh.khedu.dto.CourseDto;
+import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.enums.RoleType;
 import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.service.course.CourseService;
@@ -70,6 +71,14 @@ public class CourseRestController {
 		return courseService.getAvailAbleClassrooms(request);
 	}
 	
+	//강사의 사용가능 시간 조회
+	@ApiResponse(responseCode = "200", description = "사용 가능")
+	@GetMapping("/available-schedules/{employeeNo}")
+	public List<ScheduleDto> getAvailableTutor(
+			@PathVariable Integer employeeNo
+			){
+		return courseService.getTutorschedules(employeeNo);
+	}
 	
 	// 강좌 검색조회
 	@ApiResponse(responseCode = "200", description = "조회 성공")

@@ -113,7 +113,7 @@ public class AttemptServiceImpl implements AttemptService {
         return attempt;
     }
     
- // 시험 결과 VO 조립
+    // 시험 결과 VO 조립
     private ExamResultVO buildResult(AttemptDto attempt) {
         // =========================
         // 시험 정보 조회

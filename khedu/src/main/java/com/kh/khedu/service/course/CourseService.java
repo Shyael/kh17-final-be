@@ -2,6 +2,7 @@ package com.kh.khedu.service.course;
 
 import java.util.List;
 
+import com.kh.khedu.dto.ScheduleDto;
 import com.kh.khedu.util.PageResponseVO;
 import com.kh.khedu.vo.classroom.AvailableClassroomRequestVO;
 import com.kh.khedu.vo.classroom.ClassroomWhenRegisterVO;
@@ -13,6 +14,7 @@ import com.kh.khedu.vo.course.CourseListVO;
 import com.kh.khedu.vo.course.CourseSearchVO;
 import com.kh.khedu.vo.course.CourseSimpleListVO;
 import com.kh.khedu.vo.course.StudentCourseListVO;
+import com.kh.khedu.vo.course.TutorWhenRegisterVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 
 public interface CourseService {
@@ -23,6 +25,9 @@ public interface CourseService {
 	//강의실 조회(강의 등록화면에 사용되는)
 	List<ClassroomWhenRegisterVO> getAvailAbleClassrooms(AvailableClassroomRequestVO request);
 	
+	// 강사 이용가능시간조회(강의 등록화면에 사용됨)
+	List<ScheduleDto> getTutorschedules(Integer employeeNo);
+
 	//강좌 등록
 	CourseCreateResponseVO createCourse(TokenParseResponseVO parseVO, CourseCreateRequestVO request);
 	
@@ -48,5 +53,8 @@ public interface CourseService {
 	        int employeeNo,
 	        boolean tutor
 	);
+
+	List<CourseSimpleListVO> getActiveCourseList();
+
 	
 }

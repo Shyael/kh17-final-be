@@ -45,25 +45,67 @@
 		 where	r.room_no = #{roomNo}
 	</select>
 	<select id="check" resultType="RoomVO">
-		select	r.*,
-				(
-			        select count(*) 
-			        from message msg 
-			        inner join message_chat mc on mc.message_no = msg.message_no
-			        where msg.message_room = r.room_no
-			          and mc.message_sender_no != #{roomOwner}
-			          and msg.message_time > NVL(ru.last_read_time, to_date('1970-01-01', 'YYYY-MM-DD'))
-			    ) AS unread_cnt
-		  from	room r
-		  inner join room_user ru on ru.room_no = r.room_no and ru.account_no = r.room_owner
-		 where	r.room_owner = #{roomOwner}
-		   and	r.room_type = '상담'
+		SELECT  r.*,
+	            M.last_time,
+	            M.last_content,
+	            (
+	                SELECT count(*) 
+	                FROM message msg 
+	                INNER JOIN message_chat mc ON mc.message_no = msg.message_no
+	                WHERE msg.message_room = r.room_no
+	                  AND mc.message_sender_no != #{accountNo} -- 내가 보낸 메세지 제외
+	                  AND msg.message_time > NVL(ru.last_read_time, to_date('1970-01-01', 'YYYY-MM-DD'))
+	            ) AS unread_cnt
+	      FROM  room r
+	      INNER JOIN room_user ru ON ru.room_no = r.room_no AND ru.account_no = #{accountNo}
+	      LEFT JOIN (
+	            SELECT
+	                message_room,
+	                max(message_time) as last_time,
+	                max(message_content) keep (dense_rank last order by message_time) as last_content
+	            FROM message 
+	            GROUP BY message_room
+	        ) M ON r.room_no = M.message_room
+	     WHERE  r.room_type = '상담'
+	</select> 
+	
+	<select id="privateCheck" resultType="RoomVO">
+		SELECT  r.*,
+		        M.last_time,
+		        M.last_content,
+		        (
+		            SELECT count(*) 
+		            FROM message msg 
+		            INNER JOIN message_chat mc ON mc.message_no = msg.message_no
+		            WHERE msg.message_room = r.room_no
+		              AND mc.message_sender_no != #{myAccountNo} -- 내가 보낸 메세지 제외
+		              AND msg.message_time > NVL(ru_me.last_read_time, to_date('1970-01-01', 'YYYY-MM-DD'))
+		        ) AS unread_cnt
+		FROM    room r
+		-- 1. 나의 참여 정보 조인 (읽음 시간 확인용)
+		INNER JOIN room_user ru_me 
+		        ON ru_me.room_no = r.room_no 
+		       AND ru_me.account_no = #{myAccountNo}
+		-- 2. 강사의 참여 정보 조인 (tutor 테이블에서 account_no를 조회하여 매칭)
+		INNER JOIN room_user ru_other 
+		        ON ru_other.room_no = r.room_no 
+		       AND ru_other.account_no = #{accountNo}
+		-- 3. 마지막 메세지 정보 (방이 생성되고 메세지가 없을 수도 있으므로 LEFT JOIN 권장)
+		LEFT JOIN (
+		        SELECT  message_room,
+		                MAX(message_time) AS last_time,
+		                MAX(message_content) KEEP (DENSE_RANK LAST ORDER BY message_time) AS last_content
+		        FROM    message 
+		        GROUP BY message_room
+		) M ON r.room_no = M.message_room
+		WHERE   r.room_type = '개인'
 	</select> 
 	
 	<!-- 상담 채팅방 목록 -->
 	<select id="consultList" resultType="RoomListVO">
 		select 
 		    R.*,
+		    A.account_no,
 		    A.account_type,
 		    A.account_name,
 		    M.last_time,
@@ -104,6 +146,196 @@
 		where R.room_type = '상담'
 		order by M.last_time desc
 	</select>
+	
+	<!-- 개인 채팅방 목록 -->
+	<select id="myList" resultType="RoomListVO">
+		SELECT 
+		    R.*,
+		    A.account_no,
+		    A.account_type,
+		    A.account_name,
+		    M.last_time,
+		    M.last_content,
+		    NVL(U.cnt, 0) AS cnt,
+		    (
+		        SELECT count(*) 
+		        FROM message msg 
+		        INNER JOIN message_chat mc ON mc.message_no = msg.message_no
+		        WHERE msg.message_room = R.room_no
+		          AND mc.message_sender_no != #{accountNo} -- 내가 보낸 메세지 제외
+		          AND msg.message_time > NVL(ru_me.last_read_time, to_date('1970-01-01', 'YYYY-MM-DD'))
+		    ) AS unread_cnt,
+		    'Y' AS enter
+		FROM room R 
+		INNER JOIN room_user ru_me 
+		    ON ru_me.room_no = R.room_no 
+		   AND ru_me.account_no = #{accountNo}
+		INNER JOIN room_user ru_other
+		    ON ru_other.room_no = R.room_no
+		   AND ru_other.account_no != #{accountNo}
+		INNER JOIN account A 
+		    ON A.account_no = ru_other.account_no
+		INNER JOIN (
+		    SELECT room_no, count(*) cnt 
+		    FROM room_user 
+		    GROUP BY room_no
+		) U ON R.room_no = U.room_no
+		LEFT JOIN (
+		    SELECT
+		        message_room,
+		        max(message_time) as last_time,
+		        max(message_content) keep (dense_rank last order by message_time) as last_content
+		    FROM message 
+		    GROUP BY message_room
+		) M ON R.room_no = M.message_room
+		WHERE R.room_type = '개인'
+		ORDER BY M.last_time DESC
+	</select>
+	
+	<select id="courseList" resultType="RoomListVO">
+		WITH TargetUsers AS (
+		    SELECT DISTINCT 
+		           s.account_no, 
+		           '학생' AS account_type
+		    FROM employee e
+		    JOIN course c ON e.employee_no = c.employee_no
+		    JOIN student_course sc ON c.course_no = sc.course_no
+		    JOIN student s ON sc.student_no = s.student_no
+		    WHERE e.account_no = #{accountNo}
+		    UNION
+		    SELECT DISTINCT 
+		           p.account_no, 
+		           '학부모' AS account_type
+		    FROM employee e
+		    JOIN course c ON e.employee_no = c.employee_no
+		    JOIN student_course sc ON c.course_no = sc.course_no
+		    JOIN parent_student ps ON sc.student_no = ps.student_no
+		    JOIN parent p ON ps.parent_no = p.parent_no
+		    WHERE e.account_no = #{accountNo}
+		),
+		SharedRooms AS (
+		    SELECT 
+		    	rm.*,
+		        ru_other.account_no AS target_account_no,
+		        ru_me.last_read_time
+		    FROM room rm
+		    JOIN room_user ru_me ON rm.room_no = ru_me.room_no
+		    JOIN room_user ru_other ON rm.room_no = ru_other.room_no
+		    WHERE ru_me.account_no = #{accountNo}
+		      AND ru_other.account_no != #{accountNo}
+		      AND rm.room_type = '개인'
+		)
+		SELECT 
+		    A.account_no,
+		    A.account_type,
+		    A.account_name,
+		    sr.*,
+		    M.last_time,
+		    M.last_content,
+		    NVL(U.cnt, 0) AS cnt,
+		    (
+		        SELECT count(*) 
+		        FROM message msg 
+		        INNER JOIN message_chat mc ON mc.message_no = msg.message_no
+		        WHERE msg.message_room = SR.room_no
+		          AND mc.message_sender_no != #{accountNo} -- 내가 보낸 메세지 제외
+		          AND msg.message_time > NVL(sr.last_read_time, to_date('1970-01-01', 'YYYY-MM-DD'))
+		    ) AS unread_cnt,
+		    'Y' AS enter
+		FROM TargetUsers tu
+		JOIN account a ON tu.account_no = a.account_no
+		LEFT JOIN SharedRooms sr ON tu.account_no = sr.target_account_no
+		LEFT JOIN (
+		    SELECT room_no, count(*) cnt 
+		    FROM room_user 
+		    GROUP BY room_no
+		) U ON SR.room_no = U.room_no
+		LEFT JOIN (
+		    SELECT
+		        message_room,
+		        max(message_time) as last_time,
+		        max(message_content) keep (dense_rank last order by message_time) as last_content
+		    FROM message 
+		    GROUP BY message_room
+		) M ON SR.room_no = M.message_room
+		ORDER BY 
+		    CASE WHEN sr.room_no IS NOT NULL THEN 1 ELSE 2 END ASC,
+		    tu.account_type ASC, 
+		    a.account_no
+	</select>
+	
+	<select id="tutorList" resultType="RoomListVO">
+	    WITH TargetUsers AS (
+	        SELECT DISTINCT 
+	               e.account_no, 
+	               '직원' AS account_type
+	        FROM student s
+	        JOIN student_course sc ON s.student_no = sc.student_no
+	        JOIN course c ON sc.course_no = c.course_no
+	        JOIN employee e ON c.employee_no = e.employee_no
+	        WHERE s.account_no = #{accountNo}
+	        UNION
+	        SELECT DISTINCT 
+	               e.account_no, 
+	               '직원' AS account_type
+	        FROM parent p
+	        JOIN parent_student ps ON p.parent_no = ps.parent_no
+	        JOIN student_course sc ON ps.student_no = sc.student_no
+	        JOIN course c ON sc.course_no = c.course_no
+	        JOIN employee e ON c.employee_no = e.employee_no
+	        WHERE p.account_no = #{accountNo}
+	    ),
+	    SharedRooms AS (
+	        SELECT 
+	            rm.*,
+	            ru_other.account_no AS target_account_no,
+	            ru_me.last_read_time
+	        FROM room rm
+	        JOIN room_user ru_me ON rm.room_no = ru_me.room_no
+	        JOIN room_user ru_other ON rm.room_no = ru_other.room_no
+	        WHERE ru_me.account_no = #{accountNo}
+	          AND ru_other.account_no != #{accountNo}
+	          AND rm.room_type = '개인'
+	    )
+	    SELECT 
+	        a.account_no,
+	        tu.account_type,
+	        a.account_name,
+	        sr.*,
+	        M.last_time,
+	        M.last_content,
+	        NVL(U.cnt, 0) AS cnt,
+	        (
+	            SELECT count(*) 
+	            FROM message msg 
+	            INNER JOIN message_chat mc ON mc.message_no = msg.message_no
+	            WHERE msg.message_room = sr.room_no
+	              AND mc.message_sender_no != #{accountNo} -- 내가 보낸 메세지 제외
+	              AND msg.message_time > NVL(sr.last_read_time, to_date('1970-01-01', 'YYYY-MM-DD'))
+	        ) AS unread_cnt,
+	        'Y' AS enter
+	    FROM TargetUsers tu
+	    JOIN account a ON tu.account_no = a.account_no
+	    LEFT JOIN SharedRooms sr ON tu.account_no = sr.target_account_no
+	    LEFT JOIN (
+	        SELECT room_no, count(*) cnt 
+	        FROM room_user 
+	        GROUP BY room_no
+	    ) U ON sr.room_no = U.room_no
+	    LEFT JOIN (
+	        SELECT
+	            message_room,
+	            max(message_time) as last_time,
+	            max(message_content) keep (dense_rank last order by message_time) as last_content
+	        FROM message 
+	        GROUP BY message_room
+	    ) M ON sr.room_no = M.message_room
+	    ORDER BY 
+	        CASE WHEN sr.room_no IS NOT NULL THEN 1 ELSE 2 END ASC,
+	        tu.account_type ASC, 
+	        a.account_no
+	</select>
+	
 	<!-- 방 목록(+인원수+참여여부) -->
 	<select id="listUpgrade" resultType="RoomListVO">
 		select 

@@ -18,7 +18,7 @@ public class ClassSessionDto {
 	
 	private int sessionNo;
 	private int scheduleNo;
-	private int classroomNo;
+	private Integer classroomNo;
 	private Timestamp sessionStart;
 	private Timestamp sessionEnd;
 	private String sessionStatus;

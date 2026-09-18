@@ -14,6 +14,14 @@
 	    order by course_no desc
 	</select>
 	
+	<!-- '진행중' 상태인 강좌의 번호와 제목만 가볍게 조회 -->
+	<select id="selectActiveCourses" resultType="CourseSimpleListVO">
+	    select *
+	    from course
+	    where course_status = '진행중'
+	    order by course_no desc
+	</select>
+	
 	<!-- 강좌 등록 -->
 	<select id="sequence" resultType="int">
 		select course_seq.nextval from dual
@@ -68,6 +76,14 @@
 		join account a on e.account_no = a.account_no
 		join tutor t on e.employee_no = t.tutor_no
 		where e.employee_no = #{employeeNo}
+	</select>
+	
+	<!-- 세션번호(session_no)로 강좌 조회 -->
+	<select id="selectCourseBySessionNo" resultType="CourseSimpleListVO">
+		select * from course c
+		join schedule s on c.course_no = s.course_no
+		join class_session cs on s.schedule_no = cs.schedule_no
+		where session_no = #{sessionNo}
 	</select>
 	
 	<!-- courseStatus를 모집중 -> 진행중으로 수정 -->
@@ -200,36 +216,6 @@
 		from course c
 			<!-- 공통 검색 조건 include -->
 			<include refid="courseSearchCondition" />
-	</select>
-	
-	<!-- 출결/셀렉트박스용 경량 강좌 목록 (페이징 x, 스케줄 조인 x) -->
-	<select id="selectCourseOptions" resultType="CourseListVO">
-		select
-			c.course_no,
-			c.course_title,
-			cs.session_no,
-			cs.session_start,
-			cs.session_end
-		from course c
-		join schedule s ON c.course_no = s.course_no
-		join class_session cs ON s.schedule_no = cs.schedule_no
-		<where>
-	        TRUNC(cs.session_start) = TRUNC(TO_DATE(#{targetDate}, 'YYYY-MM-DD'))
-	        AND c.course_status = '진행중'
-	        <if test="employeeNo != null">
-	            AND c.employee_no = #{employeeNo}
-	        </if>        
-	        <if test="courseTitle != null and courseTitle != ''">
-	            AND c.course_title LIKE '%' || #{courseTitle} || '%'
-	        </if>
-	        <if test="courseSubject != null and courseSubject != ''">
-	            AND c.course_subject = #{courseSubject}
-	        </if>
-	        <if test="gradeNo != null">
-	            AND c.grade_no = #{gradeNo}
-	        </if>
-		</where>
-		order by cs.session_start asc, c.course_title asc
 	</select>
 	
 	<!-- 학생이 현재 수강 중인 강의 목록 -->

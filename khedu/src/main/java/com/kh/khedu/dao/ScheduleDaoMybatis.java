@@ -90,5 +90,10 @@ public class ScheduleDaoMybatis implements ScheduleDao {
 
 	    return sqlSession.selectList("mapper.schedule.selectWeeklySchedules", param);
 	}
+	
+	@Override
+	public List<ScheduleDto> selectTutorSchedules(Integer employeeNo) {
+		return sqlSession.selectList("mapper.schedule.selectTutorSchedules", employeeNo);
+	}
 
 }
