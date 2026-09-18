@@ -123,8 +123,8 @@
 	<select id="customerNo" resultType="int">
 		select 	customer_no
 		from 	consult_customer
-		where	customer_name = #{customerName}
-		  and	customer_mobile = #{customerMobile}
+		where	student_name = #{customerName}
+		  and	student_phone = #{customerMobile}
 	</select>
 	
 	<select id="customerInfo" resultType="ConsultCustomerDto">

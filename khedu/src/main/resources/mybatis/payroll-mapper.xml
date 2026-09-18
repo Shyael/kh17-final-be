@@ -1003,21 +1003,6 @@
 </select>
 
 <!-- 급여번호를 이용해 취소된 지급내역 조회 -->
-<select id="paymentFindCancelledByPayroll"
-		resultType="PayrollPaymentDto">
-	select p.*
-	from payroll_payment p
-	where p.payroll_no = #{payrollNo}
-		and p.payment_status = 'paid'
-		and exists (
-			select 1
-			from payroll_payment c
-			where c.cancel_target_payment_no = p.payroll_payment_no
-				and c.payment_status = 'cancelled'
-		)
-	order by p.payment_at desc, p.payroll_payment_no desc
-</select>
-
 
 
 <select id="paymentFindNotCancelledByPayroll"
@@ -1025,16 +1010,23 @@
 
     select P.*
     from payroll_payment P
+
+    left join (
+        select
+            cancel_target_payment_no,
+            sum(payment_amount) as cancelled_amount
+        from payroll_payment
+        where payment_status = 'cancelled'
+        group by cancel_target_payment_no
+    ) C
+        on C.cancel_target_payment_no = P.payroll_payment_no
+
     where P.payroll_no = #{payrollNo}
       and P.payment_status = 'paid'
-      and P.payment_amount > nvl((
-          select sum(C.payment_amount)
-          from payroll_payment C
-          where C.payment_status = 'cancelled'
-            and C.cancel_target_payment_no = P.payroll_payment_no
-      ), 0)
+      and P.payment_amount > nvl(C.cancelled_amount, 0)
 
 </select>
+
 
 
 
