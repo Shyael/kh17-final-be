@@ -16,10 +16,12 @@ public interface RoomDao {
 	
 	RoomVO selectOne(int roomNo);
 	RoomVO selectOneForCheck(int accountNo);
-	RoomVO selectOneForTutorCheck(int tutorNo, int accountNo);
+	RoomVO selectOneForPrivateCheck(int myAccountNo, int accountNo);
 	
 	List<RoomListVO> selectMyList(int accountNo);
 	List<RoomListVO> selectConsultList(int accountNo);
+	List<RoomListVO> selectCourseList(int accountNo);
+	List<RoomListVO> selectMyTutorList(int accountNo);
 	
 	List<Integer> getMembers(int roomNo);
 	List<RoomUserVO> getMemberInfo(int roomNo);
