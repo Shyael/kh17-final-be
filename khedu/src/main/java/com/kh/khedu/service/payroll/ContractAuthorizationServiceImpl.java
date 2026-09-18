@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.kh.khedu.dao.EmployeeDao;
 import com.kh.khedu.dao.payroll.ContractDao;
 import com.kh.khedu.dto.payroll.ContractDto;
+import com.kh.khedu.error.TargetNotfoundException;
 import com.kh.khedu.vo.employee.EmployeeDetailVO;
 import com.kh.khedu.vo.jwt.TokenParseResponseVO;
 @Service
@@ -67,27 +68,37 @@ public class ContractAuthorizationServiceImpl implements ContractAuthorizationSe
 		return isAdminOrPartyB;
 	}
 	
-	public boolean checkAdminOrPartyBOrDeskByContract(TokenParseResponseVO parseVO, long contractNo) {
-	
-		List<String> permission = parseVO.getRoleNames();
-		boolean isAdmin =permission.contains("ADMIN");
-		
-		boolean isDesk =permission.contains("DESK");
-		
-		ContractDto find = contractDao.find(contractNo);
-		String id = parseVO.getAccountId();
-		int compare = find.getEmployeeNo();
-		
-		EmployeeDetailVO employee = employeeDao.findMyInfo(id);
-		
-		int no = employee.getAccountNo();
-		
-		boolean isPartyB = no==compare;
-		
-		boolean isAdminOrPartyBOrDesk = (isAdmin||isDesk) || (isAdmin||isPartyB) || (isPartyB||isDesk);
-		
-		return isAdminOrPartyBOrDesk;
-		
+	public boolean checkAdminOrPartyBOrDeskByContract(
+	        TokenParseResponseVO parseVO,
+	        long contractNo) {
+
+	    List<String> permission = parseVO.getRoleNames();
+
+	    boolean isAdmin = permission.contains("ADMIN");
+	    boolean isDesk = permission.contains("DESK");
+
+	    // 계약 존재 여부 확인
+	    ContractDto contract = contractDao.find(contractNo);
+
+	    if (contract == null)
+	        throw new TargetNotfoundException();
+
+	    // 관리자 또는 데스크면 통과
+	    if (isAdmin || isDesk)
+	        return true;
+
+	    // 로그인 직원 조회
+	    EmployeeDetailVO employee =
+	            employeeDao.findMyInfo(parseVO.getAccountId());
+
+	    if (employee == null)
+	        return false;
+
+	    // 계약 당사자 확인
+	    boolean isPartyB =
+	            employee.getEmployeeNo() == contract.getEmployeeNo();
+
+	    return isPartyB;
 	}
 
 	@Override

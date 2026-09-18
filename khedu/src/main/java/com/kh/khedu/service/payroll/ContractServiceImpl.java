@@ -185,7 +185,7 @@ public class ContractServiceImpl implements ContractService {
 		
 		 boolean valid =
 			        contractAuthorizationService
-			                .checkAdminOrPartyBOrDeskByContract(
+			                .checkAdminOrPartyB(
 			                        parseVO,
 			                        contractNo
 			                );
