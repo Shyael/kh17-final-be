@@ -85,7 +85,8 @@ public class RoomRestController {
 	}
 	@GetMapping("/private")
 	public RoomListResponseVO privateList(@CurrentUser TokenParseResponseVO parseVO) {
-		List<RoomListVO> rooms = roomDao.selectMyList(parseVO.getAccountNo());
+		//List<RoomListVO> rooms = roomDao.selectMyList(parseVO.getAccountNo());
+		List<RoomListVO> rooms = roomDao.selectCourseList(parseVO.getAccountNo());
 		
 		return RoomListResponseVO.builder()
 					.count(rooms.size())
@@ -180,13 +181,12 @@ public class RoomRestController {
 		}
 	}
 	
-	//강사 채팅방 목록
+	//학생/학부모의 강사 채팅방 목록
 	@GetMapping("/tutor")
 	public RoomListResponseVO tutorRoomlist(
-			//security filter chain에서 permitAll()로 처리된 경우만 null이 가능
 			@CurrentUser TokenParseResponseVO parseVO) {
 		
-		List<RoomListVO> rooms = roomDao.selectMyList(parseVO.getAccountNo());
+		List<RoomListVO> rooms = roomDao.selectMyTutorList(parseVO.getAccountNo());
 		log.info("rooms = {}", rooms);
 		return RoomListResponseVO.builder()
 					.count(rooms.size())
@@ -195,17 +195,112 @@ public class RoomRestController {
 	}
 	
 	//강사 채팅방 상세 정보 
-	@GetMapping("/check/{employeeNo}")
-	public RoomDetailResponseVO checkTutorChat(@PathVariable(value = "employeeNo", required = false) Integer employeeNo,
+	@GetMapping("/check/{accountNo}")
+	public RoomDetailResponseVO checkTutorChat(@PathVariable(value = "accountNo", required = false) Integer accountNo,
 						@CurrentUser TokenParseResponseVO parseVO) {
-		int accountNo = parseVO.getAccountNo();
+		int myAccountNo = parseVO.getAccountNo();
 		
+		RoomVO checkVO = roomDao.selectOneForPrivateCheck(accountNo, myAccountNo);
+		//생성된 방이 없다면 생성부터
+		if(checkVO == null) {
+			RoomDto insertDto = new RoomDto().builder()
+						.roomNo(roomDao.roomSequence())
+						.roomOwner(myAccountNo)
+						.roomType("개인")
+					.build();
+			roomDao.insertRoom(insertDto);
+			roomDao.insertRoomUser(new RoomUserDto().builder()
+						.roomUserNo(roomDao.roomUserSequence())
+						.roomNo(insertDto.getRoomNo())
+						.accountNo(myAccountNo)
+					.build());
+			roomDao.insertRoomUser(new RoomUserDto().builder()
+						.roomUserNo(roomDao.roomUserSequence())
+						.roomNo(insertDto.getRoomNo())
+						.accountNo(accountNo)
+					.build());
+			
+			List<RoomUserVO> users = roomDao.getMemberInfo(insertDto.getRoomNo());
+			//응답 생성 및 반환
+			return RoomDetailResponseVO.builder()
+						.room(new RoomVO().builder()
+									.roomNo(insertDto.getRoomNo())
+									.roomOwner(insertDto.getRoomOwner())
+									.roomType(insertDto.getRoomType())
+									.roomCtime(null)
+								.build())//방정보
+						.users(users)//유저목록
+						.history(new ArrayList<>())
+					.build();
+		} 
+		else {
+			List<RoomUserVO> users = roomDao.getMemberInfo(checkVO.getRoomNo());
+			List<MessageVO> history = messageDao.selectList(checkVO.getRoomNo());
+			//응답 생성 및 반환
+			return RoomDetailResponseVO.builder()
+						.room(checkVO)//방정보
+						.users(users)//유저목록
+						.history(history)
+					.build();
+		}
+	}
+	
+	@GetMapping("/check/employee/{employeeNo}")
+	public RoomDetailResponseVO checkEmployee(@PathVariable(value = "employeeNo", required = false) Integer employeeNo,
+						@CurrentUser TokenParseResponseVO parseVO) {
+		int myAccountNo = parseVO.getAccountNo();
 		AdminEmployeeDetailVO employeeVO = employeeDao.selectAdminEmployeeDetailByEmployeeNo(employeeNo);
 		int tutorAccountNo = employeeVO.getAccountNo();
-		log.info("employeeNo = {}", employeeNo);
-		log.info("tutorAccountNo = {}", tutorAccountNo);
-		
-		RoomVO checkVO = roomDao.selectOneForTutorCheck(tutorAccountNo, accountNo);
+		RoomVO checkVO = roomDao.selectOneForPrivateCheck(tutorAccountNo, myAccountNo);
+		//생성된 방이 없다면 생성부터
+		if(checkVO == null) {
+			RoomDto insertDto = new RoomDto().builder()
+						.roomNo(roomDao.roomSequence())
+						.roomOwner(myAccountNo)
+						.roomType("개인")
+					.build();
+			roomDao.insertRoom(insertDto);
+			roomDao.insertRoomUser(new RoomUserDto().builder()
+						.roomUserNo(roomDao.roomUserSequence())
+						.roomNo(insertDto.getRoomNo())
+						.accountNo(myAccountNo)
+					.build());
+			roomDao.insertRoomUser(new RoomUserDto().builder()
+						.roomUserNo(roomDao.roomUserSequence())
+						.roomNo(insertDto.getRoomNo())
+						.accountNo(tutorAccountNo)
+					.build());
+			
+			List<RoomUserVO> users = roomDao.getMemberInfo(insertDto.getRoomNo());
+			//응답 생성 및 반환
+			return RoomDetailResponseVO.builder()
+						.room(new RoomVO().builder()
+									.roomNo(insertDto.getRoomNo())
+									.roomOwner(insertDto.getRoomOwner())
+									.roomType(insertDto.getRoomType())
+									.roomCtime(null)
+								.build())//방정보
+						.users(users)//유저목록
+						.history(new ArrayList<>())
+					.build();
+		} 
+		else {
+			List<RoomUserVO> users = roomDao.getMemberInfo(checkVO.getRoomNo());
+			List<MessageVO> history = messageDao.selectList(checkVO.getRoomNo());
+			//응답 생성 및 반환
+			return RoomDetailResponseVO.builder()
+						.room(checkVO)//방정보
+						.users(users)//유저목록
+						.history(history)
+					.build();
+		}
+	}
+	
+	@GetMapping("/private/{accountNo}")
+	public RoomDetailResponseVO privateChat(@PathVariable(value = "accountNo", required = false) Integer accountNo,
+						@CurrentUser TokenParseResponseVO parseVO) {
+		int myAccountNo = parseVO.getAccountNo();
+		RoomVO checkVO = roomDao.selectOneForPrivateCheck(myAccountNo, accountNo);
 		//생성된 방이 없다면 생성부터
 		if(checkVO == null) {
 			RoomDto insertDto = new RoomDto().builder()
@@ -217,12 +312,12 @@ public class RoomRestController {
 			roomDao.insertRoomUser(new RoomUserDto().builder()
 						.roomUserNo(roomDao.roomUserSequence())
 						.roomNo(insertDto.getRoomNo())
-						.accountNo(accountNo)
+						.accountNo(myAccountNo)
 					.build());
 			roomDao.insertRoomUser(new RoomUserDto().builder()
 						.roomUserNo(roomDao.roomUserSequence())
 						.roomNo(insertDto.getRoomNo())
-						.accountNo(tutorAccountNo)
+						.accountNo(accountNo)
 					.build());
 			
 			List<RoomUserVO> users = roomDao.getMemberInfo(insertDto.getRoomNo());

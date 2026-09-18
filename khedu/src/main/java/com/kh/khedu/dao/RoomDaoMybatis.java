@@ -45,11 +45,11 @@ public class RoomDaoMybatis implements RoomDao {
 		return sqlSession.selectOne("mapper.room.check", accountNo);
 	}
 	@Override
-	public RoomVO selectOneForTutorCheck(int tutorNo, int accountNo) {
+	public RoomVO selectOneForPrivateCheck(int myAccountNo, int accountNo) {
 		Map<String, Object> params = new HashMap<>();
-		params.put("tutorNo", tutorNo);
+		params.put("myAccountNo", myAccountNo);
 		params.put("accountNo", accountNo);
-		return sqlSession.selectOne("mapper.room.tutorCheck", params);
+		return sqlSession.selectOne("mapper.room.privateCheck", params);
 	}
 	@Override
 	public List<RoomListVO> selectMyList(int accountNo) {
@@ -58,6 +58,14 @@ public class RoomDaoMybatis implements RoomDao {
 	@Override
 	public List<RoomListVO> selectConsultList(int accountNo) {
 		return sqlSession.selectList("mapper.room.consultList", accountNo);
+	}
+	@Override
+	public List<RoomListVO> selectCourseList(int accountNo) {
+		return sqlSession.selectList("mapper.room.courseList", accountNo);
+	}
+	@Override
+	public List<RoomListVO> selectMyTutorList(int accountNo) {
+		return sqlSession.selectList("mapper.room.tutorList", accountNo);
 	}
 	@Override
 	public List<Integer> getMembers(int roomNo) {
