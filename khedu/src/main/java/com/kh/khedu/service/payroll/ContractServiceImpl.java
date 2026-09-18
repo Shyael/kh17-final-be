@@ -185,7 +185,7 @@ public class ContractServiceImpl implements ContractService {
 		
 		 boolean valid =
 			        contractAuthorizationService
-			                .checkAdminOrPartyBOrDeskByContract(
+			                .checkAdminOrPartyB(
 			                        parseVO,
 			                        contractNo
 			                );
@@ -212,6 +212,7 @@ public class ContractServiceImpl implements ContractService {
 		            .signedTime(find.getSignedTime())
 		            .writtenBreakMinutes(find.getWrittenBreakMinutes())
 		            .weeklyWorkHours(find.getWeeklyWorkHours())
+		            .weeklyHolidayDay(find.getWeeklyHolidayDay())
 		            .build();
 			return response;}
 
