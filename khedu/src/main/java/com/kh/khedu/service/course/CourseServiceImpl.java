@@ -147,7 +147,7 @@ public class CourseServiceImpl implements CourseService {
 		// 1) 강사
 		tutorDao.selectTutorForUpdate(request.getEmployeeNo());
 		
-		// 2) 강의실
+		// 2) 강의실 
 		// 1)) 요청배열에서 중복을 제거하고 정렬
 		List<Integer> classroomNos = request.getSchedules().stream()
 							.map(ScheduleCreateRequestVO::getClassroomNo) // 객체에서 강의실 번호 추출
