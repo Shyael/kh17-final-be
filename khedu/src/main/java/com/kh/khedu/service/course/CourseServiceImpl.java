@@ -155,7 +155,7 @@ public class CourseServiceImpl implements CourseService {
 							.sorted() // 순서대로 정렬
 							.toList();
 		// 2)) 가공된 번호들을 하나씩 돌면서 강사와 동일하게 락을 건다.
-		for(int classroomNo : classroomNos) {
+		for(int classroomNo : classroomNos) { 
 			classroomDao.selectClassroomForUpdate(classroomNo);
 		}
 		
