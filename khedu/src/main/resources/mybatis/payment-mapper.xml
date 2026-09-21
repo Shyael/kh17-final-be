@@ -204,7 +204,7 @@
 	<!-- 학부모 계정 번호 조회 (DB 컬럼명은 실제 테이블에 맞게 수정해주세요!) -->
 	<select id="selectParentAccountNoByStudentNo" resultType="java.lang.Integer">
 	    select parent_no -- (또는 parent_no 등 실제 학부모 계정 PK 컬럼명)
-	    from student
+	    from parent_student
 	    where student_no = #{studentNo}
 	</select>
   

@@ -202,6 +202,12 @@
         where student_no = #{studentNo}
     </update>
     
+    <update id="approveAccount">
+    	update account 
+    	set account_status = 'Y' 
+    	where account_no = (select account_no from student where student_no = #{studentNo})
+    </update>
+    
     <!-- 관리자 -->
     <select id="selectCurrentRunningSessionByStudent" resultType="ClassSessionDto">
     SELECT *
