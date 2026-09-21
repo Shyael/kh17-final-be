@@ -34,34 +34,33 @@
 <select id="findContractExpiringList"
         resultType="DashboardContractExpiringVO">
 
-    select
-        C.contract_no as contractNo,
-        C.employee_no as employeeNo,
-        A.account_name as employeeName,
-        C.contract_end as contractEnd,
+    SELECT
+        C.contract_no AS contractNo,
+        C.employee_no AS employeeNo,
+        A.account_name AS employeeName,
+        C.contract_end AS contractEnd,
 
-        C.contract_end
-        - systimestamp as dDay
+        TRUNC(CAST(C.contract_end AS DATE))
+            - TRUNC(SYSDATE) AS dDay
 
-    from employment_contract C
+    FROM employment_contract C
 
-    join employee E
-        on C.employee_no = E.employee_no
+    JOIN employee E
+        ON C.employee_no = E.employee_no
 
-    join account A
-        on E.account_no = A.account_no
+    JOIN account A
+        ON E.account_no = A.account_no
 
-    where C.contract_status = 'active'
+    WHERE C.contract_status = 'active'
 
-    and C.contract_end is not null
+      AND C.contract_end IS NOT NULL
 
-    and C.contract_end
-        between systimestamp
-        and systimestamp + 7
+      AND C.contract_end BETWEEN
+          SYSTIMESTAMP AND SYSTIMESTAMP + 7
 
-    order by C.contract_end asc
+    ORDER BY C.contract_end ASC
 
-</select>
+</select> 
 
 <!-- 급여일 임박 / 미지급 대상 조회 -->
 <select id="getPayrollDueList"
