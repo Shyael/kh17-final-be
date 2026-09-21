@@ -105,6 +105,7 @@ public class StudentDaoMybatis implements StudentDao {
 	@Override
 	public boolean approveAccount(int studentNo) {  
 		return sqlSession.update("mapper.student.approveAccount", studentNo) > 0;
+		
 	}
 
 	@Override
