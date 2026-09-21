@@ -37,10 +37,10 @@ public class ContractAddRequestVO {
 	
 	// 주 소정근로시간
 	private double weeklyWorkHours;
-	@NotNull
+	
 	// 계약 시작일
 	private Timestamp contractStart;
-	@NotNull
+	
 	// 계약 종료일
 	private Timestamp contractEnd;
 	@NotNull
