@@ -137,20 +137,31 @@ public class SecurityConfiguration {
 		        	    RoleType.PARENT.getCode()
 		        	)
 			        
+			        // [] 회원
+			        .requestMatchers(
+			        		 "/api/academy/assignment/**"
+			        ).hasAnyAuthority(
+			        		RoleType.STUDENT.getCode(),
+				            RoleType.PARENT.getCode(),
+				            RoleType.TUTOR.getCode(),
+				            RoleType.DESK.getCode(),
+				            RoleType.ADMIN.getCode()
+			        		
+			        )
+			      
 			        // =========================================================
 			        // [3] 학부모
 			        // =========================================================
 			        .requestMatchers(
 				            "/api/academy/parent/**"
 			        ).hasAnyAuthority(
-				        RoleType.PARENT.getCode()
+			        		RoleType.PARENT.getCode()
 			        )
 			        // =========================================================
 			        // [4] 학생
 			        // =========================================================
 			        .requestMatchers(
 				        "/api/academy/student/",
-			            "/api/academy/assignment/**",
 			            "/api/academy/assignment-submit/**",
 			            "/api/academy/attempt-answer/**",
 			            "/api/academy/attempt/**",
@@ -259,7 +270,8 @@ public class SecurityConfiguration {
 		config.setAllowedOrigins(List.of(
 			// 여기에 운영주소 넣어주면됨
 			"http://localhost:5173",
-			"http://52.79.242.143:8080"
+			"http://52.79.242.143:8080",
+			"https://appreciation-reverse-complete-warnings.trycloudflare.com"
 		));
 		//[2] 허용할 HTTP 메소드 설정
 		config.setAllowedMethods(List.of(
