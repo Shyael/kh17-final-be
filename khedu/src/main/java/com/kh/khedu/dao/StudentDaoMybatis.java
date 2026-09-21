@@ -107,7 +107,7 @@ public class StudentDaoMybatis implements StudentDao {
 		return sqlSession.update("mapper.student.approveAccount", studentNo) > 0;
 		
 	}
-	@Override
+	@Override 
 	public StudentDto selectOneByNoAndPhone(int studentNo, String studentPhone) {
 	    Map<String, Object> param = new HashMap<>();
 	    param.put("studentNo", studentNo);
